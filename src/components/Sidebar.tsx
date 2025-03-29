@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +20,13 @@ import {
 import { getInitials } from '@/lib/utils';
 import { Badge } from './ui/badge';
 
+interface MenuItem {
+  label: string;
+  icon: React.ReactNode;
+  path: string;
+  badge?: number;
+}
+
 export function Sidebar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -29,7 +35,6 @@ export function Sidebar() {
   const isMobile = window.innerWidth < 768;
   const [mobileView, setMobileView] = useState(isMobile);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -53,7 +58,7 @@ export function Sidebar() {
     navigate('/');
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
     { label: 'Waitlist', icon: <Clock size={20} />, path: '/waitlist' },
     { label: 'Appointments', icon: <Calendar size={20} />, path: '/appointments' },
@@ -82,7 +87,6 @@ export function Sidebar() {
     if (mobileView) setIsOpen(false);
   };
 
-  // Sidebar rendered differently for mobile and desktop
   if (mobileView) {
     return (
       <>
@@ -101,7 +105,6 @@ export function Sidebar() {
               className="fixed inset-y-0 left-0 w-64 bg-background border-r p-4 overflow-y-auto z-50" 
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Sidebar content */}
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center">
@@ -112,7 +115,6 @@ export function Sidebar() {
                   </Button>
                 </div>
 
-                {/* User info */}
                 <div className="mb-8">
                   <div className="flex items-center gap-2 mb-4">
                     <Avatar>
@@ -128,7 +130,6 @@ export function Sidebar() {
                   </div>
                 </div>
 
-                {/* Menu items */}
                 <nav className="space-y-1 flex-1">
                   {menuItems.map((item) => (
                     <Button
@@ -148,7 +149,6 @@ export function Sidebar() {
                   ))}
                 </nav>
 
-                {/* Sign out button */}
                 <Button variant="ghost" className="mt-auto mb-4 w-full justify-start" onClick={handleSignOut}>
                   <LogOut size={20} />
                   <span className="ml-2">Sign Out</span>
@@ -161,7 +161,6 @@ export function Sidebar() {
     );
   }
 
-  // Desktop sidebar
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
       <div className="flex flex-col flex-grow border-r bg-background pt-5 overflow-y-auto">
@@ -169,7 +168,6 @@ export function Sidebar() {
           <h1 className="text-xl font-bold">PatientPause</h1>
         </div>
         
-        {/* User info */}
         <div className="px-4 mb-8 mt-6">
           <div className="flex items-center gap-3">
             <Avatar>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GlowButton } from "@/components/ui/glow-button";
@@ -49,6 +48,7 @@ interface WaitlistEntry {
   estimated_wait_time?: number;
   notes?: string;
   created_at: string;
+  updated_at: string;
   profiles: {
     username?: string;
     first_name?: string;
@@ -84,7 +84,14 @@ const Waitlist = () => {
       // Assuming we're using the first waitlist for now
       // In a real app, you'd select the waitlist or pass it as a parameter
       const entries = await getWaitlistEntries("some-waitlist-id");
-      setWaitlistEntries(entries);
+      
+      // Ensure entries have the correct status type
+      const typedEntries = entries.map(entry => ({
+        ...entry,
+        status: entry.status as "waiting" | "notified" | "seated" | "cancelled"
+      }));
+      
+      setWaitlistEntries(typedEntries);
     } catch (error) {
       console.error("Error fetching waitlist entries:", error);
       toast({

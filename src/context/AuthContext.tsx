@@ -113,7 +113,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "You've successfully logged in.",
       });
       
-      navigate('/dashboard');
+      // Fetch the profile to get the user's role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        navigate('/dashboard'); // Default to business dashboard
+        return;
+      }
+      
+      // Redirect based on user role
+      if (profileData.role === 'customer') {
+        navigate('/customer/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
@@ -159,7 +177,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           title: "Welcome!",
           description: "Your account has been created successfully.",
         });
-        navigate('/dashboard');
+        
+        // Redirect based on user role
+        if (credentials.role === 'customer') {
+          navigate('/customer/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Registration error:', error);

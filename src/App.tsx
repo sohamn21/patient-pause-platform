@@ -20,6 +20,11 @@ import SettingsPage from './pages/Settings';
 import NotFoundPage from './pages/NotFound';
 import StaffManagementPage from "./pages/StaffManagement";
 import Layout from './components/Layout';
+import CustomerLayout from './components/CustomerLayout';
+import CustomerDashboard from './pages/CustomerDashboard';
+import CustomerProfile from './pages/customer/CustomerProfile';
+import CustomerWaitlists from './pages/customer/CustomerWaitlists';
+import CustomerAppointments from './pages/customer/CustomerAppointments';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import CustomCursor from './components/CustomCursor';
 
@@ -35,6 +40,8 @@ function App() {
           <Route path="/user-register" element={<UserRegisterPage />} />
           <Route path="/business-register" element={<BusinessRegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          
+          {/* Business routes */}
           <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/waitlist" element={<WaitlistPage />} />
@@ -47,6 +54,16 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
+          
+          {/* Customer routes */}
+          <Route path="/customer" element={<ProtectedRoute><CustomerLayout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="/customer/dashboard" replace />} />
+            <Route path="dashboard" element={<CustomerDashboard />} />
+            <Route path="profile" element={<CustomerProfile />} />
+            <Route path="waitlists" element={<CustomerWaitlists />} />
+            <Route path="appointments" element={<CustomerAppointments />} />
+          </Route>
+          
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>

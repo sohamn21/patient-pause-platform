@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
@@ -14,12 +13,20 @@ import {
   Building,
   Utensils,
   Scissors,
-  Stethoscope
+  Stethoscope,
+  Menu,
+  X
 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const features = [
     {
@@ -77,7 +84,8 @@ const Landing = () => {
             <span className="text-xl font-bold tracking-tight">PatientPause</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <Button variant="link" onClick={() => navigate('/pricing')}>Pricing</Button>
             <Button variant="link">Features</Button>
             <Button variant="link">Contact</Button>
@@ -90,6 +98,33 @@ const Landing = () => {
                 <GlowButton onClick={() => navigate('/signup')}>Sign Up</GlowButton>
               </div>
             )}
+          </div>
+          
+          {/* Mobile Navigation */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+                <div className="flex flex-col gap-4 py-4">
+                  <Button variant="link" onClick={() => navigate('/pricing')}>Pricing</Button>
+                  <Button variant="link">Features</Button>
+                  <Button variant="link">Contact</Button>
+                  
+                  {user ? (
+                    <Button onClick={() => navigate('/dashboard')}>Dashboard</Button>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Button variant="outline" onClick={() => navigate('/signin')}>Login</Button>
+                      <GlowButton onClick={() => navigate('/signup')}>Sign Up</GlowButton>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>

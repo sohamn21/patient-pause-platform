@@ -21,11 +21,13 @@ import NotFoundPage from './pages/NotFound';
 import StaffManagementPage from "./pages/StaffManagement";
 import Layout from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import CustomCursor from './components/CustomCursor';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CustomCursor />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<SignInPage />} />

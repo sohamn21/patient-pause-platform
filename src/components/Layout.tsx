@@ -2,14 +2,12 @@
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Outlet } from 'react-router-dom';
-import CustomCursor from './CustomCursor';
 import { SidebarProvider, SidebarInset, SidebarTrigger, SidebarRail } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 
 const Layout = () => {
   return (
     <div className="flex h-screen overflow-hidden">
-      <CustomCursor />
       <SidebarProvider defaultOpen={false}>
         <div className="flex w-full">
           <AppSidebar />

@@ -119,7 +119,8 @@ export const removeFromWaitlist = async (id: string) => {
 };
 
 export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEntryType[]> => {
-  // Using the join syntax with the profiles table
+  // Using the join syntax with the profiles table, but without requesting the email field
+  // since it doesn't exist in the profiles table
   const { data, error } = await supabase
     .from('waitlist_entries')
     .select(`
@@ -132,12 +133,11 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes,
       created_at,
       updated_at,
-      profiles:profiles(
+      profiles(
         username,
         first_name,
         last_name,
-        phone_number,
-        email
+        phone_number
       )
     `)
     .eq('waitlist_id', waitlistId)
@@ -162,7 +162,7 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
         first_name: entry.profiles.first_name || null,
         last_name: entry.profiles.last_name || null,
         phone_number: entry.profiles.phone_number || null,
-        email: entry.profiles.email || null
+        email: null // Set email to null since it doesn't exist in the profiles table
       } : null
     };
   });

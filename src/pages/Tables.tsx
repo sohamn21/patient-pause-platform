@@ -5,8 +5,16 @@ import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocationSelector } from "@/components/dashboard/LocationSelector";
 
+// Define location type
+interface Location {
+  id: string;
+  name: string;
+  address: string;
+  isMain?: boolean;
+}
+
 // Sample locations data
-const locations = [
+const locations: Location[] = [
   { id: "loc1", name: "Main Restaurant", address: "123 Main St, Anytown", isMain: true },
   { id: "loc2", name: "Downtown Branch", address: "456 Central Ave, Anytown" },
   { id: "loc3", name: "Westside Location", address: "789 West Blvd, Anytown" },
@@ -14,10 +22,10 @@ const locations = [
 
 const TablesPage = () => {
   const [selectedLocation, setSelectedLocation] = useState(locations[0].id);
-  const [activeLocations, setActiveLocations] = useState(locations);
+  const [activeLocations, setActiveLocations] = useState<Location[]>(locations);
   
-  const handleAddLocation = (location: Omit<typeof locations[0], "id">) => {
-    const newLocation = {
+  const handleAddLocation = (location: Omit<Location, "id">) => {
+    const newLocation: Location = {
       ...location,
       id: `loc${activeLocations.length + 1}`
     };

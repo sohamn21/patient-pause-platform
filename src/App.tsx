@@ -1,69 +1,60 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import LandingPage from './pages/Landing';
+import SignInPage from './pages/SignIn';
+import SignUpPage from './pages/SignUp';
+import UserRegisterPage from './pages/UserRegister';
+import BusinessRegisterPage from './pages/BusinessRegister';
+import PricingPage from './pages/Pricing';
+import DashboardPage from './pages/Dashboard';
+import WaitlistPage from './pages/Waitlist';
+import AppointmentsPage from './pages/Appointments';
+import TablesPage from './pages/Tables';
+import CustomersPage from './pages/Customers';
+import ReportsPage from './pages/Reports';
+import LocationsPage from './pages/Locations';
+import NotificationsPage from './pages/Notifications';
+import SettingsPage from './pages/Settings';
+import NotFoundPage from './pages/NotFound';
+import StaffManagementPage from "./pages/StaffManagement";
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import NotFound from "./pages/NotFound";
-import Layout from "./components/Layout";
-import Waitlist from "./pages/Waitlist";
-import SignIn from "./pages/auth/SignIn";
-import SignUp from "./pages/auth/SignUp";
-import BusinessRegister from "./pages/auth/BusinessRegister";
-import UserRegister from "./pages/auth/UserRegister";
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Tables from "./pages/Tables";
-import Customers from "./pages/Customers";
-import Reports from "./pages/Reports";
-import Locations from "./pages/Locations";
-import Notifications from "./pages/Notifications";
-import Settings from "./pages/Settings";
-import Appointments from "./pages/Appointments";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import CustomCursor from "./components/CustomCursor";
-import Pricing from "./pages/Pricing";
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
 
-const queryClient = new QueryClient();
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CustomCursor />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/register/business" element={<BusinessRegister />} />
-              <Route path="/register/user" element={<UserRegister />} />
-              <Route path="/pricing" element={<Pricing />} />
-
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/waitlist" element={<Waitlist />} />
-                <Route path="/appointments" element={<Appointments />} />
-                <Route path="/tables" element={<Tables />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/locations" element={<Locations />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
+  return user ? <>{children}</> : <Navigate to="/signin" />;
 };
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/user-register" element={<UserRegisterPage />} />
+        <Route path="/business-register" element={<BusinessRegisterPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/tables" element={<TablesPage />} />
+          <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/staff" element={<StaffManagementPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/locations" element={<LocationsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
 
 export default App;

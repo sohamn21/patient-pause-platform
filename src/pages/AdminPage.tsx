@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/components/ui/blur-card";
 import { useAuth } from "@/context/AuthContext";
@@ -63,7 +62,6 @@ const AdminPage = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch users
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('*')
@@ -72,7 +70,6 @@ const AdminPage = () => {
       if (usersError) throw usersError;
       setUsers(usersData);
 
-      // Fetch waitlists
       const { data: waitlistsData, error: waitlistsError } = await supabase
         .from('waitlists')
         .select('*')
@@ -81,8 +78,6 @@ const AdminPage = () => {
       if (waitlistsError) throw waitlistsError;
       setWaitlists(waitlistsData);
 
-      // For now, we'll create mock subscription data
-      // In a real application, this would come from a subscriptions table
       const mockSubscriptions: Subscription[] = usersData
         .filter(user => user.role === 'business')
         .map(user => ({
@@ -115,7 +110,6 @@ const AdminPage = () => {
       description: `Decoded text: ${decodedText}`,
     });
     
-    // If this is a waitlist URL, extract the ID and navigate to it
     if (decodedText.includes('/join-waitlist/')) {
       const waitlistId = decodedText.split('/join-waitlist/')[1];
       window.location.href = `/join-waitlist/${waitlistId}`;
@@ -331,8 +325,10 @@ const AdminPage = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={subscription.status === 'active' ? "success" : "destructive"} 
-                            className={subscription.status === 'active' ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"}>
+                          <Badge 
+                            variant={subscription.status === 'active' ? "default" : "destructive"} 
+                            className={subscription.status === 'active' ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"}
+                          >
                             {subscription.status}
                           </Badge>
                         </TableCell>

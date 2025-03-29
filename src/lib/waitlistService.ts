@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
 import { WaitlistEntryType } from '@/components/restaurant/types';
@@ -122,8 +121,17 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
   const { data, error } = await supabase
     .from('waitlist_entries')
     .select(`
-      *,
+      id,
+      waitlist_id,
+      user_id,
+      position,
+      status,
+      estimated_wait_time,
+      notes,
+      created_at,
+      updated_at,
       profiles:user_id (
+        id,
         username,
         first_name,
         last_name,
@@ -136,10 +144,9 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
   
   if (error) throw error;
   
-  // Safely map the data to the expected type with proper null handling
+  // Convert the raw data to the expected WaitlistEntryType format
   return data.map(entry => {
-    // Create a properly shaped object that matches WaitlistEntryType
-    const typedEntry: WaitlistEntryType = {
+    return {
       id: entry.id,
       waitlist_id: entry.waitlist_id,
       user_id: entry.user_id,
@@ -149,7 +156,6 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes: entry.notes,
       created_at: entry.created_at,
       updated_at: entry.updated_at,
-      // Safely handle profiles which may be null or may have null properties
       profiles: entry.profiles ? {
         username: entry.profiles.username || null,
         first_name: entry.profiles.first_name || null,
@@ -158,8 +164,6 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
         email: entry.profiles.email || null
       } : null
     };
-    
-    return typedEntry;
   });
 };
 

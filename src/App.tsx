@@ -10,6 +10,7 @@ import BusinessRegisterPage from './pages/auth/BusinessRegister';
 import PricingPage from './pages/Pricing';
 import DashboardPage from './pages/Dashboard';
 import WaitlistPage from './pages/Waitlist';
+import WaitlistDetails from './pages/WaitlistDetails';
 import AppointmentsPage from './pages/Appointments';
 import TablesPage from './pages/Tables';
 import CustomersPage from './pages/Customers';
@@ -64,6 +65,7 @@ function AppContent() {
         <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route path="/waitlist/:waitlistId" element={<WaitlistDetails />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/tables" element={<TablesPage />} />
           <Route path="/table-reservations" element={<TableReservationsPage />} />

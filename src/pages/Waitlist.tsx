@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -93,7 +94,7 @@ const WaitlistPage = () => {
     };
     
     fetchSubscription();
-  }, []);
+  }, [toast]);
   
   const handleCreateWaitlist = async () => {
     if (!businessId) {
@@ -186,6 +187,10 @@ const WaitlistPage = () => {
       setIsLoading(false);
     }
   };
+
+  const handleViewWaitlist = (waitlistId: string) => {
+    navigate(`/waitlist/${waitlistId}`);
+  };
   
   return (
     <div className="space-y-6">
@@ -225,6 +230,13 @@ const WaitlistPage = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewWaitlist(waitlist.id)}
+                >
+                  <ListChecks className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"

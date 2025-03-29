@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './pages/Landing';
-import SignInPage from './pages/SignIn';
-import SignUpPage from './pages/SignUp';
-import UserRegisterPage from './pages/UserRegister';
-import BusinessRegisterPage from './pages/BusinessRegister';
+import SignInPage from './pages/auth/SignIn';
+import SignUpPage from './pages/auth/SignUp';
+import UserRegisterPage from './pages/auth/UserRegister';
+import BusinessRegisterPage from './pages/auth/BusinessRegister';
 import PricingPage from './pages/Pricing';
 import DashboardPage from './pages/Dashboard';
 import WaitlistPage from './pages/Waitlist';
@@ -18,16 +19,8 @@ import NotificationsPage from './pages/Notifications';
 import SettingsPage from './pages/Settings';
 import NotFoundPage from './pages/NotFound';
 import StaffManagementPage from "./pages/StaffManagement";
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return user ? <>{children}</> : <Navigate to="/signin" />;
-};
+import Layout from './components/Layout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -39,7 +32,7 @@ function App() {
         <Route path="/user-register" element={<UserRegisterPage />} />
         <Route path="/business-register" element={<BusinessRegisterPage />} />
         <Route path="/pricing" element={<PricingPage />} />
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />

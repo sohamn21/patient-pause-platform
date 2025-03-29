@@ -68,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending ${type} to user ${userId} with message: ${message}`);
+    console.log(`Sending ${type} notification to user ${userId} with message: ${message}`);
 
     // Store notification in database
     const { data: notification, error: notificationError } = await supabase
@@ -188,7 +188,7 @@ serve(async (req) => {
     }
 
     // Update waitlist entry status if this is a waitlist notification
-    if (waitlistId && entryId && type === "waitlist") {
+    if (waitlistId && entryId && (type === "waitlist" || type === "email")) {
       const { error: updateError } = await supabase
         .from("waitlist_entries")
         .update({ status: "notified" })

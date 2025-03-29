@@ -42,8 +42,16 @@ export function ActionMenu({
   const phoneNumber = entry.profiles?.phone_number || "";
   const email = entry.profiles?.email || "";
   
-  // Check if customer can be emailed - only require email to exist
+  // Check if customer can be emailed - only require email to exist and not seated/cancelled
   const canEmail = !!email && entry.status !== "seated" && entry.status !== "cancelled";
+
+  console.log("ActionMenu - Entry:", {
+    id: entry.id,
+    customerName: entry.profiles?.first_name,
+    email: email,
+    status: entry.status,
+    canEmail: canEmail
+  });
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -52,7 +60,7 @@ export function ActionMenu({
         variant="ghost"
         onClick={onEmail}
         disabled={!canEmail}
-        title={canEmail ? "Email customer" : "No email available"}
+        title={canEmail ? "Email customer" : "No email available or customer already seated/cancelled"}
       >
         <Mail size={16} className={!canEmail ? "text-muted-foreground" : ""} />
       </Button>

@@ -6,6 +6,7 @@ import { NotificationDialog } from "./waitlist/dialogs/NotificationDialog";
 import { CallDialog } from "./waitlist/dialogs/CallDialog";
 import { EmailDialog } from "./waitlist/dialogs/EmailDialog";
 import { ActionMenu } from "./waitlist/ActionMenu";
+import { useToast } from "@/hooks/use-toast";
 
 interface WaitlistActionsProps {
   entry: WaitlistEntryType;
@@ -19,6 +20,7 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [isCallDialogOpen, setIsCallDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleViewDetails = () => {
     setIsViewDialogOpen(true);
@@ -36,14 +38,36 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
       // Fallback to SMS if no email is available
       setIsNotifyDialogOpen(true);
     } else {
-      // If neither email nor phone exists, default to email dialog which will show appropriate message
-      setIsEmailDialogOpen(true);
+      // If neither email nor phone exists, show toast
+      toast({
+        title: "No Contact Method",
+        description: "This customer has no email or phone number on file.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleEmail = () => {
-    setIsEmailDialogOpen(true);
+    const email = entry.profiles?.email;
+    
+    if (email) {
+      console.log("Opening email dialog for:", email);
+      setIsEmailDialogOpen(true);
+    } else {
+      toast({
+        title: "No Email Address",
+        description: "This customer does not have an email address on file.",
+        variant: "destructive"
+      });
+    }
   };
+
+  console.log("WaitlistActions - Entry:", {
+    id: entry.id, 
+    hasEmail: !!entry.profiles?.email,
+    email: entry.profiles?.email,
+    status: entry.status
+  });
 
   return (
     <>

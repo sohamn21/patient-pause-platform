@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ClipboardCheck, ArrowLeft, QrCode } from "lucide-react";
 import QrCodeScanner from "@/components/QrCodeScanner";
+import { supabase } from "@/integrations/supabase/client";
 
 const JoinWaitlist = () => {
   const { waitlistId } = useParams<{ waitlistId: string }>();
@@ -26,20 +27,38 @@ const JoinWaitlist = () => {
       if (waitlistId) {
         try {
           setIsLoading(true);
-          const response = await fetch(`/api/waitlists/${waitlistId}`);
-          if (response.ok) {
-            const data = await response.json();
+          
+          // Fetch waitlist data from Supabase
+          const { data, error } = await supabase
+            .from('waitlists')
+            .select(`
+              *,
+              profiles:business_id (business_name)
+            `)
+            .eq('id', waitlistId)
+            .single();
+          
+          if (error) {
+            throw error;
+          }
+          
+          if (data) {
             setWaitlistName(data.name);
-            setBusinessName(data.business_name);
+            setBusinessName(data.profiles?.business_name || "Unknown Business");
           } else {
             toast({
               title: "Error",
-              description: "Failed to load waitlist information",
+              description: "Waitlist not found",
               variant: "destructive",
             });
           }
         } catch (error) {
           console.error("Error fetching waitlist info:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load waitlist information",
+            variant: "destructive",
+          });
         } finally {
           setIsLoading(false);
         }

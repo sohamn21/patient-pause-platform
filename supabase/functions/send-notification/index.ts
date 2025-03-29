@@ -20,7 +20,7 @@ serve(async (req) => {
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { userId, phoneNumber, message, waitlistId, entryId, type } = await req.json();
+    const { userId, phoneNumber, email, message, subject, waitlistId, entryId, type } = await req.json();
 
     if (!userId || !message || !type) {
       return new Response(
@@ -56,6 +56,12 @@ serve(async (req) => {
     if (phoneNumber) {
       console.log(`Would send SMS to ${phoneNumber} with message: ${message}`);
       // In a real implementation, call SMS API here
+    }
+
+    // If there's an email, we would send an email here
+    if (email && subject) {
+      console.log(`Would send email to ${email} with subject: ${subject} and message: ${message}`);
+      // In a real implementation, call Email API here
     }
 
     // Update waitlist entry status if this is a waitlist notification

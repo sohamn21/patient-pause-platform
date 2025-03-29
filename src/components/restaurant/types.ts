@@ -45,3 +45,22 @@ export interface Reservation {
   createdAt: string;
   businessId: string;
 }
+
+export interface WaitlistEntryType {
+  id: string;
+  waitlist_id: string;
+  user_id: string;
+  position: number;
+  status: 'waiting' | 'notified' | 'seated' | 'cancelled';
+  estimated_wait_time?: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    email?: string;
+  };
+}

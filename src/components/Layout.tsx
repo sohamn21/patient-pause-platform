@@ -8,7 +8,7 @@ import { AppSidebar } from './AppSidebar';
 const Layout = () => {
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={true}>
         <div className="flex w-full">
           <AppSidebar />
           <SidebarRail />

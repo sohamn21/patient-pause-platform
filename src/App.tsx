@@ -27,6 +27,7 @@ import CustomerWaitlists from './pages/customer/CustomerWaitlists';
 import CustomerAppointments from './pages/customer/CustomerAppointments';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import CustomCursor from './components/CustomCursor';
+import JoinWaitlist from './pages/JoinWaitlist';
 
 function App() {
   return (
@@ -42,6 +43,8 @@ function App() {
           <Route path="/business-register" element={<BusinessRegisterPage />} />
           <Route path="/register/business" element={<BusinessRegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/join-waitlist" element={<JoinWaitlist />} />
+          <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
           
           {/* Business routes */}
           <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

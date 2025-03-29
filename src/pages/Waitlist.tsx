@@ -11,7 +11,9 @@ import {
   Users, 
   Mail, 
   ListFilter,
-  Plus
+  Plus,
+  QrCode,
+  Share
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
@@ -41,6 +43,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { WaitlistCard } from "@/components/dashboard/WaitlistCard";
 import { Progress } from "@/components/ui/progress";
+import QRCode from "react-qr-code";
+import { Share as ShareAPI } from "@capacitor/share";
 
 interface WaitlistEntry {
   id: string;
@@ -91,7 +95,9 @@ const Waitlist = () => {
     max_capacity: 50,
     is_active: true
   });
-  
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -303,6 +309,32 @@ const Waitlist = () => {
         description: "Failed to create waitlist",
         variant: "destructive",
       });
+    }
+  };
+
+  const generateWaitlistQRCode = (waitlistId: string) => {
+    const url = `${window.location.origin}/join-waitlist/${waitlistId}`;
+    setShareUrl(url);
+    setIsQrDialogOpen(true);
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Join our waitlist',
+          text: 'Scan this QR code to join our waitlist',
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link Copied",
+          description: "Waitlist join link copied to clipboard",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
@@ -543,6 +575,42 @@ const Waitlist = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          
+          <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Waitlist QR Code</DialogTitle>
+                <DialogDescription>
+                  Share this QR code to let customers join your waitlist
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center justify-center gap-6 py-4">
+                <div className="p-3 bg-white rounded-lg">
+                  <QRCode
+                    value={shareUrl}
+                    size={200}
+                    level="H"
+                  />
+                </div>
+                <div className="text-sm text-center text-muted-foreground">
+                  <p>Or share this link:</p>
+                  <p className="font-mono text-xs mt-1 break-all">{shareUrl}</p>
+                </div>
+              </div>
+              <DialogFooter className="flex sm:justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsQrDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button onClick={handleShare}>
+                  <Share className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -610,6 +678,17 @@ const Waitlist = () => {
                 </div>
               </BlurCardContent>
             </BlurCard>
+          </div>
+
+          <div className="flex justify-end mb-4">
+            <Button 
+              onClick={() => selectedWaitlist ? generateWaitlistQRCode(selectedWaitlist) : null}
+              disabled={!selectedWaitlist}
+              variant="outline"
+            >
+              <QrCode size={16} className="mr-2" />
+              Generate QR Code
+            </Button>
           </div>
 
           <Tabs defaultValue="waitlist" className="mb-6">

@@ -29,8 +29,8 @@ const NotFound = () => {
         <p className="text-muted-foreground mb-8">
           The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
         </p>
-        <GlowButton asChild className="w-full">
-          <a href="/">
+        <GlowButton className="w-full">
+          <a href="/" className="flex items-center justify-center w-full">
             <Home size={16} className="mr-2" />
             Return to Dashboard
           </a>

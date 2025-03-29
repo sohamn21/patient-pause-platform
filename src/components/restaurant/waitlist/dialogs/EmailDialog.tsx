@@ -29,6 +29,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
   const [emailMessage, setEmailMessage] = useState("Your table is now ready. Please come to the host stand when you arrive.");
   const [isLoading, setIsLoading] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isLoadingEmail, setIsLoadingEmail] = useState(false);
   const { toast } = useToast();
 
   const customerName = entry.profiles ? 
@@ -40,14 +41,19 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
     const fetchUserEmail = async () => {
       if (!entry.user_id || !isOpen) return;
       
-      // First check if email is already in the entry
-      if (entry.profiles?.email) {
-        setUserEmail(entry.profiles.email);
-        console.log("Found email in profile:", entry.profiles.email);
-        return;
-      }
+      setIsLoadingEmail(true);
       
       try {
+        // First check if email is already in the entry
+        if (entry.profiles?.email) {
+          console.log("Found email in profile:", entry.profiles.email);
+          setUserEmail(entry.profiles.email);
+          setIsLoadingEmail(false);
+          return;
+        }
+        
+        console.log("Email not found in profile, fetching from auth...");
+        
         // Retrieve the email using the send-notification edge function
         const { data, error } = await supabase.functions.invoke("send-notification", {
           body: {
@@ -55,6 +61,8 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
             userId: entry.user_id
           }
         });
+        
+        console.log("Auth email lookup response:", data, error);
         
         if (error) throw error;
         if (data && data.email) {
@@ -67,10 +75,14 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       } catch (error) {
         console.error("Error fetching user email:", error);
         setUserEmail(null);
+      } finally {
+        setIsLoadingEmail(false);
       }
     };
 
-    fetchUserEmail();
+    if (isOpen) {
+      fetchUserEmail();
+    }
   }, [entry.user_id, entry.profiles?.email, isOpen]);
 
   const handleEmailCustomer = async () => {
@@ -151,12 +163,21 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         <DialogHeader>
           <DialogTitle>Email Customer</DialogTitle>
           <DialogDescription>
-            {userEmail 
-              ? `Send an email to ${customerName} at ${userEmail}.`
-              : "This customer does not have an email address on file."}
+            {isLoadingEmail ? (
+              "Loading customer email information..."
+            ) : userEmail ? (
+              `Send an email to ${customerName} at ${userEmail}.`
+            ) : (
+              "This customer does not have an email address on file."
+            )}
           </DialogDescription>
         </DialogHeader>
-        {userEmail ? (
+        
+        {isLoadingEmail ? (
+          <div className="py-8 flex justify-center items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : userEmail ? (
           <div className="space-y-4 py-4">
             <div>
               <Label htmlFor="email-subject">Subject</Label>
@@ -183,9 +204,10 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
             You cannot send an email to this customer as they don't have an email address on file.
           </div>
         )}
+        
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          {userEmail && (
+          {(userEmail && !isLoadingEmail) && (
             <Button 
               onClick={handleEmailCustomer} 
               disabled={isLoading || !userEmail}

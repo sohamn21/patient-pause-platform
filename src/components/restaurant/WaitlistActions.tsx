@@ -48,18 +48,9 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
   };
 
   const handleEmail = () => {
-    const email = entry.profiles?.email;
-    
-    if (email) {
-      console.log("Opening email dialog for:", email);
-      setIsEmailDialogOpen(true);
-    } else {
-      toast({
-        title: "No Email Address",
-        description: "This customer does not have an email address on file.",
-        variant: "destructive"
-      });
-    }
+    // Always open the email dialog - the dialog itself will handle missing emails
+    console.log("Opening email dialog for customer:", entry.id);
+    setIsEmailDialogOpen(true);
   };
 
   console.log("WaitlistActions - Entry:", {

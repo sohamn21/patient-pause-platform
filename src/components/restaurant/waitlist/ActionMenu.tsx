@@ -42,13 +42,14 @@ export function ActionMenu({
   const phoneNumber = entry.profiles?.phone_number || "";
   const email = entry.profiles?.email || "";
   
-  // Check if customer can be emailed - only require email to exist and not seated/cancelled
-  const canEmail = !!email && entry.status !== "seated" && entry.status !== "cancelled";
+  // Only disable email if customer is already seated/cancelled - treat lack of email in dropdown only
+  const canEmail = entry.status !== "seated" && entry.status !== "cancelled";
 
   console.log("ActionMenu - Entry:", {
     id: entry.id,
     customerName: entry.profiles?.first_name,
     email: email,
+    phoneNumber: phoneNumber,
     status: entry.status,
     canEmail: canEmail
   });
@@ -60,7 +61,7 @@ export function ActionMenu({
         variant="ghost"
         onClick={onEmail}
         disabled={!canEmail}
-        title={canEmail ? "Email customer" : "No email available or customer already seated/cancelled"}
+        title={canEmail ? "Email customer" : "Customer already seated/cancelled"}
       >
         <Mail size={16} className={!canEmail ? "text-muted-foreground" : ""} />
       </Button>

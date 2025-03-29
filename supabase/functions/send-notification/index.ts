@@ -47,6 +47,12 @@ serve(async (req) => {
         throw error;
       }
       
+      console.log("Retrieved user data:", { 
+        id: data.user?.id, 
+        email: data.user?.email, 
+        hasEmail: !!data.user?.email 
+      });
+      
       return new Response(
         JSON.stringify({ email: data.user?.email }),
         {
@@ -69,6 +75,14 @@ serve(async (req) => {
     }
 
     console.log(`Sending ${type} notification to user ${userId} with message: ${message}`);
+    console.log("Notification details:", {
+      type,
+      userId,
+      email: email || "none",
+      phoneNumber: phoneNumber || "none",
+      subject: subject || "none",
+      messagePreview: message.substring(0, 30) + "...",
+    });
 
     // Store notification in database
     const { data: notification, error: notificationError } = await supabase

@@ -16,6 +16,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
     
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -57,26 +58,56 @@ serve(async (req) => {
       // In a real implementation, call SMS API here
     }
 
-    // If there's an email and it's an email notification type, send the email
+    // If there's an email and it's an email notification type, send the email with Brevo
     if (email && subject && type === "email") {
       console.log(`Sending email to ${email} with subject: ${subject} and message: ${message}`);
       
-      // In a real implementation, you'd call an email service API here
-      // For example with a service like SendGrid, Mailgun, etc.
-      // This is a placeholder for email sending logic
-      
-      // For demonstration, we'll just log that we would send an email
-      console.log({
-        to: email,
-        subject: subject,
-        body: message,
-        timestamp: new Date().toISOString()
-      });
-      
-      // NOTE: To implement actual email sending, you would:
-      // 1. Add a secret for your email service API key (e.g., SENDGRID_API_KEY)
-      // 2. Install the relevant npm package
-      // 3. Use the API to send the email
+      try {
+        // Call Brevo API to send email
+        const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "api-key": brevoApiKey,
+          },
+          body: JSON.stringify({
+            sender: {
+              name: "Table Ready",
+              email: "no-reply@tableready.app", // Replace with your sender email
+            },
+            to: [
+              {
+                email: email,
+              }
+            ],
+            subject: subject,
+            htmlContent: `<html><body><p>${message.replace(/\n/g, '<br>')}</p></body></html>`,
+          }),
+        });
+
+        const emailResult = await brevoResponse.json();
+        console.log("Brevo API response:", emailResult);
+
+        if (!brevoResponse.ok) {
+          throw new Error(`Brevo API error: ${JSON.stringify(emailResult)}`);
+        }
+      } catch (emailError) {
+        console.error("Error sending email with Brevo:", emailError);
+        // We don't throw here since the notification was already created
+        // But we add the error to the response
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            notification, 
+            emailError: emailError.message 
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Update waitlist entry status if this is a waitlist notification

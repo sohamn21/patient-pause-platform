@@ -89,3 +89,41 @@ export const getUnreadNotificationsCount = async (userId: string) => {
   if (error) throw error;
   return count || 0;
 };
+
+// Real-time notification subscription
+export const subscribeToNotifications = (userId: string, callback: (notification: Notification) => void) => {
+  const channel = supabase
+    .channel('public:notifications')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      },
+      (payload) => {
+        const notification = payload.new as Notification;
+        callback(notification);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+// Send SMS notification
+export const sendSmsNotification = async (phoneNumber: string, message: string) => {
+  // This is a placeholder - in a real app, you'd integrate with Twilio, MessageBird, or another SMS service
+  console.log(`Sending SMS to ${phoneNumber}: ${message}`);
+  return { success: true, message: 'SMS notification sent' };
+};
+
+// Send email notification
+export const sendEmailNotification = async (email: string, subject: string, message: string) => {
+  // This is a placeholder - in a real app, you'd integrate with SendGrid, Mailchimp, or another email service
+  console.log(`Sending email to ${email} with subject ${subject}: ${message}`);
+  return { success: true, message: 'Email notification sent' };
+};

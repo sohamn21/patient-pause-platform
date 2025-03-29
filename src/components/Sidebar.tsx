@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   LayoutDashboard, 
   Clock, 
@@ -15,7 +17,9 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -31,7 +35,8 @@ export function Sidebar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const isMobile = window.innerWidth < 768;
   const [mobileView, setMobileView] = useState(isMobile);
 
@@ -39,7 +44,7 @@ export function Sidebar() {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setMobileView(mobile);
-      if (!mobile) setIsOpen(false);
+      if (!mobile) setIsMobileOpen(false);
     };
 
     window.addEventListener('resize', handleResize);
@@ -82,9 +87,13 @@ export function Sidebar() {
     setIsOpen(!isOpen);
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
   const handleNavigation = (path: string) => {
     navigate(path);
-    if (mobileView) setIsOpen(false);
+    if (mobileView) setIsMobileOpen(false);
   };
 
   if (mobileView) {
@@ -94,13 +103,13 @@ export function Sidebar() {
           variant="outline" 
           size="icon" 
           className="fixed top-4 left-4 z-50 md:hidden"
-          onClick={toggleSidebar}
+          onClick={toggleMobileSidebar}
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
         </Button>
 
-        {isOpen && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" onClick={toggleSidebar}>
+        {isMobileOpen && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" onClick={toggleMobileSidebar}>
             <div 
               className="fixed inset-y-0 left-0 w-64 bg-background border-r p-4 overflow-y-auto z-50" 
               onClick={(e) => e.stopPropagation()}
@@ -110,7 +119,7 @@ export function Sidebar() {
                   <div className="flex items-center">
                     <span className="text-xl font-bold">PatientPause</span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                  <Button variant="ghost" size="icon" onClick={toggleMobileSidebar}>
                     <X size={20} />
                   </Button>
                 </div>
@@ -162,25 +171,49 @@ export function Sidebar() {
   }
 
   return (
-    <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
-      <div className="flex flex-col flex-grow border-r bg-background pt-5 overflow-y-auto">
-        <div className="flex items-center justify-center h-16 flex-shrink-0 px-4">
-          <h1 className="text-xl font-bold">PatientPause</h1>
+    <div 
+      className={`hidden md:flex md:flex-col md:fixed md:inset-y-0 z-30 transition-all duration-300 ease-in-out ${
+        isOpen ? 'md:w-64' : 'md:w-20'
+      }`}
+    >
+      <div className="flex flex-col flex-grow border-r bg-background pt-5 overflow-y-auto relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute right-2 top-2"
+          onClick={toggleSidebar}
+        >
+          {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </Button>
+        
+        <div className={`flex items-center ${isOpen ? 'justify-center' : 'justify-center'} h-16 flex-shrink-0 px-4`}>
+          {isOpen ? (
+            <h1 className="text-xl font-bold">PatientPause</h1>
+          ) : (
+            <h1 className="text-xl font-bold">PP</h1>
+          )}
         </div>
         
-        <div className="px-4 mb-8 mt-6">
-          <div className="flex items-center gap-3">
+        <div className={`px-4 mb-8 mt-6 ${isOpen ? '' : 'flex justify-center'}`}>
+          {isOpen ? (
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback>{getInitials(fullName || 'User')}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{fullName || 'User'}</p>
+                <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                  {role === 'business' ? businessName : 'Customer'}
+                </p>
+              </div>
+            </div>
+          ) : (
             <Avatar>
               <AvatarImage src={avatarUrl} />
               <AvatarFallback>{getInitials(fullName || 'User')}</AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-medium">{fullName || 'User'}</p>
-              <p className="text-sm text-muted-foreground truncate max-w-[150px]">
-                {role === 'business' ? businessName : 'Customer'}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
         
         <div className="mt-1 flex-1 flex flex-col">
@@ -189,13 +222,18 @@ export function Sidebar() {
               <Button
                 key={item.label}
                 variant={location.pathname === item.path ? "secondary" : "ghost"}
-                className="w-full justify-start"
+                className={`w-full ${isOpen ? 'justify-start' : 'justify-center px-0'}`}
                 onClick={() => navigate(item.path)}
               >
                 {item.icon}
-                <span className="ml-3">{item.label}</span>
-                {item.badge && (
+                {isOpen && <span className="ml-3">{item.label}</span>}
+                {item.badge && isOpen && (
                   <Badge variant="destructive" className="ml-auto">
+                    {item.badge}
+                  </Badge>
+                )}
+                {item.badge && !isOpen && (
+                  <Badge variant="destructive" className="absolute top-0 right-0 -mt-1 -mr-1 w-4 h-4 flex items-center justify-center p-0 text-[10px]">
                     {item.badge}
                   </Badge>
                 )}
@@ -204,9 +242,13 @@ export function Sidebar() {
           </nav>
           
           <div className="px-3 mb-6">
-            <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+            <Button 
+              variant="ghost" 
+              className={`w-full ${isOpen ? 'justify-start' : 'justify-center px-0'}`} 
+              onClick={handleSignOut}
+            >
               <LogOut size={20} />
-              <span className="ml-3">Sign Out</span>
+              {isOpen && <span className="ml-3">Sign Out</span>}
             </Button>
           </div>
         </div>

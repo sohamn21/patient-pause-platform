@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -18,22 +18,42 @@ import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useState, useEffect } from "react";
 
-// Default to a dummy key for development environment
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_dummy-key-for-development";
+// Get the publishable key from environment
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isClerkLoaded, setIsClerkLoaded] = useState(false);
+  const [isEnvironmentReady, setIsEnvironmentReady] = useState(false);
 
   useEffect(() => {
     // Log for debugging
     console.log("Clerk publishable key status:", PUBLISHABLE_KEY ? "Found" : "Missing");
-    setIsClerkLoaded(true);
+    setIsEnvironmentReady(true);
   }, []);
 
-  if (!isClerkLoaded) {
+  // Show a loading state while checking environment variables
+  if (!isEnvironmentReady) {
     return <div className="min-h-screen flex items-center justify-center">Loading application...</div>;
+  }
+
+  // If no publishable key is available, show the landing page only
+  // This allows the app to function without Clerk in development
+  if (!PUBLISHABLE_KEY) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
   }
 
   return (
@@ -48,28 +68,35 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/register/business" element={<BusinessRegister />} />
-              <Route path="/register/user" element={<UserRegister />} />
+            <ClerkLoading>
+              <div className="min-h-screen flex items-center justify-center">
+                Loading authentication...
+              </div>
+            </ClerkLoading>
+            <ClerkLoaded>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/register/business" element={<BusinessRegister />} />
+                <Route path="/register/user" element={<UserRegister />} />
 
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/waitlist" element={<Waitlist />} />
-                <Route path="/appointments" element={<Index />} />
-                <Route path="/tables" element={<Index />} />
-                <Route path="/customers" element={<Index />} />
-                <Route path="/notifications" element={<Index />} />
-                <Route path="/reports" element={<Index />} />
-                <Route path="/locations" element={<Index />} />
-                <Route path="/settings" element={<Index />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/waitlist" element={<Waitlist />} />
+                  <Route path="/appointments" element={<Index />} />
+                  <Route path="/tables" element={<Index />} />
+                  <Route path="/customers" element={<Index />} />
+                  <Route path="/notifications" element={<Index />} />
+                  <Route path="/reports" element={<Index />} />
+                  <Route path="/locations" element={<Index />} />
+                  <Route path="/settings" element={<Index />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ClerkLoaded>
           </BrowserRouter>
         </TooltipProvider>
       </ClerkProvider>

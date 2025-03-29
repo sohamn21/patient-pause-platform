@@ -9,25 +9,18 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isSignedIn, isLoaded } = useUser();
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
-
-  useEffect(() => {
-    // Check if the auth check has completed to avoid flashing screens
-    if (isLoaded) {
-      setAuthCheckComplete(true);
-    }
-  }, [isLoaded]);
-
-  // Handle the loading state
+  
+  // Show a loading indicator while Clerk is initializing
   if (!isLoaded) {
     return <div className="min-h-screen flex items-center justify-center">Loading authentication...</div>;
   }
-
-  // This will only happen after isLoaded is true
+  
+  // If not signed in, redirect to the sign-in page
   if (!isSignedIn) {
     console.log("User not signed in, redirecting to signin");
     return <Navigate to="/signin" replace />;
   }
 
-  return children;
+  // User is authenticated, render the children
+  return <>{children}</>;
 };

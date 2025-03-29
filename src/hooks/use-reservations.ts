@@ -5,10 +5,16 @@ import { ReservationData } from '@/components/restaurant/TableReservation';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
-interface Reservation extends ReservationData {
+export interface Reservation {
   id: string;
-  createdAt: string;
   businessId: string;
+  tableId: string;
+  customerName: string;
+  date: Date | string;
+  time: string;
+  partySize: number;
+  notes?: string;
+  createdAt: string;
 }
 
 export function useReservations() {
@@ -28,8 +34,21 @@ export function useReservations() {
         .eq('business_id', user.id);
       
       if (error) throw error;
-      setReservations(data || []);
       
+      // Map database fields to our interface
+      const formattedReservations: Reservation[] = (data || []).map(item => ({
+        id: item.id,
+        businessId: item.business_id,
+        tableId: item.table_id,
+        customerName: item.customer_name,
+        date: new Date(item.date),
+        time: item.time,
+        partySize: item.party_size,
+        notes: item.notes,
+        createdAt: item.created_at
+      }));
+      
+      setReservations(formattedReservations);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -49,20 +68,38 @@ export function useReservations() {
       const { data: newReservation, error } = await supabase
         .from('reservations')
         .insert({
-          ...data,
-          business_id: user.id
+          business_id: user.id,
+          table_id: data.tableId,
+          customer_name: data.customerName,
+          date: data.date,
+          time: data.time,
+          party_size: data.partySize,
+          notes: data.notes
         })
         .select()
         .single();
       
       if (error) throw error;
 
-      setReservations((prev) => [...prev, newReservation]);
+      // Format the reservation data to match our interface
+      const formattedReservation: Reservation = {
+        id: newReservation.id,
+        businessId: newReservation.business_id,
+        tableId: newReservation.table_id,
+        customerName: newReservation.customer_name,
+        date: new Date(newReservation.date),
+        time: newReservation.time,
+        partySize: newReservation.party_size,
+        notes: newReservation.notes,
+        createdAt: newReservation.created_at
+      };
+      
+      setReservations((prev) => [...prev, formattedReservation]);
       
       // Update table status
       updateTableStatus(data.tableId, 'reserved');
       
-      return newReservation;
+      return formattedReservation;
     } catch (error) {
       console.error('Error creating reservation:', error);
       toast({

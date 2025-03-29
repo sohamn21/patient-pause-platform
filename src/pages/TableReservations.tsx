@@ -10,6 +10,20 @@ import { FloorItem } from "@/components/restaurant/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
+interface TableDbRow {
+  id: string;
+  business_id: string;
+  number: number;
+  capacity: number;
+  status: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  shape: string;
+  rotation: number;
+}
+
 const TableReservationsPage = () => {
   const { user } = useAuth();
   const { createReservation, updateTableStatus } = useReservations();
@@ -27,7 +41,22 @@ const TableReservationsPage = () => {
         
         if (error) throw error;
         
-        setTables(data || []);
+        // Convert database format to FloorItem format
+        const floorItems: FloorItem[] = (data as TableDbRow[]).map(table => ({
+          id: table.id,
+          type: 'table',
+          x: table.x,
+          y: table.y,
+          width: table.width,
+          height: table.height,
+          rotation: table.rotation,
+          capacity: table.capacity,
+          number: table.number,
+          shape: table.shape as 'rectangle' | 'circle',
+          status: table.status as 'available' | 'occupied' | 'reserved'
+        }));
+        
+        setTables(floorItems);
       } catch (error) {
         console.error('Error fetching tables:', error);
       }

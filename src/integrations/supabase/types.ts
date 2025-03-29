@@ -89,6 +89,117 @@ export type Database = {
         }
         Relationships: []
       }
+      reservations: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          customer_name: string
+          date: string
+          id: string
+          notes: string | null
+          party_size: number
+          table_id: string
+          time: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          customer_name: string
+          date: string
+          id?: string
+          notes?: string | null
+          party_size: number
+          table_id: string
+          time: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          customer_name?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          party_size?: number
+          table_id?: string
+          time?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          active: boolean | null
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          id: string
+          payment_method: Json | null
+          plan_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          payment_method?: Json | null
+          plan_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          payment_method?: Json | null
+          plan_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tables: {
+        Row: {
+          business_id: string
+          capacity: number
+          height: number
+          id: string
+          number: number
+          rotation: number | null
+          shape: string | null
+          status: string | null
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          business_id: string
+          capacity: number
+          height?: number
+          id?: string
+          number: number
+          rotation?: number | null
+          shape?: string | null
+          status?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          business_id?: string
+          capacity?: number
+          height?: number
+          id?: string
+          number?: number
+          rotation?: number | null
+          shape?: string | null
+          status?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
       waitlist_entries: {
         Row: {
           created_at: string | null

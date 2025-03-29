@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function ReservationsList() {
-  const { reservations, loading, fetchReservations, updateTableStatus } = useReservations();
+  const { reservations, loading, fetchReservations, cancelReservation, updateTableStatus } = useReservations();
 
   useEffect(() => {
     fetchReservations();
@@ -23,8 +23,8 @@ export function ReservationsList() {
     updateTableStatus(tableId, 'occupied');
   };
 
-  const handleCancelReservation = (tableId: string) => {
-    updateTableStatus(tableId, 'available');
+  const handleCancelReservation = async (reservationId: string) => {
+    await cancelReservation(reservationId);
   };
 
   const getUpcomingReservations = () => {
@@ -96,7 +96,7 @@ export function ReservationsList() {
                     <DropdownMenuItem onClick={() => handleSeatGuests(reservation.tableId)}>
                       Seat Guests
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCancelReservation(reservation.tableId)}>
+                    <DropdownMenuItem onClick={() => handleCancelReservation(reservation.id)}>
                       Cancel Reservation
                     </DropdownMenuItem>
                   </DropdownMenuContent>

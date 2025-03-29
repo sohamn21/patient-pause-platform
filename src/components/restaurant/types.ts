@@ -24,6 +24,7 @@ export interface FloorItem {
   status?: 'available' | 'occupied' | 'reserved';
   color?: string;
   label?: string;
+  reservationId?: string;
 }
 
 export interface FloorPlanSettings {
@@ -31,4 +32,16 @@ export interface FloorPlanSettings {
   showNumbers: boolean;
   showCapacity: boolean;
   snapToGrid: boolean;
+}
+
+export interface Reservation {
+  id: string;
+  tableId: string;
+  customerName: string;
+  date: Date;
+  time: string;
+  partySize: number;
+  notes?: string;
+  createdAt: string;
+  businessId: string;
 }

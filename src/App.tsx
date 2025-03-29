@@ -30,6 +30,7 @@ import CustomCursor from './components/CustomCursor';
 import JoinWaitlist from './pages/JoinWaitlist';
 import AdminPage from './pages/AdminPage';
 import AdminRoute from './components/AdminRoute';
+import TableReservationsPage from './pages/TableReservations';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
             <Route path="/waitlist" element={<WaitlistPage />} />
             <Route path="/appointments" element={<AppointmentsPage />} />
             <Route path="/tables" element={<TablesPage />} />
+            <Route path="/table-reservations" element={<TableReservationsPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/staff" element={<StaffManagementPage />} />
             <Route path="/reports" element={<ReportsPage />} />

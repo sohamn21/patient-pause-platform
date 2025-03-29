@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type SubscriptionPlan = {
@@ -11,17 +10,19 @@ export type SubscriptionPlan = {
   features: string[];
 };
 
+export type PaymentMethod = {
+  type: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+};
+
 export type SubscriptionStatus = {
   active: boolean;
   plan: SubscriptionPlan | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
-  payment_method: {
-    type: string;
-    last4: string;
-    exp_month: number;
-    exp_year: number;
-  } | null;
+  payment_method: PaymentMethod | null;
 };
 
 export const subscriptionPlans: SubscriptionPlan[] = [
@@ -83,12 +84,36 @@ export const getCurrentSubscription = async (): Promise<SubscriptionStatus> => {
     
     const plan = subscriptionPlans.find(p => p.id === data.plan_id);
     
+    let paymentMethod: PaymentMethod | null = null;
+    if (data.payment_method) {
+      try {
+        const parsedMethod = typeof data.payment_method === 'string' 
+          ? JSON.parse(data.payment_method) 
+          : data.payment_method;
+          
+        if (parsedMethod && 
+            typeof parsedMethod.type === 'string' && 
+            typeof parsedMethod.last4 === 'string' && 
+            typeof parsedMethod.exp_month === 'number' && 
+            typeof parsedMethod.exp_year === 'number') {
+          paymentMethod = {
+            type: parsedMethod.type,
+            last4: parsedMethod.last4,
+            exp_month: parsedMethod.exp_month,
+            exp_year: parsedMethod.exp_year
+          };
+        }
+      } catch (e) {
+        console.error('Error parsing payment method:', e);
+      }
+    }
+    
     return {
       active: data.active,
       plan: plan || null,
       current_period_end: data.current_period_end,
       cancel_at_period_end: data.cancel_at_period_end,
-      payment_method: data.payment_method
+      payment_method: paymentMethod
     };
   } catch (error) {
     console.error('Error fetching subscription:', error);

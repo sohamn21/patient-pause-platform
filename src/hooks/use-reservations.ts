@@ -65,13 +65,18 @@ export function useReservations() {
     if (!user) return null;
 
     try {
+      // Convert JavaScript Date object to ISO string for the database
+      const formattedDate = data.date instanceof Date 
+        ? data.date.toISOString().split('T')[0] 
+        : data.date;
+
       const { data: newReservation, error } = await supabase
         .from('reservations')
         .insert({
           business_id: user.id,
           table_id: data.tableId,
           customer_name: data.customerName,
-          date: data.date,
+          date: formattedDate,
           time: data.time,
           party_size: data.partySize,
           notes: data.notes

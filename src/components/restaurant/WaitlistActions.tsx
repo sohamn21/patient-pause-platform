@@ -24,12 +24,17 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
     setIsViewDialogOpen(true);
   };
 
+  // Use email as the default notification method
+  const handleNotify = () => {
+    setIsEmailDialogOpen(true);
+  };
+
   return (
     <>
       <ActionMenu 
         entry={entry}
         onViewDetails={handleViewDetails}
-        onNotify={() => setIsNotifyDialogOpen(true)}
+        onNotify={handleNotify}
         onCall={() => setIsCallDialogOpen(true)}
         onEmail={() => setIsEmailDialogOpen(true)}
         onStatusChange={onStatusChange}
@@ -59,6 +64,7 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         isOpen={isEmailDialogOpen}
         onOpenChange={setIsEmailDialogOpen}
         entry={entry}
+        refreshEntries={refreshEntries}
       />
     </>
   );

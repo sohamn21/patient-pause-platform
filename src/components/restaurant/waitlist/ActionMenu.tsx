@@ -47,10 +47,10 @@ export function ActionMenu({
       <Button 
         size="icon" 
         variant="ghost"
-        onClick={onNotify}
+        onClick={onEmail}  // Changed from onNotify to onEmail for the quick action button
         disabled={entry.status === "seated" || entry.status === "cancelled"}
       >
-        <SendHorizonal size={16} />
+        <Mail size={16} />  {/* Changed from SendHorizonal to Mail icon */}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -67,11 +67,18 @@ export function ActionMenu({
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem 
+            onClick={onEmail}  // Changed from onNotify to onEmail as default
+            disabled={entry.status === "seated" || entry.status === "cancelled"}
+          >
+            <Mail size={14} className="mr-2" />  {/* Changed from SendHorizonal to Mail icon */}
+            Email Customer
+          </DropdownMenuItem>
+          <DropdownMenuItem 
             onClick={onNotify}
             disabled={entry.status === "seated" || entry.status === "cancelled"}
           >
             <SendHorizonal size={14} className="mr-2" />
-            Send Notification
+            Send SMS Notification
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={onCall}
@@ -79,13 +86,6 @@ export function ActionMenu({
           >
             <Phone size={14} className="mr-2" />
             Call Customer
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={onEmail}
-            disabled={!email}
-          >
-            <Mail size={14} className="mr-2" />
-            Email Customer
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 

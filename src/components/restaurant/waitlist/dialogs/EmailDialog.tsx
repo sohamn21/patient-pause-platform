@@ -20,11 +20,12 @@ interface EmailDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   entry: WaitlistEntryType;
+  refreshEntries?: () => void;
 }
 
-export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
+export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: EmailDialogProps) {
+  const [emailSubject, setEmailSubject] = useState("Your Table is Ready");
+  const [emailMessage, setEmailMessage] = useState("Your table is now ready. Please come to the host stand when you arrive.");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -103,8 +104,11 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
         description: `Email sent to ${customerName} at ${email}`,
       });
 
-      setEmailSubject("");
-      setEmailMessage("");
+      // If refreshEntries function exists, call it to refresh the list
+      if (refreshEntries) {
+        refreshEntries();
+      }
+
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending email:", error);

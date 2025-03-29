@@ -1,266 +1,284 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
-import { CheckCircle2, Clock, Calendar, Bell, Building2, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { 
+  Clock,
+  CalendarClock,
+  Users,
+  MessageSquare,
+  ChevronRight,
+  CheckCircle,
+  Building,
+  Utensils,
+  Scissors,
+  Stethoscope
+} from 'lucide-react';
 
 const Landing = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const isSignedIn = !!user;
+
+  const features = [
+    {
+      title: 'Smart Waitlist',
+      description: 'Reduce wait times and improve customer experience with a digital waitlist system.',
+      icon: <Clock className="w-12 h-12 text-primary" />
+    },
+    {
+      title: 'Appointment Scheduling',
+      description: 'Allow customers to book appointments online and reduce no-shows with reminders.',
+      icon: <CalendarClock className="w-12 h-12 text-primary" />
+    },
+    {
+      title: 'Customer Management',
+      description: 'Keep track of customer preferences and history to provide personalized service.',
+      icon: <Users className="w-12 h-12 text-primary" />
+    },
+    {
+      title: 'Notifications',
+      description: 'Send automatic updates to customers via SMS, email, or in-app notifications.',
+      icon: <MessageSquare className="w-12 h-12 text-primary" />
+    }
+  ];
+
+  const businessTypes = [
+    {
+      type: 'Restaurants',
+      description: 'Manage table turnover, reduce wait times, and improve customer satisfaction.',
+      icon: <Utensils className="w-10 h-10 text-primary" />
+    },
+    {
+      type: 'Salons',
+      description: 'Schedule appointments, manage stylists, and keep clients informed about wait times.',
+      icon: <Scissors className="w-10 h-10 text-primary" />
+    },
+    {
+      type: 'Clinics',
+      description: 'Organize patient flow, reduce waiting room congestion, and improve patient experience.',
+      icon: <Stethoscope className="w-10 h-10 text-primary" />
+    },
+    {
+      type: 'Any Service Business',
+      description: 'Perfect for any business that deals with customer queues and appointments.',
+      icon: <Building className="w-10 h-10 text-primary" />
+    }
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
-      <header className="py-4 px-6 border-b border-border">
-        <div className="container mx-auto flex justify-between items-center">
+    <div className="flex flex-col min-h-screen">
+      {/* Navigation */}
+      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <Clock className="w-6 h-6 text-primary" />
-            <span className="text-xl font-bold">Waitify</span>
+            <Clock className="h-6 w-6" />
+            <span className="text-xl font-bold tracking-tight">PatientPause</span>
           </div>
+          
           <div className="flex items-center gap-4">
-            {isSignedIn ? (
-              <Button>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
+            <Button variant="link" onClick={() => navigate('/pricing')}>Pricing</Button>
+            <Button variant="link">Features</Button>
+            <Button variant="link">Contact</Button>
+            
+            {user ? (
+              <Button onClick={() => navigate('/dashboard')}>Dashboard</Button>
             ) : (
-              <>
-                <Button variant="ghost">
-                  <Link to="/signin">Sign In</Link>
-                </Button>
-                <Button>
-                  <Link to="/signup">Sign Up</Link>
-                </Button>
-              </>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => navigate('/signin')}>Login</Button>
+                <GlowButton onClick={() => navigate('/signup')}>Sign Up</GlowButton>
+              </div>
             )}
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Smart Waitlist & Scheduling for Your Business
+      <section className="container grid grid-cols-1 gap-6 py-12 md:grid-cols-2 md:py-24">
+        <div className="flex flex-col justify-center space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+              Stop the Wait,<br />Start the Experience
             </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Manage waitlists, appointments, and reservations in one place. Perfect for clinics, salons, and restaurants.
+            <p className="max-w-[600px] text-muted-foreground md:text-xl">
+              PatientPause helps businesses manage customer queues, reduce wait times, and improve service. Perfect for restaurants, salons, clinics, and more.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <GlowButton size="lg">
-                <Link to="/signup">Get Started</Link>
-              </GlowButton>
-              <Button variant="outline" size="lg">
-                <Link to="/signin">Log In</Link>
-              </Button>
-            </div>
           </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-8 rounded-xl">
-            <div className="aspect-video bg-background/40 backdrop-blur-sm rounded-lg flex items-center justify-center">
-              <Clock className="w-24 h-24 text-primary/50" />
+          <div className="flex flex-col gap-2 min-[400px]:flex-row">
+            <GlowButton className="mr-4" onClick={() => navigate('/signup')}>
+              Get Started
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </GlowButton>
+            <Button variant="outline" onClick={() => navigate('/pricing')}>View Pricing</Button>
+          </div>
+        </div>
+        <div className="flex items-center justify-center">
+          <div className="relative h-[350px] w-[350px] sm:h-[500px] sm:w-[500px]">
+            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-br from-primary to-purple-500 opacity-20 blur-[100px]" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Clock className="h-32 w-32 text-primary" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Features for Every Industry</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Tailored solutions for clinics, salons, and restaurants to streamline customer flow and enhance experiences.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Clock className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Real-time Waitlist</h3>
-              <p className="text-muted-foreground">
-                Let customers join your waitlist online or in-store and receive live updates on their position.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Calendar className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Appointment Scheduling</h3>
-              <p className="text-muted-foreground">
-                Allow customers to book appointments online, set your availability, and manage your calendar.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Bell className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Automated Notifications</h3>
-              <p className="text-muted-foreground">
-                Send SMS and email updates for waitlist position, appointments, and reservation confirmations.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Building2 className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Multi-location Support</h3>
-              <p className="text-muted-foreground">
-                Manage multiple locations with separate waitlists, staff, and settings from one dashboard.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Customer Profiles</h3>
-              <p className="text-muted-foreground">
-                Create customer profiles with visit history, preferences, and quick rebooking options.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="bg-background p-6 rounded-xl border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Industry-Specific Tools</h3>
-              <p className="text-muted-foreground">
-                Custom features for clinics, salons, and restaurants to match your specific business needs.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Industry Sections */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Tailored for Your Industry</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the solution that's right for your business type.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Clinic Section */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 p-8 rounded-xl border border-border">
-              <h3 className="text-2xl font-bold mb-4">For Clinics</h3>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                  <span>Service-based scheduling</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                  <span>Patient records management</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                  <span>HIPAA-compliant data handling</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                  <span>Practitioner preferences</span>
-                </li>
-              </ul>
-              <Button className="w-full bg-blue-500 hover:bg-blue-600">
-                <Link to="/register/business?type=clinic">Get Started</Link>
-              </Button>
-            </div>
-
-            {/* Salon Section */}
-            <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 p-8 rounded-xl border border-border">
-              <h3 className="text-2xl font-bold mb-4">For Salons</h3>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-                  <span>Stylist selection & scheduling</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-                  <span>Service duration management</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-                  <span>Client preferences & history</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-                  <span>Special event bookings</span>
-                </li>
-              </ul>
-              <Button className="w-full bg-purple-500 hover:bg-purple-600">
-                <Link to="/register/business?type=salon">Get Started</Link>
-              </Button>
-            </div>
-
-            {/* Restaurant Section */}
-            <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-8 rounded-xl border border-border">
-              <h3 className="text-2xl font-bold mb-4">For Restaurants</h3>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <span>Table management system</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <span>Group reservations & party bookings</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <span>Walk-in & reserved seating</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <span>POS & ordering integrations</span>
-                </li>
-              </ul>
-              <Button className="w-full bg-amber-500 hover:bg-amber-600">
-                <Link to="/register/business?type=restaurant">Get Started</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Streamline Your Business?</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Join thousands of businesses using Waitify to manage their waitlists, appointments, and reservations.
+      {/* Features Section */}
+      <section className="container py-12 md:py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Key Features</h2>
+          <p className="mt-4 text-muted-foreground md:text-xl">
+            Everything you need to manage customer flow and enhance service quality
           </p>
-          <GlowButton size="lg">
-            <Link to="/signup">Get Started for Free</Link>
-          </GlowButton>
+        </div>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => (
+            <div key={index} className="flex flex-col items-center text-center p-4 border rounded-lg hover:shadow-md transition-shadow">
+              <div className="mb-4">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+              <p className="text-muted-foreground">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Business Types Section */}
+      <section className="container py-12 md:py-24 bg-muted/50 rounded-lg my-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            Perfect For All Business Types
+          </h2>
+          <p className="mt-4 text-muted-foreground md:text-xl">
+            Our solution adapts to the unique needs of various service businesses
+          </p>
+        </div>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {businessTypes.map((business, index) => (
+            <div key={index} className="bg-background p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center mb-4">
+                {business.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-center">{business.type}</h3>
+              <p className="text-muted-foreground text-center">{business.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="container py-12 md:py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            What Our Customers Say
+          </h2>
+          <p className="mt-4 text-muted-foreground md:text-xl">
+            Join the thousands of businesses improving their customer experience
+          </p>
+        </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="bg-muted/30 p-6 rounded-lg border">
+            <p className="italic mb-4">"PatientPause transformed our waiting room experience. Our patients love the transparency and reduced wait times."</p>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="font-bold">AC</span>
+              </div>
+              <div>
+                <p className="font-medium">Dr. Arun Chopra</p>
+                <p className="text-sm text-muted-foreground">Sunrise Medical Clinic</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-muted/30 p-6 rounded-lg border">
+            <p className="italic mb-4">"Table turnover has improved by 30% since implementing PatientPause. Our customers are happier, and we're seeing more revenue."</p>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="font-bold">PS</span>
+              </div>
+              <div>
+                <p className="font-medium">Priya Sharma</p>
+                <p className="text-sm text-muted-foreground">Spice Garden Restaurant</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-muted/30 p-6 rounded-lg border">
+            <p className="italic mb-4">"Our stylists can now focus on their clients instead of managing the waiting area. The scheduling is seamless, and we've reduced no-shows."</p>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="font-bold">KM</span>
+              </div>
+              <div>
+                <p className="font-medium">Kavita Malhotra</p>
+                <p className="text-sm text-muted-foreground">Elegance Hair Studio</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container py-12 md:py-24">
+        <div className="bg-primary/10 rounded-lg p-8 md:p-12 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-bold tracking-tighter md:text-4xl mb-4">
+            Ready to Transform Your Customer Experience?
+          </h2>
+          <p className="text-muted-foreground mb-6 max-w-[600px]">
+            Start your 14-day free trial today. No credit card required.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <GlowButton onClick={() => navigate('/signup')}>
+              Get Started Free
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </GlowButton>
+            <Button variant="outline" onClick={() => navigate('/pricing')}>
+              View Pricing
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-border mt-auto">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+      <footer className="border-t">
+        <div className="container py-8 md:py-12">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">Product</h3>
+              <Button variant="link" className="justify-start h-auto p-0">Features</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Pricing</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Integrations</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Updates</Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">Resources</h3>
+              <Button variant="link" className="justify-start h-auto p-0">Documentation</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Guides</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Support</Button>
+              <Button variant="link" className="justify-start h-auto p-0">API</Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">Company</h3>
+              <Button variant="link" className="justify-start h-auto p-0">About</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Blog</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Careers</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Contact</Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">Legal</h3>
+              <Button variant="link" className="justify-start h-auto p-0">Privacy</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Terms</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Cookie Policy</Button>
+              <Button variant="link" className="justify-start h-auto p-0">Licenses</Button>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row justify-between items-center mt-12 pt-8 border-t">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Clock className="w-5 h-5 text-primary" />
-              <span className="font-bold">Waitify</span>
+              <Clock className="h-5 w-5" />
+              <span className="font-bold">PatientPause</span>
             </div>
-            <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Waitify. All rights reserved.
-            </div>
+            <p className="text-sm text-muted-foreground">
+              © 2023 PatientPause. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

@@ -1,189 +1,220 @@
 
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
+  LayoutDashboard, 
   Clock, 
   Calendar, 
+  Utensils, 
   Users, 
-  MessageSquare, 
-  BarChart3, 
-  Settings,
+  Bell, 
+  LineChart, 
+  MapPin, 
+  Settings, 
+  LogOut,
   Menu,
-  X,
-  ChevronsLeft,
-  ChevronsRight,
-  Home,
-  Table,
-  Building2
+  X
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-interface SidebarItemProps {
-  icon: React.ReactNode;
-  label: string;
-  to: string;
-  collapsed: boolean;
-}
-
-const SidebarItem = ({ icon, label, to, collapsed }: SidebarItemProps) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200',
-        {
-          'justify-center': collapsed,
-          'bg-accent text-accent-foreground': isActive,
-          'hover:bg-accent/50 hover:text-accent-foreground': !isActive,
-        }
-      )
-    }
-  >
-    <div className="text-muted-foreground">{icon}</div>
-    {!collapsed && <span>{label}</span>}
-  </NavLink>
-);
+import { getInitials } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = window.innerWidth < 768;
+  const [mobileView, setMobileView] = useState(isMobile);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setMobileView(mobile);
+      if (!mobile) setIsOpen(false);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const firstName = profile?.first_name || user?.user_metadata?.first_name || '';
+  const lastName = profile?.last_name || user?.user_metadata?.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  const businessName = profile?.business_name || user?.user_metadata?.businessName || '';
+  const avatarUrl = profile?.avatar_url || '';
+  const role = profile?.role || user?.user_metadata?.role || 'customer';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
-  const toggleMobileSidebar = () => {
-    setMobileOpen(!mobileOpen);
+  const menuItems = [
+    { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+    { label: 'Waitlist', icon: <Clock size={20} />, path: '/waitlist' },
+    { label: 'Appointments', icon: <Calendar size={20} />, path: '/appointments' },
+  ];
+
+  if (role === 'business') {
+    menuItems.push(
+      { label: 'Tables', icon: <Utensils size={20} />, path: '/tables' },
+      { label: 'Customers', icon: <Users size={20} />, path: '/customers' },
+      { label: 'Reports', icon: <LineChart size={20} />, path: '/reports' },
+      { label: 'Locations', icon: <MapPin size={20} />, path: '/locations' },
+    );
+  }
+
+  menuItems.push(
+    { label: 'Notifications', icon: <Bell size={20} />, path: '/notifications', badge: 2 },
+    { label: 'Settings', icon: <Settings size={20} />, path: '/settings' }
+  );
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
   };
 
-  return (
-    <>
-      {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed left-4 top-4 z-50 md:hidden"
-        onClick={toggleMobileSidebar}
-      >
-        {mobileOpen ? <X /> : <Menu />}
-      </Button>
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (mobileView) setIsOpen(false);
+  };
 
-      {/* Sidebar */}
-      <div
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar border-r border-border transition-all duration-300 ease-in-out md:relative md:translate-x-0',
-          {
-            'w-16': collapsed && !mobileOpen,
-            '-translate-x-full': !mobileOpen && !collapsed,
-            'translate-x-0': mobileOpen || !collapsed,
-            'md:w-16': collapsed && !mobileOpen,
-          }
+  // Sidebar rendered differently for mobile and desktop
+  if (mobileView) {
+    return (
+      <>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="fixed top-4 left-4 z-50 md:hidden"
+          onClick={toggleSidebar}
+        >
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </Button>
+
+        {isOpen && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" onClick={toggleSidebar}>
+            <div 
+              className="fixed inset-y-0 left-0 w-64 bg-background border-r p-4 overflow-y-auto z-50" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Sidebar content */}
+              <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center">
+                    <span className="text-xl font-bold">PatientPause</span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                    <X size={20} />
+                  </Button>
+                </div>
+
+                {/* User info */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Avatar>
+                      <AvatarImage src={avatarUrl} />
+                      <AvatarFallback>{getInitials(fullName || 'User')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{fullName || 'User'}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {role === 'business' ? businessName : 'Customer'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu items */}
+                <nav className="space-y-1 flex-1">
+                  {menuItems.map((item) => (
+                    <Button
+                      key={item.label}
+                      variant={location.pathname === item.path ? "secondary" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => handleNavigation(item.path)}
+                    >
+                      {item.icon}
+                      <span className="ml-2">{item.label}</span>
+                      {item.badge && (
+                        <Badge variant="destructive" className="ml-auto">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
+                </nav>
+
+                {/* Sign out button */}
+                <Button variant="ghost" className="mt-auto mb-4 w-full justify-start" onClick={handleSignOut}>
+                  <LogOut size={20} />
+                  <span className="ml-2">Sign Out</span>
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
-      >
-        {/* Logo and collapse button */}
-        <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">PP</span>
-              </div>
-              <span className="text-lg font-bold text-gradient">
-                PatientPause
-              </span>
-            </div>
-          )}
-          {collapsed && !mobileOpen && (
-            <div className="flex w-full justify-center">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">PP</span>
-              </div>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleCollapsed}
-            className="hidden md:flex"
-          >
-            {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
-          </Button>
+      </>
+    );
+  }
+
+  // Desktop sidebar
+  return (
+    <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
+      <div className="flex flex-col flex-grow border-r bg-background pt-5 overflow-y-auto">
+        <div className="flex items-center justify-center h-16 flex-shrink-0 px-4">
+          <h1 className="text-xl font-bold">PatientPause</h1>
         </div>
-
-        {/* Sidebar items */}
-        <div className="flex-1 overflow-auto scrollbar-none py-4 px-3">
-          <div className="space-y-1 mb-6">
-            <SidebarItem
-              icon={<Home size={20} />}
-              label="Dashboard"
-              to="/"
-              collapsed={collapsed && !mobileOpen}
-            />
-            <SidebarItem
-              icon={<Clock size={20} />}
-              label="Waitlist"
-              to="/waitlist"
-              collapsed={collapsed && !mobileOpen}
-            />
-            <SidebarItem
-              icon={<Calendar size={20} />}
-              label="Appointments"
-              to="/appointments"
-              collapsed={collapsed && !mobileOpen}
-            />
-            <SidebarItem
-              icon={<Table size={20} />}
-              label="Tables"
-              to="/tables"
-              collapsed={collapsed && !mobileOpen}
-            />
-            <SidebarItem
-              icon={<Users size={20} />}
-              label="Customers"
-              to="/customers"
-              collapsed={collapsed && !mobileOpen}
-            />
-            <SidebarItem
-              icon={<MessageSquare size={20} />}
-              label="Notifications"
-              to="/notifications"
-              collapsed={collapsed && !mobileOpen}
-            />
-          </div>
-
-          <div className="pt-4 pb-2">
-            {!collapsed && (
-              <p className="px-3 text-xs font-medium text-muted-foreground">
-                ANALYTICS
+        
+        {/* User info */}
+        <div className="px-4 mb-8 mt-6">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback>{getInitials(fullName || 'User')}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{fullName || 'User'}</p>
+              <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                {role === 'business' ? businessName : 'Customer'}
               </p>
-            )}
-            <div className="mt-2 space-y-1">
-              <SidebarItem
-                icon={<BarChart3 size={20} />}
-                label="Reports"
-                to="/reports"
-                collapsed={collapsed && !mobileOpen}
-              />
-              <SidebarItem
-                icon={<Building2 size={20} />}
-                label="Locations"
-                to="/locations"
-                collapsed={collapsed && !mobileOpen}
-              />
             </div>
           </div>
         </div>
-
-        {/* Bottom section */}
-        <div className="border-t border-border p-3">
-          <SidebarItem
-            icon={<Settings size={20} />}
-            label="Settings"
-            to="/settings"
-            collapsed={collapsed && !mobileOpen}
-          />
+        
+        <div className="mt-1 flex-1 flex flex-col">
+          <nav className="flex-1 px-3 pb-4 space-y-1">
+            {menuItems.map((item) => (
+              <Button
+                key={item.label}
+                variant={location.pathname === item.path ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => navigate(item.path)}
+              >
+                {item.icon}
+                <span className="ml-3">{item.label}</span>
+                {item.badge && (
+                  <Badge variant="destructive" className="ml-auto">
+                    {item.badge}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </nav>
+          
+          <div className="px-3 mb-6">
+            <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+              <LogOut size={20} />
+              <span className="ml-3">Sign Out</span>
+            </Button>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
+
+export default Sidebar;

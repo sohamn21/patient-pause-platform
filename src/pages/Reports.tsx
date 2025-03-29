@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,10 +8,14 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionService';
+import { DateRange } from 'react-day-picker';
 
 const ReportsPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [dateRange, setDateRange] = useState({ from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), to: new Date() });
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({ 
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
+    to: new Date() 
+  });
   const [waitlistFilter, setWaitlistFilter] = useState('all');
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
@@ -38,6 +43,16 @@ const ReportsPage = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Handler for date range changes that works with the DateRangePicker component
+  const handleDateRangeChange = (range: DateRange | { from: Date; to: Date } | undefined) => {
+    if (range?.from) {
+      setDateRange({
+        from: range.from,
+        to: range.to || new Date()
+      });
+    }
+  };
 
   const overviewStats = [
     { title: 'Total Customers', value: '1,248', icon: <Users className="h-4 w-4" /> },
@@ -114,7 +129,7 @@ const ReportsPage = () => {
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <DateRangePicker
             value={dateRange}
-            onChange={setDateRange}
+            onChange={handleDateRangeChange}
           />
           <Select value={waitlistFilter} onValueChange={setWaitlistFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">

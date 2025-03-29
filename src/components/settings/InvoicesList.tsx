@@ -13,9 +13,9 @@ interface Invoice {
   id: string;
   number: string;
   status: string;
-  amount_paid: number;
+  amount_due: number; // Changed from amount_paid to amount_due
   currency: string;
-  created: number;
+  created: string | number; // Support both string and number
   invoice_pdf: string;
   hosted_invoice_url: string;
 }
@@ -51,7 +51,7 @@ export const InvoicesList = () => {
       id: 'inv_mock1',
       number: 'INV-001',
       status: 'paid',
-      amount_paid: 1999,
+      amount_due: 1999, // Changed from amount_paid to amount_due
       currency: 'inr',
       created: Date.now() - 86400000 * 30, // 30 days ago
       invoice_pdf: '#',
@@ -61,7 +61,7 @@ export const InvoicesList = () => {
       id: 'inv_mock2',
       number: 'INV-002',
       status: 'paid',
-      amount_paid: 1999,
+      amount_due: 1999, // Changed from amount_paid to amount_due
       currency: 'inr',
       created: Date.now() - 86400000 * 60, // 60 days ago
       invoice_pdf: '#',
@@ -104,7 +104,7 @@ export const InvoicesList = () => {
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.number}</TableCell>
                   <TableCell>{format(new Date(invoice.created), "MMM d, yyyy")}</TableCell>
-                  <TableCell>{formatCurrency(invoice.amount_paid, invoice.currency)}</TableCell>
+                  <TableCell>{formatCurrency(invoice.amount_due, invoice.currency)}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       invoice.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' :

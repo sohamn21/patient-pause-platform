@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
 import { CheckCircle2, Clock, Calendar, Bell, Building2, Users } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '@/context/AuthContext';
 
 const Landing = () => {
-  const { isSignedIn } = useUser();
+  const { user } = useAuth();
+  const isSignedIn = !!user;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

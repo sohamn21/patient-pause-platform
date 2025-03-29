@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { useUser } from '@clerk/clerk-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users, Settings, Plus } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const Dashboard = () => {
-  const { user, isLoaded } = useUser();
-  const role = user?.unsafeMetadata?.role as string || 'customer';
-  const businessType = user?.unsafeMetadata?.businessType as string;
+  const { user, loading } = useAuth();
+  const role = user?.user_metadata?.role as string || 'customer';
+  const businessType = user?.user_metadata?.businessType as string;
   
-  if (!isLoaded) {
+  if (loading) {
     return <div className="h-screen flex items-center justify-center">Loading...</div>;
   }
   

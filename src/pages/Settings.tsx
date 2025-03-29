@@ -40,7 +40,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { BillingDetails } from "@/components/settings/BillingDetails";
+import { BillingHistory } from "@/components/settings/BillingHistory";
 
 const profileFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -88,9 +90,12 @@ const SettingsPage = () => {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  
+  const defaultTab = searchParams.get('tab') || 'profile';
   
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -339,7 +344,7 @@ const SettingsPage = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4 w-full sm:w-auto">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
@@ -698,38 +703,10 @@ const SettingsPage = () => {
                 </BlurCardContent>
               </BlurCard>
               
-              <BlurCard className="mt-6">
-                <BlurCardHeader>
-                  <BlurCardTitle>Billing & Subscription</BlurCardTitle>
-                </BlurCardHeader>
-                <BlurCardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-md">
-                      <div className="flex flex-col">
-                        <span className="font-medium">Current Plan: <span className="text-primary">Professional</span></span>
-                        <span className="text-sm text-muted-foreground">₹1,999/month, billed monthly</span>
-                      </div>
-                      <Button variant="outline" onClick={() => navigate("/pricing")}>Manage Subscription</Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-md">
-                      <div className="flex flex-col">
-                        <span className="font-medium">Payment Method</span>
-                        <span className="text-sm text-muted-foreground">Credit Card ending in 4242</span>
-                      </div>
-                      <Button variant="outline">Update Payment</Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-md">
-                      <div className="flex flex-col">
-                        <span className="font-medium">Billing History</span>
-                        <span className="text-sm text-muted-foreground">View past invoices and payment history</span>
-                      </div>
-                      <Button variant="outline">View Invoices</Button>
-                    </div>
-                  </div>
-                </BlurCardContent>
-              </BlurCard>
+              <div className="space-y-6 mt-6">
+                <BillingDetails />
+                <BillingHistory />
+              </div>
               
               <div className="flex justify-end mt-6">
                 <Button 

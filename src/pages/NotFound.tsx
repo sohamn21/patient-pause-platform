@@ -1,13 +1,14 @@
 
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BlurCard } from "@/components/ui/blur-card";
 import { GlowButton } from "@/components/ui/glow-button";
-import { Home, AlertTriangle } from "lucide-react";
+import { Home, AlertTriangle, ArrowLeft } from "lucide-react";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error(
@@ -15,6 +16,10 @@ const NotFound = () => {
       location.pathname
     );
   }, [location.pathname]);
+
+  const goBack = () => {
+    navigate(-1);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -25,16 +30,22 @@ const NotFound = () => {
           </div>
         </div>
         <h1 className="text-4xl font-bold mb-4 text-gradient">404</h1>
-        <p className="text-xl mb-8">Oops! Page not found</p>
-        <p className="text-muted-foreground mb-8">
-          The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+        <p className="text-xl mb-4">Oops! Page not found</p>
+        <p className="text-muted-foreground mb-6">
+          The page "{location.pathname}" might have been removed, had its name changed, or is temporarily unavailable.
         </p>
-        <GlowButton className="w-full">
-          <a href="/" className="flex items-center justify-center w-full">
-            <Home size={16} className="mr-2" />
-            Return to Dashboard
-          </a>
-        </GlowButton>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button variant="outline" onClick={goBack} className="mb-3 sm:mb-0">
+            <ArrowLeft size={16} className="mr-2" />
+            Go Back
+          </Button>
+          <GlowButton>
+            <a href="/" className="flex items-center justify-center w-full">
+              <Home size={16} className="mr-2" />
+              Return to Home
+            </a>
+          </GlowButton>
+        </div>
       </BlurCard>
     </div>
   );

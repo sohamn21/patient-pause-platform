@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
 import { WaitlistEntryType } from '@/components/restaurant/types';
@@ -136,11 +135,31 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
   
   if (error) throw error;
   
-  // Ensure the status field is properly typed
-  return data.map(entry => ({
-    ...entry,
-    status: entry.status as "waiting" | "notified" | "seated" | "cancelled"
-  }));
+  // Ensure the status field is properly typed and handle profiles correctly
+  return data.map(entry => {
+    // Create a properly shaped object that matches WaitlistEntryType
+    const typedEntry: WaitlistEntryType = {
+      id: entry.id,
+      waitlist_id: entry.waitlist_id,
+      user_id: entry.user_id,
+      position: entry.position,
+      status: entry.status as "waiting" | "notified" | "seated" | "cancelled",
+      estimated_wait_time: entry.estimated_wait_time,
+      notes: entry.notes,
+      created_at: entry.created_at,
+      updated_at: entry.updated_at,
+      // Handle profiles mapping correctly
+      profiles: entry.profiles ? {
+        username: entry.profiles.username,
+        first_name: entry.profiles.first_name,
+        last_name: entry.profiles.last_name,
+        phone_number: entry.profiles.phone_number,
+        email: entry.profiles.email
+      } : null
+    };
+    
+    return typedEntry;
+  });
 };
 
 export const getUserWaitlistEntries = async (userId: string) => {

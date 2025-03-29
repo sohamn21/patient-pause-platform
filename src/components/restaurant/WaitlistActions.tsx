@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,7 +168,20 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the send-notification edge function with email parameters
+      const { data, error } = await supabase.functions.invoke("send-notification", {
+        body: {
+          userId: entry.user_id,
+          email: email,
+          subject: emailSubject,
+          message: emailMessage,
+          waitlistId: entry.waitlist_id,
+          entryId: entry.id,
+          type: "email"
+        }
+      });
+
+      if (error) throw error;
 
       toast({
         title: "Email Sent",

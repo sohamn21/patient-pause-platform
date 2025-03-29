@@ -32,14 +32,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending notification to user ${userId} with message: ${message}`);
+    console.log(`Sending ${type} to user ${userId} with message: ${message}`);
 
     // Store notification in database
     const { data: notification, error: notificationError } = await supabase
       .from("notifications")
       .insert({
         user_id: userId,
-        title: type === "waitlist" ? "Waitlist Update" : "Notification",
+        title: type === "waitlist" ? "Waitlist Update" : (type === "email" ? subject : "Notification"),
         message: message,
         type: type,
       })
@@ -52,16 +52,31 @@ serve(async (req) => {
     }
 
     // If there's a phone number, we would send an SMS here
-    // For now, we'll just log it (you'd integrate with Twilio or a similar service)
-    if (phoneNumber) {
+    if (phoneNumber && type === "waitlist") {
       console.log(`Would send SMS to ${phoneNumber} with message: ${message}`);
       // In a real implementation, call SMS API here
     }
 
-    // If there's an email, we would send an email here
-    if (email && subject) {
-      console.log(`Would send email to ${email} with subject: ${subject} and message: ${message}`);
-      // In a real implementation, call Email API here
+    // If there's an email and it's an email notification type, send the email
+    if (email && subject && type === "email") {
+      console.log(`Sending email to ${email} with subject: ${subject} and message: ${message}`);
+      
+      // In a real implementation, you'd call an email service API here
+      // For example with a service like SendGrid, Mailgun, etc.
+      // This is a placeholder for email sending logic
+      
+      // For demonstration, we'll just log that we would send an email
+      console.log({
+        to: email,
+        subject: subject,
+        body: message,
+        timestamp: new Date().toISOString()
+      });
+      
+      // NOTE: To implement actual email sending, you would:
+      // 1. Add a secret for your email service API key (e.g., SENDGRID_API_KEY)
+      // 2. Install the relevant npm package
+      // 3. Use the API to send the email
     }
 
     // Update waitlist entry status if this is a waitlist notification

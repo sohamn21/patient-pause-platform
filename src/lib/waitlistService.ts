@@ -2,8 +2,25 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
 
+// Define types with required fields for creation operations
+type CreateWaitlistData = {
+  business_id: string;
+  name: string;
+  description?: string;
+  max_capacity?: number;
+  is_active?: boolean;
+};
+
+type CreateWaitlistEntryData = {
+  waitlist_id: string;
+  user_id: string;
+  notes?: string;
+  status?: 'waiting' | 'notified' | 'seated' | 'cancelled';
+  estimated_wait_time?: number;
+};
+
 // Waitlist management functions for business owners
-export const createWaitlist = async (waitlistData: Partial<Waitlist>) => {
+export const createWaitlist = async (waitlistData: CreateWaitlistData) => {
   const { data, error } = await supabase
     .from('waitlists')
     .insert(waitlistData)
@@ -48,7 +65,7 @@ export const getBusinessWaitlists = async (businessId: string) => {
 };
 
 // Waitlist entry functions for customers and businesses
-export const addToWaitlist = async (entryData: Partial<WaitlistEntry>) => {
+export const addToWaitlist = async (entryData: CreateWaitlistEntryData) => {
   // First, get the current highest position
   const { data: positionData, error: positionError } = await supabase
     .from('waitlist_entries')
@@ -67,7 +84,10 @@ export const addToWaitlist = async (entryData: Partial<WaitlistEntry>) => {
   // Add the entry with the next position
   const { data, error } = await supabase
     .from('waitlist_entries')
-    .insert({ ...entryData, position: nextPosition })
+    .insert({ 
+      ...entryData, 
+      position: nextPosition 
+    })
     .select()
     .single();
   

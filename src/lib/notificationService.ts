@@ -2,7 +2,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from '@/integrations/supabase/types.custom';
 
-export const createNotification = async (notificationData: Partial<Notification>) => {
+// Define type for notification creation that includes all required fields
+type CreateNotificationData = {
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  is_read?: boolean;
+};
+
+export const createNotification = async (notificationData: CreateNotificationData) => {
   const { data, error } = await supabase
     .from('notifications')
     .insert(notificationData)

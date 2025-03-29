@@ -1,0 +1,14 @@
+
+import React from "react";
+
+export function FloorPlanGrid() {
+  return (
+    <div 
+      className="absolute inset-0 w-full h-full"
+      style={{
+        backgroundImage: "linear-gradient(#55555510 1px, transparent 1px), linear-gradient(90deg, #55555510 1px, transparent 1px)",
+        backgroundSize: "20px 20px",
+      }}
+    />
+  );
+}

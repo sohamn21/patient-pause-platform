@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { TableManagement } from "@/components/restaurant/TableManagement";
+import { FloorPlan } from "@/components/restaurant/FloorPlan";
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/components/ui/blur-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocationSelector } from "@/components/dashboard/LocationSelector";
@@ -83,10 +84,8 @@ const TablesPage = () => {
             <BlurCardHeader>
               <BlurCardTitle>Restaurant Floor Plan</BlurCardTitle>
             </BlurCardHeader>
-            <BlurCardContent className="h-[400px] flex items-center justify-center">
-              <p className="text-muted-foreground">
-                Interactive floor plan layout will be displayed here to visualize your restaurant setup.
-              </p>
+            <BlurCardContent className="min-h-[600px]">
+              <FloorPlan locationName={selectedLocationData?.name} />
             </BlurCardContent>
           </BlurCard>
         </TabsContent>

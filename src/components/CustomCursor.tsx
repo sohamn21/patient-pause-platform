@@ -75,17 +75,17 @@ const CustomCursor = () => {
         className={`transition-transform duration-100 ${clicked ? 'scale-90' : linkHovered ? 'scale-150' : 'scale-100'}`}
         style={{
           position: 'absolute',
-          width: '24px',
-          height: '24px',
-          transform: `translate(${position.x - 12}px, ${position.y - 12}px)`,
+          width: '40px',
+          height: '40px',
+          transform: `translate(${position.x - 20}px, ${position.y - 20}px)`,
           borderRadius: '50%',
           transition: 'transform 0.15s ease-out',
           opacity: hidden ? 0 : 1,
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r={linkHovered ? "6" : "3"} fill="#82F9FF" fillOpacity="0.8"/>
-          <circle cx="12" cy="12" r="11.5" stroke="white" strokeOpacity={linkHovered ? "0.4" : "0.2"}/>
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r={linkHovered ? "10" : "6"} fill="#1EAEDB" fillOpacity="0.9"/>
+          <circle cx="20" cy="20" r="19" stroke="#FFFFFF" strokeWidth="2" strokeOpacity={linkHovered ? "0.7" : "0.5"}/>
         </svg>
       </div>
     </div>
@@ -93,4 +93,3 @@ const CustomCursor = () => {
 };
 
 export default CustomCursor;
-

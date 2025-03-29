@@ -16,6 +16,7 @@ import UserRegister from "./pages/auth/UserRegister";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import CustomCursor from "./components/CustomCursor";
 
 // Use only the environment variable that will work in Vite
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -45,6 +46,7 @@ const App = () => {
         signUpUrl="/signup"
       >
         <TooltipProvider>
+          <CustomCursor />
           <Toaster />
           <Sonner />
           <BrowserRouter>

@@ -60,12 +60,12 @@
     @apply scroll-smooth;
   }
 
-  /* Custom cursor - removed specific cursor styles */
+  /* Custom cursor styling */
   * {
     cursor: none !important;
   }
 
-  a, button, input, select, textarea, [role="button"] {
+  a, button, input, select, textarea, [role="button"], [role="link"] {
     cursor: none !important;
   }
 }

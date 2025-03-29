@@ -4,7 +4,7 @@ import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/comp
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, User, Building, ListChecks, Clock } from "lucide-react";
+import { ShieldCheck, User, Building, ListChecks, Clock, CreditCard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Table, 
@@ -36,11 +36,23 @@ interface Waitlist {
   created_at: string;
 }
 
+interface Subscription {
+  id: string;
+  user_id: string;
+  business_name: string;
+  plan: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  price: number;
+}
+
 const AdminPage = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [waitlists, setWaitlists] = useState<Waitlist[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
 
@@ -68,6 +80,23 @@ const AdminPage = () => {
       
       if (waitlistsError) throw waitlistsError;
       setWaitlists(waitlistsData);
+
+      // For now, we'll create mock subscription data
+      // In a real application, this would come from a subscriptions table
+      const mockSubscriptions: Subscription[] = usersData
+        .filter(user => user.role === 'business')
+        .map(user => ({
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          business_name: user.business_name || 'Unknown Business',
+          plan: Math.random() > 0.5 ? 'Premium' : 'Basic',
+          status: Math.random() > 0.3 ? 'active' : 'expired',
+          start_date: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+          end_date: new Date(Date.now() + Math.random() * 10000000000).toISOString(),
+          price: Math.random() > 0.5 ? 1999 : 999,
+        }));
+      
+      setSubscriptions(mockSubscriptions);
     } catch (error) {
       console.error('Error fetching admin data:', error);
       toast({
@@ -109,7 +138,7 @@ const AdminPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <BlurCard>
           <BlurCardContent className="flex items-center justify-between p-6">
             <div>
@@ -149,6 +178,20 @@ const AdminPage = () => {
             </div>
           </BlurCardContent>
         </BlurCard>
+        
+        <BlurCard>
+          <BlurCardContent className="flex items-center justify-between p-6">
+            <div>
+              <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+              <h3 className="text-2xl font-bold">
+                {subscriptions.filter(sub => sub.status === 'active').length}
+              </h3>
+            </div>
+            <div className="rounded-full bg-amber-500/10 p-2 text-amber-500">
+              <CreditCard size={18} />
+            </div>
+          </BlurCardContent>
+        </BlurCard>
       </div>
 
       <div className="flex justify-end mb-6">
@@ -167,6 +210,7 @@ const AdminPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="waitlists">Waitlists</TabsTrigger>
+          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
         
@@ -248,6 +292,57 @@ const AdminPage = () => {
                         <TableCell>
                           {new Date(waitlist.created_at).toLocaleDateString()}
                         </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </BlurCardContent>
+          </BlurCard>
+        </TabsContent>
+
+        <TabsContent value="subscriptions">
+          <BlurCard>
+            <BlurCardHeader>
+              <BlurCardTitle>Subscription Management</BlurCardTitle>
+            </BlurCardHeader>
+            <BlurCardContent>
+              {isLoading ? (
+                <div className="text-center py-4">Loading subscriptions...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Business</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Start Date</TableHead>
+                      <TableHead>End Date</TableHead>
+                      <TableHead>Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subscriptions.map((subscription) => (
+                      <TableRow key={subscription.id}>
+                        <TableCell>{subscription.business_name}</TableCell>
+                        <TableCell>
+                          <Badge variant={subscription.plan === 'Premium' ? "default" : "outline"}>
+                            {subscription.plan}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={subscription.status === 'active' ? "success" : "destructive"} 
+                            className={subscription.status === 'active' ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"}>
+                            {subscription.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(subscription.start_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(subscription.end_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>₹{subscription.price}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

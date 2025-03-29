@@ -18,6 +18,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const brevoApiKey = Deno.env.get("BREVO_API_KEY");
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase environment variables");
+    }
+    
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
@@ -62,7 +66,37 @@ serve(async (req) => {
     if (email && subject && type === "email") {
       console.log(`Sending email to ${email} with subject: ${subject} and message: ${message}`);
       
+      if (!brevoApiKey) {
+        console.warn("BREVO_API_KEY not set in environment variables");
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            notification, 
+            warning: "Email not sent: Brevo API key not configured" 
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
       try {
+        // Get user details to include in the email
+        const { data: userData, error: userError } = await supabase
+          .from("profiles")
+          .select("first_name, last_name")
+          .eq("id", userId)
+          .single();
+          
+        if (userError) {
+          console.warn("Could not fetch user profile:", userError);
+        }
+        
+        const userName = userData ? 
+          `${userData.first_name || ''} ${userData.last_name || ''}`.trim() : 
+          "Customer";
+          
         // Call Brevo API to send email
         const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
@@ -79,10 +113,22 @@ serve(async (req) => {
             to: [
               {
                 email: email,
+                name: userName
               }
             ],
             subject: subject,
-            htmlContent: `<html><body><p>${message.replace(/\n/g, '<br>')}</p></body></html>`,
+            htmlContent: `<html><body>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <h1 style="color: #333;">Table Ready</h1>
+                </div>
+                <div style="padding: 20px;">
+                  <p>Hello${userName ? ' ' + userName : ''},</p>
+                  <p>${message.replace(/\n/g, '<br>')}</p>
+                  <p style="margin-top: 30px;">Best regards,<br>Table Ready Team</p>
+                </div>
+              </div>
+            </body></html>`,
           }),
         });
 

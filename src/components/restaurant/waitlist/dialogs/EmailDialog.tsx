@@ -32,13 +32,39 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
     `${entry.profiles.first_name || ''} ${entry.profiles.last_name || ''}`.trim() : 
     "Customer";
   
-  const email = entry.profiles?.email || "";
+  // Get email from the profiles data if available, or fetch it
+  const [email, setEmail] = useState<string | null>(null);
+
+  // Fetch user email when dialog opens
+  const fetchUserEmail = async () => {
+    if (!entry.user_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('auth')
+        .select('email')
+        .eq('id', entry.user_id)
+        .single();
+      
+      if (error) throw error;
+      if (data && data.email) {
+        setEmail(data.email);
+      }
+    } catch (error) {
+      console.error("Error fetching user email:", error);
+    }
+  };
+
+  // Ensure we have the user's email
+  if (isOpen && !email && entry.user_id) {
+    fetchUserEmail();
+  }
 
   const handleEmailCustomer = async () => {
     if (!email) {
       toast({
         title: "No Email Address",
-        description: "This customer doesn't have an email address",
+        description: "Could not find an email address for this customer",
         variant: "destructive",
       });
       return;
@@ -82,7 +108,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
       console.error("Error sending email:", error);
       toast({
         title: "Error",
-        description: "Failed to send email",
+        description: "Failed to send email. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -96,7 +122,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
         <DialogHeader>
           <DialogTitle>Email Customer</DialogTitle>
           <DialogDescription>
-            Send an email to {customerName} at {email}.
+            Send an email to {customerName} {email ? `at ${email}` : ""}.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -122,7 +148,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleEmailCustomer} disabled={isLoading}>
+          <Button onClick={handleEmailCustomer} disabled={isLoading || !email}>
             {isLoading ? "Sending..." : "Send Email"}
           </Button>
         </DialogFooter>

@@ -1,115 +1,135 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BlurCard } from "@/components/ui/blur-card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Clock, Calendar, Store, User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-
-// Sample businesses with waitlists
-const sampleBusinesses = [
-  {
-    id: "1",
-    name: "Urban Bistro",
-    type: "Restaurant",
-    waitTime: "25-30 min",
-    distance: "0.8 miles",
-    capacity: "12/45"
-  },
-  {
-    id: "2",
-    name: "Cloud 9 Cafe",
-    type: "Cafe",
-    waitTime: "10-15 min",
-    distance: "1.2 miles",
-    capacity: "5/30"
-  },
-  {
-    id: "3",
-    name: "Studio 54 Hair Salon",
-    type: "Salon",
-    waitTime: "45-60 min",
-    distance: "0.5 miles",
-    capacity: "8/10"
-  },
-  {
-    id: "4",
-    name: "Peak Medical Clinic",
-    type: "Healthcare",
-    waitTime: "35-40 min",
-    distance: "2.1 miles",
-    capacity: "15/25"
-  }
-];
-
-// Sample user's active waitlists
-const sampleActiveWaitlists = [
-  {
-    id: "w1",
-    businessName: "Urban Bistro",
-    joinedAt: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    position: 3,
-    estimatedWaitTime: "10-15 min",
-    status: "waiting" as const
-  },
-  {
-    id: "w2",
-    businessName: "Peak Medical Clinic",
-    joinedAt: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
-    position: 2,
-    estimatedWaitTime: "5-10 min",
-    status: "notified" as const
-  }
-];
-
-// Sample past waitlist history
-const sampleHistoryWaitlists = [
-  {
-    id: "h1",
-    businessName: "Cloud 9 Cafe",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    waitTime: "12 min",
-    status: "seated" as const
-  },
-  {
-    id: "h2",
-    businessName: "Studio 54 Hair Salon",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-    waitTime: "32 min",
-    status: "seated" as const
-  },
-  {
-    id: "h3",
-    businessName: "Urban Bistro",
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days ago
-    waitTime: "8 min",
-    status: "cancelled" as const
-  }
-];
+import { useAuth } from '@/context/AuthContext';
+import { getAvailableWaitlists, getUserWaitlistEntries, addToWaitlist } from '@/lib/waitlistService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CustomerWaitlists = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [availableWaitlists, setAvailableWaitlists] = useState<any[]>([]);
+  const [activeWaitlists, setActiveWaitlists] = useState<any[]>([]);
+  const [pastWaitlists, setPastWaitlists] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
   
-  const filteredBusinesses = sampleBusinesses.filter(business => 
-    business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    business.type.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchWaitlists = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch available waitlists
+        const waitlistsData = await getAvailableWaitlists();
+        setAvailableWaitlists(waitlistsData || []);
+        
+        // Fetch user's waitlist entries
+        const userEntriesData = await getUserWaitlistEntries(user.id);
+        
+        // Split entries into active and past
+        const active = userEntriesData.filter(entry => 
+          entry.status === 'waiting' || entry.status === 'notified'
+        );
+        
+        const past = userEntriesData.filter(entry => 
+          entry.status === 'seated' || entry.status === 'cancelled'
+        );
+        
+        setActiveWaitlists(active);
+        setPastWaitlists(past);
+      } catch (error) {
+        console.error("Error fetching waitlists:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load waitlist data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchWaitlists();
+  }, [user, toast]);
+  
+  const filteredWaitlists = availableWaitlists.filter(waitlist => 
+    waitlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    waitlist.profiles?.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    waitlist.profiles?.business_type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleJoinWaitlist = (businessId: string, businessName: string) => {
-    toast({
-      title: "Joined Waitlist",
-      description: `You've been added to ${businessName}'s waitlist.`,
-    });
+  const handleJoinWaitlist = async (waitlistId: string, waitlistName: string) => {
+    if (!user) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to join the waitlist",
+      });
+      return;
+    }
+    
+    setIsJoining(true);
+    try {
+      const entryData = {
+        waitlist_id: waitlistId,
+        user_id: user.id,
+        notes: "Joined via customer dashboard"
+      };
+      
+      await addToWaitlist(entryData);
+      
+      // Refresh active waitlists
+      const userEntriesData = await getUserWaitlistEntries(user.id);
+      const active = userEntriesData.filter(entry => 
+        entry.status === 'waiting' || entry.status === 'notified'
+      );
+      setActiveWaitlists(active);
+      
+      toast({
+        title: "Success!",
+        description: `You've been added to ${waitlistName}'s waitlist.`,
+      });
+    } catch (error) {
+      console.error("Error joining waitlist:", error);
+      toast({
+        title: "Failed to Join",
+        description: "Could not join the waitlist. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsJoining(false);
+    }
   };
   
-  const handleLeaveWaitlist = (waitlistId: string, businessName: string) => {
-    toast({
-      title: "Left Waitlist",
-      description: `You've been removed from ${businessName}'s waitlist.`,
-      variant: "destructive",
-    });
+  const handleLeaveWaitlist = async (waitlistId: string, entryId: string, businessName: string) => {
+    try {
+      // Use the removeFromWaitlist function from waitlistService
+      await import('@/lib/waitlistService').then(module => {
+        return module.removeFromWaitlist(entryId);
+      });
+      
+      // Update the state by removing the entry
+      setActiveWaitlists(prev => prev.filter(entry => entry.id !== entryId));
+      
+      toast({
+        title: "Left Waitlist",
+        description: `You've been removed from ${businessName}'s waitlist.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error leaving waitlist:", error);
+      toast({
+        title: "Error",
+        description: "Failed to leave waitlist. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSwitchToDiscoverTab = () => {
@@ -118,6 +138,151 @@ const CustomerWaitlists = () => {
     if (tabsElement) {
       tabsElement.click();
     }
+  };
+
+  const renderActiveWaitlists = () => {
+    if (isLoading) {
+      return Array(2).fill(0).map((_, i) => (
+        <BlurCard key={i}>
+          <div className="p-6">
+            <Skeleton className="h-6 w-3/4 mb-4" />
+            <Skeleton className="h-4 w-1/2 mb-2" />
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </BlurCard>
+      ));
+    }
+    
+    if (activeWaitlists.length === 0) {
+      return (
+        <BlurCard className="p-6 text-center">
+          <h3 className="text-lg font-medium mb-2">No Active Waitlists</h3>
+          <p className="text-muted-foreground mb-4">
+            You are not currently on any waitlists.
+          </p>
+          <Button onClick={handleSwitchToDiscoverTab}>
+            Discover Waitlists
+          </Button>
+        </BlurCard>
+      );
+    }
+    
+    return activeWaitlists.map(entry => (
+      <BlurCard key={entry.id} className="overflow-hidden">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="font-semibold text-lg">{entry.waitlists?.name || 'Unnamed Waitlist'}</h3>
+              <p className="text-sm text-muted-foreground">
+                {entry.waitlists?.profiles?.business_name || 'Unknown Business'}
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+              entry.status === 'notified' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-blue-500/20 text-blue-500'
+            }`}>
+              {entry.status === 'notified' ? 'Ready Soon' : 'Waiting'}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Position: {entry.position}</span>
+            </div>
+            {entry.estimated_wait_time && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">Wait: ~{entry.estimated_wait_time} min</span>
+              </div>
+            )}
+          </div>
+          
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full"
+            onClick={() => handleLeaveWaitlist(
+              entry.waitlist_id, 
+              entry.id, 
+              entry.waitlists?.profiles?.business_name || 'this business'
+            )}
+          >
+            Leave Waitlist
+          </Button>
+        </div>
+      </BlurCard>
+    ));
+  };
+
+  const renderAvailableWaitlists = () => {
+    if (isLoading) {
+      return Array(3).fill(0).map((_, i) => (
+        <BlurCard key={i}>
+          <div className="p-6">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-4" />
+            <Skeleton className="h-4 w-full mb-4" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </BlurCard>
+      ));
+    }
+    
+    if (filteredWaitlists.length === 0) {
+      return (
+        <div className="col-span-full text-center py-6">
+          <Store className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Waitlists Found</h3>
+          <p className="text-muted-foreground">
+            We couldn't find any businesses matching your search.
+          </p>
+        </div>
+      );
+    }
+    
+    return filteredWaitlists.map(waitlist => {
+      // Check if user is already in this waitlist
+      const alreadyJoined = activeWaitlists.some(entry => entry.waitlist_id === waitlist.id);
+      
+      return (
+        <BlurCard key={waitlist.id} className="overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold">{waitlist.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {waitlist.profiles?.business_name || 'Unknown Business'} • 
+                  {waitlist.profiles?.business_type || 'Business'}
+                </p>
+              </div>
+              {waitlist.max_capacity && (
+                <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                  Capacity: {waitlist.max_capacity}
+                </div>
+              )}
+            </div>
+            
+            {waitlist.description && (
+              <p className="text-sm mb-4 text-muted-foreground line-clamp-2">
+                {waitlist.description}
+              </p>
+            )}
+            
+            <Button
+              className="w-full"
+              disabled={isJoining || alreadyJoined}
+              onClick={() => handleJoinWaitlist(waitlist.id, waitlist.name)}
+            >
+              {alreadyJoined ? 'Already Joined' : 'Join Waitlist'}
+            </Button>
+          </div>
+        </BlurCard>
+      );
+    });
   };
 
   return (
@@ -132,59 +297,9 @@ const CustomerWaitlists = () => {
         </TabsList>
         
         <TabsContent value="active">
-          {sampleActiveWaitlists.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sampleActiveWaitlists.map(waitlist => (
-                <BlurCard key={waitlist.id} className="overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">{waitlist.businessName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Joined {waitlist.joinedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        waitlist.status === 'notified' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-blue-500/20 text-blue-500'
-                      }`}>
-                        {waitlist.status === 'notified' ? 'Ready Soon' : 'Waiting'}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">Position: {waitlist.position}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">Wait: {waitlist.estimatedWaitTime}</span>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleLeaveWaitlist(waitlist.id, waitlist.businessName)}
-                    >
-                      Leave Waitlist
-                    </Button>
-                  </div>
-                </BlurCard>
-              ))}
-            </div>
-          ) : (
-            <BlurCard className="p-6 text-center">
-              <h3 className="text-lg font-medium mb-2">No Active Waitlists</h3>
-              <p className="text-muted-foreground mb-4">
-                You are not currently on any waitlists.
-              </p>
-              <Button onClick={handleSwitchToDiscoverTab}>
-                Discover Waitlists
-              </Button>
-            </BlurCard>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {renderActiveWaitlists()}
+          </div>
         </TabsContent>
         
         <TabsContent value="discover">
@@ -198,75 +313,62 @@ const CustomerWaitlists = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredBusinesses.length > 0 ? (
-              filteredBusinesses.map(business => (
-                <BlurCard key={business.id} className="overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold">{business.name}</h3>
-                        <p className="text-sm text-muted-foreground">{business.type} • {business.distance}</p>
-                      </div>
-                      <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                        {business.capacity}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Current wait: {business.waitTime}</span>
-                    </div>
-                    
-                    <Button
-                      className="w-full"
-                      onClick={() => handleJoinWaitlist(business.id, business.name)}
-                    >
-                      Join Waitlist
-                    </Button>
-                  </div>
-                </BlurCard>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-6">
-                <Store className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Waitlists Found</h3>
-                <p className="text-muted-foreground">
-                  We couldn't find any businesses matching your search.
-                </p>
-              </div>
-            )}
+            {renderAvailableWaitlists()}
           </div>
         </TabsContent>
         
         <TabsContent value="history">
           <BlurCard>
             <div className="divide-y divide-border">
-              {sampleHistoryWaitlists.map(waitlist => (
-                <div key={waitlist.id} className="p-4 hover:bg-accent/10">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{waitlist.businessName}</h3>
-                      <div className="flex items-center gap-4 mt-1">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
-                          {waitlist.date.toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          Wait time: {waitlist.waitTime}
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`px-3 py-1 rounded-full text-xs ${
-                      waitlist.status === 'seated' 
-                        ? 'bg-green-500/20 text-green-500' 
-                        : 'bg-red-500/20 text-red-500'
-                    }`}>
-                      {waitlist.status === 'seated' ? 'Seated' : 'Cancelled'}
+              {isLoading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="p-4">
+                    <Skeleton className="h-5 w-1/3 mb-2" />
+                    <div className="flex items-center gap-4 mt-1">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-24" />
                     </div>
                   </div>
+                ))
+              ) : pastWaitlists.length > 0 ? (
+                pastWaitlists.map(entry => (
+                  <div key={entry.id} className="p-4 hover:bg-accent/10">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">
+                          {entry.waitlists?.name || 'Unnamed Waitlist'} - 
+                          {entry.waitlists?.profiles?.business_name || 'Unknown Business'}
+                        </h3>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            {new Date(entry.created_at).toLocaleDateString()}
+                          </div>
+                          {entry.estimated_wait_time && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              Wait time: ~{entry.estimated_wait_time} min
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs ${
+                        entry.status === 'seated' 
+                          ? 'bg-green-500/20 text-green-500' 
+                          : 'bg-red-500/20 text-red-500'
+                      }`}>
+                        {entry.status === 'seated' ? 'Seated' : 'Cancelled'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground">
+                    You don't have any past waitlist entries yet.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </BlurCard>
         </TabsContent>

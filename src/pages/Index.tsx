@@ -4,32 +4,46 @@ import { WaitlistCard } from "@/components/dashboard/WaitlistCard";
 import { AppointmentsCard } from "@/components/dashboard/AppointmentsCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ActivityChart } from "@/components/dashboard/ActivityChart";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
-  // Mock data
-  const upcomingAppointments = [
-    {
-      id: "1",
-      time: "10:30 AM",
-      name: "John Smith",
-      service: "Haircut & Style",
-      status: "confirmed" as const,
-    },
-    {
-      id: "2",
-      time: "11:45 AM",
-      name: "Emily Johnson",
-      service: "Dental Checkup",
-      status: "confirmed" as const,
-    },
-    {
-      id: "3",
-      time: "1:15 PM",
-      name: "Michael Brown",
-      service: "Table for 4",
-      status: "pending" as const,
-    },
-  ];
+  const { user } = useAuth();
+  const [statsData, setStatsData] = useState({
+    customersToday: 0,
+    waitTime: "0 min",
+    appointments: 0,
+    turnoverRate: "0 min"
+  });
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        // Here you would fetch real data from your backend
+        // For now we'll set empty data
+        setStatsData({
+          customersToday: 0,
+          waitTime: "0 min",
+          appointments: 0,
+          turnoverRate: "0 min"
+        });
+        
+        setUpcomingAppointments([]);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user]);
 
   return (
     <div className="animate-fade-in">
@@ -43,40 +57,40 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard 
           title="Total Customers Today" 
-          value={36} 
+          value={statsData.customersToday} 
           icon={Users}
-          change={12}
+          change={0}
           changeText="vs yesterday"
           iconColor="bg-primary/10 text-primary"
         />
         <StatsCard 
           title="Current Wait Time" 
-          value="24 min" 
+          value={statsData.waitTime} 
           icon={Clock}
-          change={-8}
+          change={0}
           changeText="vs 1 hour ago"
           iconColor="bg-secondary/10 text-secondary"
         />
         <StatsCard 
           title="Today's Appointments" 
-          value={18} 
+          value={statsData.appointments} 
           icon={Calendar}
-          change={5}
+          change={0}
           changeText="vs yesterday"
           iconColor="bg-accent/10 text-accent"
         />
         <StatsCard 
           title="Table Turnover Rate" 
-          value="42 min" 
+          value={statsData.turnoverRate} 
           icon={BarChart3}
-          change={-4}
+          change={0}
           changeText="vs last week"
           iconColor="bg-muted text-muted-foreground"
         />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <WaitlistCard count={24} capacity={50} avgWaitTime={32} />
+        <WaitlistCard count={0} capacity={0} avgWaitTime={0} />
         <div className="lg:col-span-2">
           <AppointmentsCard upcomingAppointments={upcomingAppointments} />
         </div>

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
 import { WaitlistEntryType } from '@/components/restaurant/types';

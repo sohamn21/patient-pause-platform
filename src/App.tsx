@@ -17,8 +17,8 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
-// Use the environment variable directly
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+// Use only the environment variable that will work in Vite
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const queryClient = new QueryClient();
 
@@ -30,7 +30,7 @@ const App = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
           <p>Clerk Publishable Key is missing. Please add it to your environment variables.</p>
-          <p className="mt-2 text-sm">Use VITE_CLERK_PUBLISHABLE_KEY or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</p>
+          <p className="mt-2 text-sm">Use VITE_CLERK_PUBLISHABLE_KEY in your .env file</p>
         </div>
       </div>
     );

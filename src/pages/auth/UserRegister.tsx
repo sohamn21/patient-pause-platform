@@ -1,14 +1,13 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSignUp } from '@clerk/clerk-react';
 import { Clock } from 'lucide-react';
 import { BlurCard } from '@/components/ui/blur-card';
-import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserFormData {
   firstName: string;
@@ -33,64 +32,84 @@ const initialState: UserFormData = {
 };
 
 const UserRegister = () => {
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState<UserFormData>(initialState);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when field is edited
+    if (errors[name as keyof UserFormData]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, termsAccepted: checked }));
+    if (errors.termsAccepted) {
+      setErrors(prev => ({ ...prev, termsAccepted: undefined }));
+    }
   };
 
   const validateForm = () => {
+    const newErrors: Partial<Record<keyof UserFormData, string>> = {};
+    let isValid = true;
+
     if (!formData.firstName.trim()) {
-      toast({ title: "Error", description: "First name is required", variant: "destructive" });
-      return false;
+      newErrors.firstName = "First name is required";
+      isValid = false;
     }
+    
     if (!formData.lastName.trim()) {
-      toast({ title: "Error", description: "Last name is required", variant: "destructive" });
-      return false;
+      newErrors.lastName = "Last name is required";
+      isValid = false;
     }
+    
     if (!formData.email.trim()) {
-      toast({ title: "Error", description: "Email is required", variant: "destructive" });
-      return false;
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
     }
+    
     if (!formData.username.trim()) {
-      toast({ title: "Error", description: "Username is required", variant: "destructive" });
-      return false;
+      newErrors.username = "Username is required";
+      isValid = false;
     }
+    
     if (!formData.phoneNumber.trim()) {
-      toast({ title: "Error", description: "Phone number is required", variant: "destructive" });
-      return false;
+      newErrors.phoneNumber = "Phone number is required";
+      isValid = false;
     }
+    
     if (!formData.password) {
-      toast({ title: "Error", description: "Password is required", variant: "destructive" });
-      return false;
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
     }
+    
     if (formData.password !== formData.confirmPassword) {
-      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-      return false;
+      newErrors.confirmPassword = "Passwords do not match";
+      isValid = false;
     }
+    
     if (!formData.termsAccepted) {
-      toast({ title: "Error", description: "You must accept the terms and conditions", variant: "destructive" });
-      return false;
+      newErrors.termsAccepted = "You must accept the terms and conditions";
+      isValid = false;
     }
-    return true;
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isLoaded) {
-      return;
-    }
-
     if (!validateForm()) {
       return;
     }
@@ -98,45 +117,20 @@ const UserRegister = () => {
     try {
       setIsLoading(true);
       
-      // Create the user with all required fields
-      const result = await signUp.create({
+      await signUp({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        emailAddress: formData.email,
+        email: formData.email,
         password: formData.password,
         phoneNumber: formData.phoneNumber,
         username: formData.username,
+        role: 'customer'
       });
 
-      // Add user metadata
-      await signUp.update({
-        unsafeMetadata: {
-          role: 'customer',
-        },
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        toast({
-          title: "Account created!",
-          description: "Welcome to Waitify. Your account is ready.",
-        });
-        navigate('/dashboard');
-      } else {
-        // Handle verification step if needed
-        console.log('Sign up status:', result.status);
-        toast({
-          title: "Verification needed",
-          description: "Please check your email or phone for verification instructions.",
-        });
-      }
-    } catch (err: any) {
+      // The redirect is handled in the AuthContext
+    } catch (err) {
       console.error('Sign up error:', err);
-      toast({
-        title: "Error",
-        description: err.errors?.[0]?.message || "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
+      // Error is handled in the AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -170,8 +164,11 @@ const UserRegister = () => {
                   placeholder="John" 
                   value={formData.firstName}
                   onChange={handleChange}
-                  required
+                  className={errors.firstName ? "border-destructive" : ""}
                 />
+                {errors.firstName && (
+                  <p className="text-xs text-destructive">{errors.firstName}</p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -182,8 +179,11 @@ const UserRegister = () => {
                   placeholder="Doe" 
                   value={formData.lastName}
                   onChange={handleChange}
-                  required
+                  className={errors.lastName ? "border-destructive" : ""}
                 />
+                {errors.lastName && (
+                  <p className="text-xs text-destructive">{errors.lastName}</p>
+                )}
               </div>
             </div>
             
@@ -195,8 +195,11 @@ const UserRegister = () => {
                 placeholder="johndoe" 
                 value={formData.username}
                 onChange={handleChange}
-                required
+                className={errors.username ? "border-destructive" : ""}
               />
+              {errors.username && (
+                <p className="text-xs text-destructive">{errors.username}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -208,8 +211,11 @@ const UserRegister = () => {
                 placeholder="email@example.com" 
                 value={formData.email}
                 onChange={handleChange}
-                required
+                className={errors.email ? "border-destructive" : ""}
               />
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -221,8 +227,11 @@ const UserRegister = () => {
                 placeholder="+1 (555) 123-4567" 
                 value={formData.phoneNumber}
                 onChange={handleChange}
-                required
+                className={errors.phoneNumber ? "border-destructive" : ""}
               />
+              {errors.phoneNumber && (
+                <p className="text-xs text-destructive">{errors.phoneNumber}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -234,8 +243,11 @@ const UserRegister = () => {
                 placeholder="••••••••" 
                 value={formData.password}
                 onChange={handleChange}
-                required
+                className={errors.password ? "border-destructive" : ""}
               />
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -247,8 +259,11 @@ const UserRegister = () => {
                 placeholder="••••••••" 
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                required
+                className={errors.confirmPassword ? "border-destructive" : ""}
               />
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+              )}
             </div>
             
             <div className="flex items-center space-x-2 mt-4">
@@ -259,7 +274,9 @@ const UserRegister = () => {
               />
               <label
                 htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                  errors.termsAccepted ? "text-destructive" : ""
+                }`}
               >
                 I agree to the{" "}
                 <Link to="/terms" className="text-primary hover:underline">
@@ -267,6 +284,9 @@ const UserRegister = () => {
                 </Link>
               </label>
             </div>
+            {errors.termsAccepted && (
+              <p className="text-xs text-destructive -mt-2">{errors.termsAccepted}</p>
+            )}
             
             <Button 
               type="submit" 

@@ -1,59 +1,28 @@
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSignIn } from '@clerk/clerk-react';
 import { Clock } from 'lucide-react';
 import { BlurCard } from '@/components/ui/blur-card';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const SignIn = () => {
-  const { isLoaded, signIn, setActive } = useSignIn();
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isLoaded) {
-      return;
-    }
-
     try {
       setIsLoading(true);
-      
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        toast({
-          title: "Welcome back!",
-          description: "You've been successfully logged in.",
-        });
-        navigate('/dashboard');
-      } else {
-        console.error('Sign in failed', result);
-        toast({
-          title: "Sign in failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (err: any) {
+      await signIn(email, password);
+    } catch (err) {
       console.error('Sign in error:', err);
-      toast({
-        title: "Error",
-        description: err.errors?.[0]?.message || "Failed to sign in. Please try again.",
-        variant: "destructive",
-      });
+      // Error is handled in the AuthContext
     } finally {
       setIsLoading(false);
     }

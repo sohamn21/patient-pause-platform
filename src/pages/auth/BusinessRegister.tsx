@@ -1,13 +1,11 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSignUp } from '@clerk/clerk-react';
 import { Clock, ChevronLeft } from 'lucide-react';
 import { BlurCard } from '@/components/ui/blur-card';
-import { useToast } from '@/hooks/use-toast';
 import { 
   Select, 
   SelectContent, 
@@ -16,6 +14,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/context/AuthContext';
 
 interface BusinessFormData {
   firstName: string;
@@ -44,16 +43,15 @@ const initialState: BusinessFormData = {
 };
 
 const BusinessRegister = () => {
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState<BusinessFormData>(initialState);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [errors, setErrors] = useState<Partial<Record<keyof BusinessFormData, string>>>({});
   const location = useLocation();
   
   // Get business type from URL query parameters
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const type = params.get('type');
     if (type) {
@@ -64,62 +62,96 @@ const BusinessRegister = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when field is edited
+    if (errors[name as keyof BusinessFormData]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, termsAccepted: checked }));
+    if (errors.termsAccepted) {
+      setErrors(prev => ({ ...prev, termsAccepted: undefined }));
+    }
   };
 
   const handleSelectChange = (value: string) => {
     setFormData(prev => ({ ...prev, businessType: value }));
+    if (errors.businessType) {
+      setErrors(prev => ({ ...prev, businessType: undefined }));
+    }
   };
 
   const validateStep1 = () => {
+    const newErrors: Partial<Record<keyof BusinessFormData, string>> = {};
+    let isValid = true;
+
     if (!formData.firstName.trim()) {
-      toast({ title: "Error", description: "First name is required", variant: "destructive" });
-      return false;
+      newErrors.firstName = "First name is required";
+      isValid = false;
     }
+    
     if (!formData.lastName.trim()) {
-      toast({ title: "Error", description: "Last name is required", variant: "destructive" });
-      return false;
+      newErrors.lastName = "Last name is required";
+      isValid = false;
     }
+    
     if (!formData.email.trim()) {
-      toast({ title: "Error", description: "Email is required", variant: "destructive" });
-      return false;
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
     }
+    
     if (!formData.username.trim()) {
-      toast({ title: "Error", description: "Username is required", variant: "destructive" });
-      return false;
+      newErrors.username = "Username is required";
+      isValid = false;
     }
+    
     if (!formData.phoneNumber.trim()) {
-      toast({ title: "Error", description: "Phone number is required", variant: "destructive" });
-      return false;
+      newErrors.phoneNumber = "Phone number is required";
+      isValid = false;
     }
+    
     if (!formData.password) {
-      toast({ title: "Error", description: "Password is required", variant: "destructive" });
-      return false;
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
     }
+    
     if (formData.password !== formData.confirmPassword) {
-      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-      return false;
+      newErrors.confirmPassword = "Passwords do not match";
+      isValid = false;
     }
-    return true;
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const validateStep2 = () => {
+    const newErrors: Partial<Record<keyof BusinessFormData, string>> = {};
+    let isValid = true;
+
     if (!formData.businessName.trim()) {
-      toast({ title: "Error", description: "Business name is required", variant: "destructive" });
-      return false;
+      newErrors.businessName = "Business name is required";
+      isValid = false;
     }
+    
     if (!formData.businessType) {
-      toast({ title: "Error", description: "Business type is required", variant: "destructive" });
-      return false;
+      newErrors.businessType = "Business type is required";
+      isValid = false;
     }
+    
     if (!formData.termsAccepted) {
-      toast({ title: "Error", description: "You must accept the terms and conditions", variant: "destructive" });
-      return false;
+      newErrors.termsAccepted = "You must accept the terms and conditions";
+      isValid = false;
     }
-    return true;
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const nextStep = () => {
@@ -137,10 +169,6 @@ const BusinessRegister = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isLoaded) {
-      return;
-    }
-
     if (!validateStep2()) {
       return;
     }
@@ -148,47 +176,22 @@ const BusinessRegister = () => {
     try {
       setIsLoading(true);
       
-      // Create the user with all required fields
-      const result = await signUp.create({
+      await signUp({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        emailAddress: formData.email,
+        email: formData.email,
         password: formData.password,
         phoneNumber: formData.phoneNumber,
         username: formData.username,
+        role: 'business',
+        businessName: formData.businessName,
+        businessType: formData.businessType
       });
 
-      // Add business metadata
-      await signUp.update({
-        unsafeMetadata: {
-          role: 'business',
-          businessName: formData.businessName,
-          businessType: formData.businessType,
-        },
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        toast({
-          title: "Account created!",
-          description: "Welcome to Waitify. Your business account is ready.",
-        });
-        navigate('/dashboard');
-      } else {
-        // Handle verification step if needed
-        console.log('Sign up status:', result.status);
-        toast({
-          title: "Verification needed",
-          description: "Please check your email or phone for verification instructions.",
-        });
-      }
-    } catch (err: any) {
+      // The redirect is handled in the AuthContext
+    } catch (err) {
       console.error('Sign up error:', err);
-      toast({
-        title: "Error",
-        description: err.errors?.[0]?.message || "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
+      // Error is handled in the AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -224,8 +227,11 @@ const BusinessRegister = () => {
                       placeholder="John" 
                       value={formData.firstName}
                       onChange={handleChange}
-                      required
+                      className={errors.firstName ? "border-destructive" : ""}
                     />
+                    {errors.firstName && (
+                      <p className="text-xs text-destructive">{errors.firstName}</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -236,8 +242,11 @@ const BusinessRegister = () => {
                       placeholder="Doe" 
                       value={formData.lastName}
                       onChange={handleChange}
-                      required
+                      className={errors.lastName ? "border-destructive" : ""}
                     />
+                    {errors.lastName && (
+                      <p className="text-xs text-destructive">{errors.lastName}</p>
+                    )}
                   </div>
                 </div>
                 
@@ -249,8 +258,11 @@ const BusinessRegister = () => {
                     placeholder="johndoe" 
                     value={formData.username}
                     onChange={handleChange}
-                    required
+                    className={errors.username ? "border-destructive" : ""}
                   />
+                  {errors.username && (
+                    <p className="text-xs text-destructive">{errors.username}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -262,8 +274,11 @@ const BusinessRegister = () => {
                     placeholder="email@example.com" 
                     value={formData.email}
                     onChange={handleChange}
-                    required
+                    className={errors.email ? "border-destructive" : ""}
                   />
+                  {errors.email && (
+                    <p className="text-xs text-destructive">{errors.email}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -275,8 +290,11 @@ const BusinessRegister = () => {
                     placeholder="+1 (555) 123-4567" 
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    required
+                    className={errors.phoneNumber ? "border-destructive" : ""}
                   />
+                  {errors.phoneNumber && (
+                    <p className="text-xs text-destructive">{errors.phoneNumber}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -288,8 +306,11 @@ const BusinessRegister = () => {
                     placeholder="••••••••" 
                     value={formData.password}
                     onChange={handleChange}
-                    required
+                    className={errors.password ? "border-destructive" : ""}
                   />
+                  {errors.password && (
+                    <p className="text-xs text-destructive">{errors.password}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -301,8 +322,11 @@ const BusinessRegister = () => {
                     placeholder="••••••••" 
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    required
+                    className={errors.confirmPassword ? "border-destructive" : ""}
                   />
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+                  )}
                 </div>
                 
                 <Button 
@@ -323,8 +347,11 @@ const BusinessRegister = () => {
                     placeholder="Your Business Name" 
                     value={formData.businessName}
                     onChange={handleChange}
-                    required
+                    className={errors.businessName ? "border-destructive" : ""}
                   />
+                  {errors.businessName && (
+                    <p className="text-xs text-destructive">{errors.businessName}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -333,7 +360,7 @@ const BusinessRegister = () => {
                     value={formData.businessType}
                     onValueChange={handleSelectChange}
                   >
-                    <SelectTrigger id="businessType">
+                    <SelectTrigger id="businessType" className={errors.businessType ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select your business type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -343,6 +370,9 @@ const BusinessRegister = () => {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.businessType && (
+                    <p className="text-xs text-destructive">{errors.businessType}</p>
+                  )}
                 </div>
                 
                 <div className="flex items-center space-x-2 mt-4">
@@ -353,7 +383,9 @@ const BusinessRegister = () => {
                   />
                   <label
                     htmlFor="terms"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                      errors.termsAccepted ? "text-destructive" : ""
+                    }`}
                   >
                     I agree to the{" "}
                     <Link to="/terms" className="text-primary hover:underline">
@@ -361,6 +393,9 @@ const BusinessRegister = () => {
                     </Link>
                   </label>
                 </div>
+                {errors.termsAccepted && (
+                  <p className="text-xs text-destructive">{errors.termsAccepted}</p>
+                )}
                 
                 <div className="flex space-x-3 mt-6">
                   <Button 

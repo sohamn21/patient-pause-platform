@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
+import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -18,70 +18,42 @@ import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CustomCursor from "./components/CustomCursor";
 
-// Use only the environment variable that will work in Vite
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
 const queryClient = new QueryClient();
 
 const App = () => {
-  // If no publishable key is available, show a warning
-  if (!PUBLISHABLE_KEY) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-red-100 text-red-800 p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
-          <p>Clerk Publishable Key is missing. Please add it to your environment variables.</p>
-          <p className="mt-2 text-sm">Use VITE_CLERK_PUBLISHABLE_KEY in your .env file</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
-      <ClerkProvider 
-        publishableKey={PUBLISHABLE_KEY}
-        clerkJSVersion="5.56.0-snapshot.v20250312225817"
-        signInUrl="/signin"
-        signUpUrl="/signup"
-      >
-        <TooltipProvider>
-          <CustomCursor />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ClerkLoading>
-              <div className="min-h-screen flex items-center justify-center">
-                Loading authentication...
-              </div>
-            </ClerkLoading>
-            <ClerkLoaded>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Landing />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/register/business" element={<BusinessRegister />} />
-                <Route path="/register/user" element={<UserRegister />} />
+      <TooltipProvider>
+        <CustomCursor />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/register/business" element={<BusinessRegister />} />
+              <Route path="/register/user" element={<UserRegister />} />
 
-                {/* Protected routes */}
-                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/waitlist" element={<Waitlist />} />
-                  <Route path="/appointments" element={<Index />} />
-                  <Route path="/tables" element={<Index />} />
-                  <Route path="/customers" element={<Index />} />
-                  <Route path="/notifications" element={<Index />} />
-                  <Route path="/reports" element={<Index />} />
-                  <Route path="/locations" element={<Index />} />
-                  <Route path="/settings" element={<Index />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </ClerkLoaded>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ClerkProvider>
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/waitlist" element={<Waitlist />} />
+                <Route path="/appointments" element={<Index />} />
+                <Route path="/tables" element={<Index />} />
+                <Route path="/customers" element={<Index />} />
+                <Route path="/notifications" element={<Index />} />
+                <Route path="/reports" element={<Index />} />
+                <Route path="/locations" element={<Index />} />
+                <Route path="/settings" element={<Index />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

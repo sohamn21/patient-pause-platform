@@ -6,8 +6,14 @@ const CustomCursor = () => {
   const [clicked, setClicked] = useState(false);
   const [linkHovered, setLinkHovered] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Show cursor after a short delay (helps with initial positioning)
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 500);
+
     const addEventListeners = () => {
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseenter', onMouseEnter);
@@ -58,8 +64,16 @@ const CustomCursor = () => {
     };
 
     addEventListeners();
-    return () => removeEventListeners();
+    return () => {
+      removeEventListeners();
+      clearTimeout(timer);
+    };
   }, []);
+
+  // If on touch device, don't render the custom cursor
+  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
+    return null;
+  }
 
   return (
     <div
@@ -69,6 +83,8 @@ const CustomCursor = () => {
         left: 0,
         zIndex: 9999,
         pointerEvents: 'none',
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.3s ease',
       }}
     >
       <div

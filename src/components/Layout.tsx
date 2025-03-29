@@ -10,7 +10,7 @@ const Layout = () => {
   return (
     <div className="flex h-screen overflow-hidden">
       <CustomCursor />
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex w-full">
           <AppSidebar />
           <SidebarRail />
@@ -18,7 +18,9 @@ const Layout = () => {
             <div className="absolute top-4 left-4 z-50 md:hidden">
               <SidebarTrigger />
             </div>
-            <Outlet />
+            <div className="container mx-auto max-w-6xl">
+              <Outlet />
+            </div>
           </SidebarInset>
         </div>
       </SidebarProvider>

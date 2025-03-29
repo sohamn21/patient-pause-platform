@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from '@/components/ui/blur-card';
+import { BlurCard, BlurCardContent } from '@/components/ui/blur-card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Clock, Calendar } from 'lucide-react';
+import { User } from 'lucide-react';
 import AdminRoleUpdater from '@/components/AdminRoleUpdater';
 
 const CustomerDashboard = () => {
@@ -45,49 +45,11 @@ const CustomerDashboard = () => {
         </div>
         
         <div className="md:col-span-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <BlurCard>
-              <BlurCardHeader>
-                <BlurCardTitle>Active Waitlists</BlurCardTitle>
-              </BlurCardHeader>
-              <BlurCardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="rounded-full bg-primary/10 p-2 mr-4">
-                    <Clock className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-muted-foreground text-sm">Current waitlists</p>
-                  </div>
-                </div>
-              </BlurCardContent>
-            </BlurCard>
-            
-            <BlurCard>
-              <BlurCardHeader>
-                <BlurCardTitle>Appointments</BlurCardTitle>
-              </BlurCardHeader>
-              <BlurCardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="rounded-full bg-primary/10 p-2 mr-4">
-                    <Calendar className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-muted-foreground text-sm">Upcoming appointments</p>
-                  </div>
-                </div>
-              </BlurCardContent>
-            </BlurCard>
-          </div>
-          
-          <BlurCard className="mt-6">
-            <BlurCardHeader>
-              <BlurCardTitle>Recent Activity</BlurCardTitle>
-            </BlurCardHeader>
+          {/* Removed Waitlist and Appointments sections */}
+          <BlurCard>
             <BlurCardContent className="p-6">
               <p className="text-muted-foreground text-center py-6">
-                No recent activity to display.
+                Welcome to your dashboard! Explore the menu to access your waitlists, appointments, and profile.
               </p>
             </BlurCardContent>
           </BlurCard>

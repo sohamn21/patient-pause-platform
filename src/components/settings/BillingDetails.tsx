@@ -23,7 +23,7 @@ export const BillingDetails = () => {
       toast({
         title: "Subscription Successful",
         description: "Your subscription has been activated successfully.",
-        icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
+        // Remove the icon property as it's not in the Toast type
       });
     } else if (canceled === 'true') {
       toast({
@@ -57,7 +57,7 @@ export const BillingDetails = () => {
           className={`mb-6 ${success === 'true' ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300' : ''}`}
           variant={success === 'true' ? 'default' : 'default'}
         >
-          <AlertCircle className="h-4 w-4" />
+          {success === 'true' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
           <AlertTitle>
             {success === 'true' ? 'Subscription Activated' : 'Checkout Canceled'}
           </AlertTitle>

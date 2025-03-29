@@ -1,13 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, UserPlus } from 'lucide-react';
+import { Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, UserPlus, Shield, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinessWaitlists } from '@/lib/waitlistService';
 import { getUserWaitlistEntries } from '@/lib/waitlistService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionService';
 
 const Dashboard = () => {
   const { user, profile, loading } = useAuth();
@@ -35,6 +35,8 @@ interface BusinessDashboardProps {
 const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
   const [waitlists, setWaitlists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -58,7 +60,20 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
       }
     };
 
+    const fetchSubscription = async () => {
+      try {
+        setSubscriptionLoading(true);
+        const data = await getCurrentSubscription();
+        setSubscription(data);
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
     fetchWaitlists();
+    fetchSubscription();
   }, [user, toast]);
 
   // Stats data
@@ -105,6 +120,56 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
           Welcome back! Here's an overview of your business.
         </p>
       </div>
+      
+      {/* Subscription Banner */}
+      {!subscriptionLoading && (
+        <>
+          {subscription?.active ? (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{subscription.plan?.name} Plan Active</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Your subscription renews on {subscription.current_period_end ? 
+                          new Date(subscription.current_period_end).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => navigate('/settings')}>
+                    Manage Subscription
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Upgrade to Pro</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Get unlimited waitlists, analytics, and more features
+                      </p>
+                    </div>
+                  </div>
+                  <Button size="sm" onClick={() => navigate('/settings')}>
+                    View Plans
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
       
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-4">

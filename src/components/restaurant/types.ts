@@ -6,11 +6,12 @@ export interface TableType {
   width: number;
   height: number;
   shape?: 'rectangle' | 'circle';
+  color?: string;
 }
 
 export interface FloorItem {
   id: string;
-  type: 'table' | 'wall' | 'door';
+  type: 'table' | 'wall' | 'door' | 'decoration';
   x: number;
   y: number;
   width: number;
@@ -20,4 +21,14 @@ export interface FloorItem {
   capacity?: number;
   number?: number;
   shape?: 'rectangle' | 'circle';
+  status?: 'available' | 'occupied' | 'reserved';
+  color?: string;
+  label?: string;
+}
+
+export interface FloorPlanSettings {
+  gridSize: number;
+  showNumbers: boolean;
+  showCapacity: boolean;
+  snapToGrid: boolean;
 }

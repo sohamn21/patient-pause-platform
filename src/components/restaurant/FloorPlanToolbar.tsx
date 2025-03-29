@@ -1,9 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Table, Chair, Building, MapPin, RotateCw, RotateCcw, Trash, Copy } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Table, Utensils, Building, FileSpreadsheet, Trash2, RotateCw, RotateCcw, Copy } from "lucide-react";
 
 interface FloorPlanToolbarProps {
   activeTool: string | null;
@@ -14,76 +12,171 @@ interface FloorPlanToolbarProps {
   onDuplicateItem: (id: string) => void;
 }
 
-export function FloorPlanToolbar({
-  activeTool,
-  setActiveTool,
+export function FloorPlanToolbar({ 
+  activeTool, 
+  setActiveTool, 
   selectedItem,
   onDeleteItem,
   onRotateItem,
   onDuplicateItem,
 }: FloorPlanToolbarProps) {
+  const handleToolClick = (tool: string) => {
+    setActiveTool(activeTool === tool ? null : tool);
+  };
+  
+  const handleDeleteClick = () => {
+    if (selectedItem && confirm("Are you sure you want to delete this item?")) {
+      onDeleteItem(selectedItem);
+    }
+  };
+  
+  const handleRotateClick = (direction: 'clockwise' | 'counterclockwise') => {
+    if (selectedItem) {
+      onRotateItem(selectedItem, direction);
+    }
+  };
+  
+  const handleDuplicateClick = () => {
+    if (selectedItem) {
+      onDuplicateItem(selectedItem);
+    }
+  };
+  
   return (
-    <div className="flex flex-row md:flex-col gap-2 p-2 border rounded-md bg-background">
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(activeTool === "table" && "bg-primary/20")}
-        onClick={() => setActiveTool(activeTool === "table" ? null : "table")}
-      >
-        <Table size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(activeTool === "wall" && "bg-primary/20")}
-        onClick={() => setActiveTool(activeTool === "wall" ? null : "wall")}
-      >
-        <Building size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(activeTool === "door" && "bg-primary/20")}
-        onClick={() => setActiveTool(activeTool === "door" ? null : "door")}
-      >
-        <MapPin size={20} />
-      </Button>
+    <div className="flex flex-col gap-2 w-48 border rounded-md bg-background/80 backdrop-blur-sm p-2">
+      <TooltipProvider>
+        <div className="grid grid-cols-2 gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={activeTool === "table" ? "secondary" : "outline"} 
+                size="icon"
+                onClick={() => handleToolClick("table")}
+              >
+                <Table size={18} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add Table
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={activeTool === "wall" ? "secondary" : "outline"} 
+                size="icon"
+                onClick={() => handleToolClick("wall")}
+              >
+                <Building size={18} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add Wall
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={activeTool === "door" ? "secondary" : "outline"} 
+                size="icon"
+                onClick={() => handleToolClick("door")}
+              >
+                <FileSpreadsheet size={18} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add Door
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={activeTool === "decoration" ? "secondary" : "outline"} 
+                size="icon"
+                onClick={() => handleToolClick("decoration")}
+              >
+                <Utensils size={18} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add Decoration
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
       
-      <Separator className="my-2" />
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        disabled={!selectedItem}
-        onClick={() => selectedItem && onRotateItem(selectedItem, 'clockwise')}
-      >
-        <RotateCw size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        disabled={!selectedItem}
-        onClick={() => selectedItem && onRotateItem(selectedItem, 'counterclockwise')}
-      >
-        <RotateCcw size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        disabled={!selectedItem}
-        onClick={() => selectedItem && onDuplicateItem(selectedItem)}
-      >
-        <Copy size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-        disabled={!selectedItem}
-        onClick={() => selectedItem && onDeleteItem(selectedItem)}
-      >
-        <Trash size={20} />
-      </Button>
+      <div className="border-t pt-2">
+        <TooltipProvider>
+          <div className="grid grid-cols-3 gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  disabled={!selectedItem}
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Delete
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  disabled={!selectedItem}
+                  onClick={() => handleRotateClick('clockwise')}
+                >
+                  <RotateCw size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Rotate Clockwise
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  disabled={!selectedItem}
+                  onClick={() => handleRotateClick('counterclockwise')}
+                >
+                  <RotateCcw size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Rotate Counterclockwise
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  disabled={!selectedItem}
+                  onClick={handleDuplicateClick}
+                >
+                  <Copy size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Duplicate
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }

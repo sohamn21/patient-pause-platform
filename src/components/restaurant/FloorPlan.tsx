@@ -1,109 +1,40 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Table, Chair, Utensils, MapPin, Building } from "lucide-react";
+import { Table, Utensils, MapPin, Building, FileSpreadsheet } from "lucide-react";
 import { FloorPlanTable } from "./FloorPlanTable";
 import { FloorPlanControls } from "./FloorPlanControls";
 import { FloorPlanGrid } from "./FloorPlanGrid";
 import { FloorPlanToolbar } from "./FloorPlanToolbar";
-import { TableType, FloorItem } from "./types";
-import { v4 as uuidv4 } from "uuid";
+import { useFloorPlan } from "@/hooks/use-floor-plan";
 
 export function FloorPlan({ locationName }: { locationName?: string }) {
-  const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [items, setItems] = useState<FloorItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [isDraggingItem, setIsDraggingItem] = useState(false);
-  const [tableTypes] = useState<TableType[]>([
-    { id: "rectangle2", name: "2-Person Rectangle", capacity: 2, width: 60, height: 40 },
-    { id: "rectangle4", name: "4-Person Rectangle", capacity: 4, width: 80, height: 80 },
-    { id: "round2", name: "2-Person Round", capacity: 2, width: 50, height: 50, shape: "circle" },
-    { id: "round4", name: "4-Person Round", capacity: 4, width: 80, height: 80, shape: "circle" },
-    { id: "round6", name: "6-Person Round", capacity: 6, width: 100, height: 100, shape: "circle" },
-    { id: "round8", name: "8-Person Round", capacity: 8, width: 120, height: 120, shape: "circle" },
-  ]);
+  const [activeTableType, setActiveTableType] = useState("rectangle4");
+  const [showLabels, setShowLabels] = useState(true);
+  const [snapToGrid, setSnapToGrid] = useState(false);
   
-  const [activeTableType, setActiveTableType] = useState(tableTypes[1].id);
-  
-  useEffect(() => {
-    // Load the saved floor plan if available
-    const savedFloorPlan = localStorage.getItem(`floorPlan-${locationName}`);
-    if (savedFloorPlan) {
-      try {
-        setItems(JSON.parse(savedFloorPlan));
-      } catch (error) {
-        console.error("Error loading saved floor plan:", error);
-      }
-    }
-  }, [locationName]);
-  
-  const saveFloorPlan = () => {
-    localStorage.setItem(`floorPlan-${locationName}`, JSON.stringify(items));
-    toast({
-      title: "Floor plan saved",
-      description: "Your layout has been saved successfully",
-    });
-  };
-  
-  const handleAddTable = (x: number, y: number) => {
-    const tableType = tableTypes.find(t => t.id === activeTableType);
-    if (!tableType) return;
-    
-    const newTable: FloorItem = {
-      id: uuidv4(),
-      type: "table",
-      x,
-      y,
-      width: tableType.width,
-      height: tableType.height,
-      rotation: 0,
-      tableType: tableType.id,
-      capacity: tableType.capacity,
-      number: items.filter(item => item.type === "table").length + 1,
-      shape: tableType.shape || "rectangle",
-    };
-    
-    setItems([...items, newTable]);
-    setSelectedItem(newTable.id);
-    setActiveTool(null);
-  };
-  
-  const handleAddWall = (x: number, y: number) => {
-    const newWall: FloorItem = {
-      id: uuidv4(),
-      type: "wall",
-      x,
-      y,
-      width: 100,
-      height: 10,
-      rotation: 0,
-    };
-    
-    setItems([...items, newWall]);
-    setSelectedItem(newWall.id);
-    setActiveTool(null);
-  };
-  
-  const handleAddDoor = (x: number, y: number) => {
-    const newDoor: FloorItem = {
-      id: uuidv4(),
-      type: "door",
-      x,
-      y,
-      width: 60,
-      height: 10,
-      rotation: 0,
-    };
-    
-    setItems([...items, newDoor]);
-    setSelectedItem(newDoor.id);
-    setActiveTool(null);
-  };
+  const {
+    items,
+    selectedItem,
+    setSelectedItem,
+    isDraggingItem,
+    setIsDraggingItem,
+    tableTypes,
+    saveFloorPlan,
+    clearFloorPlan,
+    addTable,
+    addWall,
+    addDoor,
+    updateItem,
+    deleteItem,
+    rotateItem,
+    duplicateItem
+  } = useFloorPlan(locationName);
   
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (activeTool && containerRef.current) {
@@ -111,16 +42,23 @@ export function FloorPlan({ locationName }: { locationName?: string }) {
       const rect = container.getBoundingClientRect();
       
       // Calculate position with zoom and centering
-      const x = (e.clientX - rect.left) / zoom;
-      const y = (e.clientY - rect.top) / zoom;
+      let x = (e.clientX - rect.left) / zoom;
+      let y = (e.clientY - rect.top) / zoom;
+      
+      // Snap to grid if enabled
+      if (snapToGrid) {
+        x = Math.round(x / 20) * 20;
+        y = Math.round(y / 20) * 20;
+      }
       
       if (activeTool === "table") {
-        handleAddTable(x, y);
+        addTable(x, y, activeTableType);
       } else if (activeTool === "wall") {
-        handleAddWall(x, y);
+        addWall(x, y);
       } else if (activeTool === "door") {
-        handleAddDoor(x, y);
+        addDoor(x, y);
       }
+      setActiveTool(null);
     } else if (!isDraggingItem) {
       // Deselect when clicking on empty space
       setSelectedItem(null);
@@ -130,69 +68,6 @@ export function FloorPlan({ locationName }: { locationName?: string }) {
   const handleItemClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedItem(id);
-  };
-  
-  const handleUpdateItem = (updatedItem: FloorItem) => {
-    setItems(items.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
-    ));
-  };
-  
-  const handleDeleteItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-    setSelectedItem(null);
-    toast({
-      title: "Item deleted",
-      description: "The selected item has been removed from the floor plan",
-    });
-  };
-  
-  const handleRotateItem = (id: string, direction: 'clockwise' | 'counterclockwise') => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const delta = direction === 'clockwise' ? 45 : -45;
-        return { ...item, rotation: (item.rotation || 0) + delta };
-      }
-      return item;
-    }));
-  };
-  
-  const handleDuplicateItem = (id: string) => {
-    const itemToDuplicate = items.find(item => item.id === id);
-    if (!itemToDuplicate) return;
-    
-    const newItem: FloorItem = {
-      ...itemToDuplicate,
-      id: uuidv4(),
-      x: itemToDuplicate.x + 20,
-      y: itemToDuplicate.y + 20,
-    };
-    
-    // If duplicating a table, update its number
-    if (newItem.type === 'table') {
-      newItem.number = items.filter(item => item.type === "table").length + 1;
-    }
-    
-    setItems([...items, newItem]);
-    setSelectedItem(newItem.id);
-    toast({
-      title: "Item duplicated",
-      description: `A copy of the selected item has been created`,
-    });
-  };
-  
-  const clearFloorPlan = () => {
-    if (items.length === 0) return;
-    
-    if (confirm("Are you sure you want to clear the floor plan? This action cannot be undone.")) {
-      setItems([]);
-      setSelectedItem(null);
-      localStorage.removeItem(`floorPlan-${locationName}`);
-      toast({
-        title: "Floor plan cleared",
-        description: "All items have been removed from the floor plan",
-      });
-    }
   };
   
   return (
@@ -228,13 +103,22 @@ export function FloorPlan({ locationName }: { locationName?: string }) {
           activeTool={activeTool} 
           setActiveTool={setActiveTool} 
           selectedItem={selectedItem}
-          onDeleteItem={handleDeleteItem}
-          onRotateItem={handleRotateItem}
-          onDuplicateItem={handleDuplicateItem}
+          onDeleteItem={deleteItem}
+          onRotateItem={rotateItem}
+          onDuplicateItem={duplicateItem}
         />
         
         <div className="relative flex-1 border rounded-md bg-background/50 overflow-hidden">
-          <FloorPlanControls zoom={zoom} setZoom={setZoom} />
+          <FloorPlanControls 
+            zoom={zoom} 
+            setZoom={setZoom} 
+            onSave={saveFloorPlan}
+            onClear={clearFloorPlan}
+            showLabels={showLabels}
+            setShowLabels={setShowLabels}
+            snapToGrid={snapToGrid}
+            setSnapToGrid={setSnapToGrid}
+          />
           
           <div 
             ref={containerRef} 
@@ -254,7 +138,7 @@ export function FloorPlan({ locationName }: { locationName?: string }) {
                   isSelected={selectedItem === item.id}
                   tableTypes={tableTypes}
                   onClick={(e) => handleItemClick(item.id, e)}
-                  onChange={handleUpdateItem}
+                  onChange={updateItem}
                   onDragStart={() => setIsDraggingItem(true)}
                   onDragEnd={() => setIsDraggingItem(false)}
                 />

@@ -69,16 +69,30 @@ export function FloorPlanTable({
   let content = null;
   
   if (item.type === 'table') {
-    backgroundColor = 'bg-primary/20';
-    borderColor = 'border-primary/70';
+    // Apply status-based colors
+    if (item.status === 'occupied') {
+      backgroundColor = 'bg-red-200';
+      borderColor = 'border-red-500';
+    } else if (item.status === 'reserved') {
+      backgroundColor = 'bg-amber-200';
+      borderColor = 'border-amber-500';
+    } else {
+      backgroundColor = 'bg-primary/20';
+      borderColor = 'border-primary/70';
+    }
+    
     if (item.shape === 'circle') {
       shapeClass = 'rounded-full';
     } else {
       shapeClass = 'rounded-md';
     }
+    
     content = (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <span className="text-xs font-bold">{item.number}</span>
+        {item.capacity && (
+          <span className="text-[10px] text-muted-foreground">{item.capacity} seats</span>
+        )}
       </div>
     );
   } else if (item.type === 'wall') {
@@ -87,6 +101,10 @@ export function FloorPlanTable({
   } else if (item.type === 'door') {
     backgroundColor = 'bg-yellow-300';
     borderColor = 'border-yellow-600';
+  } else if (item.type === 'decoration') {
+    backgroundColor = 'bg-blue-200';
+    borderColor = 'border-blue-400';
+    shapeClass = 'rounded-md';
   }
   
   return (
@@ -108,6 +126,11 @@ export function FloorPlanTable({
       onMouseDown={handleMouseDown}
     >
       {content}
+      {item.label && (
+        <div className="absolute -bottom-6 left-0 w-full text-center text-xs truncate pointer-events-none">
+          {item.label}
+        </div>
+      )}
     </div>
   );
 }

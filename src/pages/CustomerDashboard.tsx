@@ -5,7 +5,6 @@ import { BlurCard, BlurCardContent } from '@/components/ui/blur-card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
-import AdminRoleUpdater from '@/components/AdminRoleUpdater';
 
 const CustomerDashboard = () => {
   const { user, profile } = useAuth();
@@ -37,15 +36,9 @@ const CustomerDashboard = () => {
               </div>
             </BlurCardContent>
           </BlurCard>
-          
-          {/* Admin Role Updater */}
-          <div className="mt-6">
-            <AdminRoleUpdater />
-          </div>
         </div>
         
         <div className="md:col-span-2">
-          {/* Removed Waitlist and Appointments sections */}
           <BlurCard>
             <BlurCardContent className="p-6">
               <p className="text-muted-foreground text-center py-6">

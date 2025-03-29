@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
 import { WaitlistEntryType } from '@/components/restaurant/types';
@@ -118,6 +119,7 @@ export const removeFromWaitlist = async (id: string) => {
 };
 
 export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEntryType[]> => {
+  // Using the join syntax with the profiles table
   const { data, error } = await supabase
     .from('waitlist_entries')
     .select(`
@@ -130,8 +132,7 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes,
       created_at,
       updated_at,
-      profiles:user_id (
-        id,
+      profiles:profiles(
         username,
         first_name,
         last_name,

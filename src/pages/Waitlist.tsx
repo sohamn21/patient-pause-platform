@@ -44,7 +44,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { WaitlistCard } from "@/components/dashboard/WaitlistCard";
 import { Progress } from "@/components/ui/progress";
 import QRCode from "react-qr-code";
-import { Share as ShareAPI } from "@capacitor/share";
 
 interface WaitlistEntry {
   id: string;

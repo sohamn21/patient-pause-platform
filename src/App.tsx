@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import LandingPage from './pages/Landing';
 import SignInPage from './pages/auth/SignIn';
 import SignUpPage from './pages/auth/SignUp';
@@ -25,27 +25,29 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/user-register" element={<UserRegisterPage />} />
-        <Route path="/business-register" element={<BusinessRegisterPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/waitlist" element={<WaitlistPage />} />
-          <Route path="/appointments" element={<AppointmentsPage />} />
-          <Route path="/tables" element={<TablesPage />} />
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/staff" element={<StaffManagementPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/locations" element={<LocationsPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/user-register" element={<UserRegisterPage />} />
+          <Route path="/business-register" element={<BusinessRegisterPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/waitlist" element={<WaitlistPage />} />
+            <Route path="/appointments" element={<AppointmentsPage />} />
+            <Route path="/tables" element={<TablesPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/staff" element={<StaffManagementPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/locations" element={<LocationsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

@@ -28,12 +28,21 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
   const handleNotify = () => {
     // Check if email exists
     const email = entry.profiles?.email;
+    const phoneNumber = entry.profiles?.phone_number;
+    
     if (email) {
       setIsEmailDialogOpen(true);
-    } else {
+    } else if (phoneNumber) {
       // Fallback to SMS if no email is available
       setIsNotifyDialogOpen(true);
+    } else {
+      // If neither email nor phone exists, default to email dialog which will show appropriate message
+      setIsEmailDialogOpen(true);
     }
+  };
+
+  const handleEmail = () => {
+    setIsEmailDialogOpen(true);
   };
 
   return (
@@ -43,7 +52,7 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         onViewDetails={handleViewDetails}
         onNotify={handleNotify}
         onCall={() => setIsCallDialogOpen(true)}
-        onEmail={() => setIsEmailDialogOpen(true)}
+        onEmail={handleEmail}
         onStatusChange={onStatusChange}
         onRemove={onRemove}
       />

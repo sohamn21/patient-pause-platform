@@ -42,8 +42,8 @@ export function ActionMenu({
   const phoneNumber = entry.profiles?.phone_number || "";
   const email = entry.profiles?.email || "";
   
-  // Check if customer can be emailed
-  const canEmail = email && entry.status !== "seated" && entry.status !== "cancelled";
+  // Check if customer can be emailed - only require email to exist
+  const canEmail = !!email && entry.status !== "seated" && entry.status !== "cancelled";
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -79,7 +79,7 @@ export function ActionMenu({
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={onNotify}
-            disabled={entry.status === "seated" || entry.status === "cancelled"}
+            disabled={entry.status === "seated" || entry.status === "cancelled" || !phoneNumber}
           >
             <SendHorizonal size={14} className="mr-2" />
             Send SMS Notification

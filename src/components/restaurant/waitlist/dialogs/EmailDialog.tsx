@@ -43,6 +43,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       // First check if email is already in the entry
       if (entry.profiles?.email) {
         setUserEmail(entry.profiles.email);
+        console.log("Found email in profile:", entry.profiles.email);
         return;
       }
       
@@ -57,10 +58,15 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         
         if (error) throw error;
         if (data && data.email) {
+          console.log("Fetched email from edge function:", data.email);
           setUserEmail(data.email);
+        } else {
+          console.log("No email found for user", entry.user_id);
+          setUserEmail(null);
         }
       } catch (error) {
         console.error("Error fetching user email:", error);
+        setUserEmail(null);
       }
     };
 
@@ -88,6 +94,8 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
 
     setIsLoading(true);
     try {
+      console.log("Sending email to:", userEmail);
+      
       // Call the send-notification edge function with email parameters
       const { data, error } = await supabase.functions.invoke("send-notification", {
         body: {
@@ -101,7 +109,12 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
+
+      console.log("Email function response:", data);
 
       // Update the waitlist entry status to notified
       await supabase
@@ -138,46 +151,56 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         <DialogHeader>
           <DialogTitle>Email Customer</DialogTitle>
           <DialogDescription>
-            Send an email to {customerName} {userEmail ? `at ${userEmail}` : ""}.
+            {userEmail 
+              ? `Send an email to ${customerName} at ${userEmail}.`
+              : "This customer does not have an email address on file."}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div>
-            <Label htmlFor="email-subject">Subject</Label>
-            <Input
-              id="email-subject"
-              value={emailSubject}
-              onChange={(e) => setEmailSubject(e.target.value)}
-              placeholder="Your table is ready"
-            />
+        {userEmail ? (
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Your table is ready"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                placeholder="Your table is now ready. Please come to the host stand when you arrive."
+                className="min-h-[150px]"
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="email-message">Message</Label>
-            <Textarea
-              id="email-message"
-              value={emailMessage}
-              onChange={(e) => setEmailMessage(e.target.value)}
-              placeholder="Your table is now ready. Please come to the host stand when you arrive."
-              className="min-h-[150px]"
-            />
+        ) : (
+          <div className="py-4 text-center text-muted-foreground">
+            You cannot send an email to this customer as they don't have an email address on file.
           </div>
-        </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button 
-            onClick={handleEmailCustomer} 
-            disabled={isLoading || !userEmail}
-            className="flex items-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Send Email"
-            )}
-          </Button>
+          {userEmail && (
+            <Button 
+              onClick={handleEmailCustomer} 
+              disabled={isLoading || !userEmail}
+              className="flex items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Email"
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

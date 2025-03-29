@@ -5,7 +5,7 @@ const CustomCursor = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [clicked, setClicked] = useState(false);
   const [linkHovered, setLinkHovered] = useState(false);
-  const [hidden, setHidden] = useState(false); // Changed to false to show cursor by default
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     const addEventListeners = () => {
@@ -93,3 +93,4 @@ const CustomCursor = () => {
 };
 
 export default CustomCursor;
+

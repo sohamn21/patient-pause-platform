@@ -60,7 +60,7 @@
     @apply scroll-smooth;
   }
 
-  /* Custom cursor */
+  /* Custom cursor - removed specific cursor styles */
   * {
     cursor: none !important;
   }

@@ -18,6 +18,7 @@ interface UserFormData {
   confirmPassword: string;
   termsAccepted: boolean;
   phoneNumber: string;
+  username: string;
 }
 
 const initialState: UserFormData = {
@@ -28,6 +29,7 @@ const initialState: UserFormData = {
   confirmPassword: '',
   termsAccepted: false,
   phoneNumber: '',
+  username: '',
 };
 
 const UserRegister = () => {
@@ -59,6 +61,14 @@ const UserRegister = () => {
       toast({ title: "Error", description: "Email is required", variant: "destructive" });
       return false;
     }
+    if (!formData.username.trim()) {
+      toast({ title: "Error", description: "Username is required", variant: "destructive" });
+      return false;
+    }
+    if (!formData.phoneNumber.trim()) {
+      toast({ title: "Error", description: "Phone number is required", variant: "destructive" });
+      return false;
+    }
     if (!formData.password) {
       toast({ title: "Error", description: "Password is required", variant: "destructive" });
       return false;
@@ -88,12 +98,14 @@ const UserRegister = () => {
     try {
       setIsLoading(true);
       
+      // Create the user with all required fields
       const result = await signUp.create({
         firstName: formData.firstName,
         lastName: formData.lastName,
         emailAddress: formData.email,
         password: formData.password,
-        phoneNumber: formData.phoneNumber || undefined,
+        phoneNumber: formData.phoneNumber,
+        username: formData.username,
       });
 
       // Add user metadata
@@ -111,11 +123,11 @@ const UserRegister = () => {
         });
         navigate('/dashboard');
       } else {
-        console.error('Sign up failed', result);
+        // Handle verification step if needed
+        console.log('Sign up status:', result.status);
         toast({
-          title: "Sign up failed",
-          description: "Please try again later.",
-          variant: "destructive",
+          title: "Verification needed",
+          description: "Please check your email or phone for verification instructions.",
         });
       }
     } catch (err: any) {
@@ -176,6 +188,18 @@ const UserRegister = () => {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input 
+                id="username" 
+                name="username"
+                placeholder="johndoe" 
+                value={formData.username}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 
                 id="email" 
@@ -189,7 +213,7 @@ const UserRegister = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number (optional)</Label>
+              <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input 
                 id="phoneNumber" 
                 name="phoneNumber"
@@ -197,6 +221,7 @@ const UserRegister = () => {
                 placeholder="+1 (555) 123-4567" 
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                required
               />
             </div>
             

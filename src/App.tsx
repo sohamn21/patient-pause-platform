@@ -16,43 +16,23 @@ import UserRegister from "./pages/auth/UserRegister";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { useState, useEffect } from "react";
 
-// Get the publishable key from environment
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Use the environment variable directly
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isEnvironmentReady, setIsEnvironmentReady] = useState(false);
-
-  useEffect(() => {
-    // Log for debugging
-    console.log("Clerk publishable key status:", PUBLISHABLE_KEY ? "Found" : "Missing");
-    setIsEnvironmentReady(true);
-  }, []);
-
-  // Show a loading state while checking environment variables
-  if (!isEnvironmentReady) {
-    return <div className="min-h-screen flex items-center justify-center">Loading application...</div>;
-  }
-
-  // If no publishable key is available, show the landing page only
-  // This allows the app to function without Clerk in development
+  // If no publishable key is available, show a warning
   if (!PUBLISHABLE_KEY) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <div className="min-h-screen flex items-center justify-center bg-red-100 text-red-800 p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
+          <p>Clerk Publishable Key is missing. Please add it to your environment variables.</p>
+          <p className="mt-2 text-sm">Use VITE_CLERK_PUBLISHABLE_KEY or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</p>
+        </div>
+      </div>
     );
   }
 

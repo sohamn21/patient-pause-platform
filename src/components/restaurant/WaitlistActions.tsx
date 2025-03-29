@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +31,7 @@ import {
   X, 
   UserMinus 
 } from "lucide-react";
+import { WaitlistEntryType } from "@/components/restaurant/types";
 
 type WaitlistEntryStatus = "waiting" | "notified" | "seated" | "cancelled";
 
@@ -54,8 +54,8 @@ interface WaitlistEntry {
 }
 
 interface WaitlistActionsProps {
-  entry: WaitlistEntry;
-  onStatusChange: (id: string, status: WaitlistEntryStatus) => Promise<void>;
+  entry: WaitlistEntryType;
+  onStatusChange: (id: string, status: "waiting" | "notified" | "seated" | "cancelled") => Promise<void>;
   onRemove: (id: string) => Promise<void>;
   refreshEntries: () => void;
 }
@@ -94,7 +94,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
 
     setIsLoading(true);
     try {
-      // Call the edge function to send notification
       const { data, error } = await supabase.functions.invoke("send-notification", {
         body: {
           userId: entry.user_id,
@@ -138,8 +137,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
       return;
     }
 
-    // In a real app, this might integrate with a calling API
-    // For now, we'll just simulate it
     window.open(`tel:${phoneNumber}`);
     setIsCallDialogOpen(false);
 
@@ -170,8 +167,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
 
     setIsLoading(true);
     try {
-      // In a real app, this would call an email API or service
-      // For now, we'll just simulate it
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast({
@@ -267,7 +262,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         </DropdownMenu>
       </div>
 
-      {/* View Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -319,7 +313,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         </DialogContent>
       </Dialog>
 
-      {/* Send Notification Dialog */}
       <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -346,7 +339,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         </DialogContent>
       </Dialog>
 
-      {/* Call Customer Dialog */}
       <Dialog open={isCallDialogOpen} onOpenChange={setIsCallDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -366,7 +358,6 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
         </DialogContent>
       </Dialog>
 
-      {/* Email Customer Dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent>
           <DialogHeader>

@@ -117,7 +117,13 @@ const WaitlistPage = () => {
         filteredData = data.filter(entry => entry.status === "seated");
       }
       
-      setEntries(filteredData);
+      // Cast the status to ensure it matches our type definition
+      const typedEntries: WaitlistEntryType[] = filteredData.map(entry => ({
+        ...entry,
+        status: entry.status as "waiting" | "notified" | "seated" | "cancelled"
+      }));
+      
+      setEntries(typedEntries);
     } catch (error) {
       console.error("Error loading waitlist entries:", error);
       toast({

@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Waitlist, WaitlistEntry } from '@/integrations/supabase/types.custom';
+import { WaitlistEntryType } from '@/components/restaurant/types';
 
 // Define types with required fields for creation operations
 type CreateWaitlistData = {
@@ -117,7 +118,7 @@ export const removeFromWaitlist = async (id: string) => {
   return true;
 };
 
-export const getWaitlistEntries = async (waitlistId: string) => {
+export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEntryType[]> => {
   const { data, error } = await supabase
     .from('waitlist_entries')
     .select(`
@@ -126,14 +127,20 @@ export const getWaitlistEntries = async (waitlistId: string) => {
         username,
         first_name,
         last_name,
-        phone_number
+        phone_number,
+        email
       )
     `)
     .eq('waitlist_id', waitlistId)
     .order('position', { ascending: true });
   
   if (error) throw error;
-  return data;
+  
+  // Ensure the status field is properly typed
+  return data.map(entry => ({
+    ...entry,
+    status: entry.status as "waiting" | "notified" | "seated" | "cancelled"
+  }));
 };
 
 export const getUserWaitlistEntries = async (userId: string) => {

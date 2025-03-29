@@ -52,15 +52,15 @@ export interface WaitlistEntryType {
   user_id: string;
   position: number;
   status: 'waiting' | 'notified' | 'seated' | 'cancelled';
-  estimated_wait_time?: number;
-  notes?: string;
+  estimated_wait_time?: number | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
   profiles?: {
-    username?: string;
-    first_name?: string;
-    last_name?: string;
-    phone_number?: string;
-    email?: string;
-  };
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone_number?: string | null;
+    email?: string | null;
+  } | null;
 }

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,33 +32,35 @@ export function EmailDialog({ isOpen, onOpenChange, entry }: EmailDialogProps) {
     `${entry.profiles.first_name || ''} ${entry.profiles.last_name || ''}`.trim() : 
     "Customer";
   
-  // Get email from the profiles data if available, or fetch it
+  // Get email from profiles or fetch it
   const [email, setEmail] = useState<string | null>(null);
 
-  // Fetch user email when dialog opens
-  const fetchUserEmail = async () => {
-    if (!entry.user_id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('auth')
-        .select('email')
-        .eq('id', entry.user_id)
-        .single();
+  // Fetch profile email when dialog opens
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      if (!entry.user_id || !isOpen) return;
       
-      if (error) throw error;
-      if (data && data.email) {
-        setEmail(data.email);
+      try {
+        // Retrieve the email using the send-notification edge function
+        // which has service role access and can get the email
+        const { data, error } = await supabase.functions.invoke("send-notification", {
+          body: {
+            action: "get-email",
+            userId: entry.user_id
+          }
+        });
+        
+        if (error) throw error;
+        if (data && data.email) {
+          setEmail(data.email);
+        }
+      } catch (error) {
+        console.error("Error fetching user email:", error);
       }
-    } catch (error) {
-      console.error("Error fetching user email:", error);
-    }
-  };
+    };
 
-  // Ensure we have the user's email
-  if (isOpen && !email && entry.user_id) {
     fetchUserEmail();
-  }
+  }, [entry.user_id, isOpen]);
 
   const handleEmailCustomer = async () => {
     if (!email) {

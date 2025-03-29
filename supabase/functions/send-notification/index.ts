@@ -25,7 +25,38 @@ serve(async (req) => {
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { userId, phoneNumber, email, message, subject, waitlistId, entryId, type } = await req.json();
+    const body = await req.json();
+    
+    // Handle email retrieval request
+    if (body.action === "get-email") {
+      if (!body.userId) {
+        return new Response(
+          JSON.stringify({ error: "Missing user ID" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
+      // Get user email from auth.users
+      const { data, error } = await supabase.auth.admin.getUserById(body.userId);
+      
+      if (error) {
+        console.error("Error fetching user:", error);
+        throw error;
+      }
+      
+      return new Response(
+        JSON.stringify({ email: data.user?.email }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+    const { userId, phoneNumber, email, message, subject, waitlistId, entryId, type } = body;
 
     if (!userId || !message || !type) {
       return new Response(

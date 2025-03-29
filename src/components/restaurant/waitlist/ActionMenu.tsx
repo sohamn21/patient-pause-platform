@@ -1,0 +1,117 @@
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  Eye, 
+  SendHorizonal, 
+  Phone, 
+  Mail, 
+  MoreVertical, 
+  UserCheck, 
+  X, 
+  UserMinus 
+} from "lucide-react";
+import { WaitlistEntryType } from "@/components/restaurant/types";
+
+interface ActionMenuProps {
+  entry: WaitlistEntryType;
+  onViewDetails: () => void;
+  onNotify: () => void;
+  onCall: () => void;
+  onEmail: () => void;
+  onStatusChange: (id: string, status: "waiting" | "notified" | "seated" | "cancelled") => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
+}
+
+export function ActionMenu({
+  entry,
+  onViewDetails,
+  onNotify,
+  onCall,
+  onEmail,
+  onStatusChange,
+  onRemove
+}: ActionMenuProps) {
+  const phoneNumber = entry.profiles?.phone_number || "";
+  const email = entry.profiles?.email || "";
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <Button 
+        size="icon" 
+        variant="ghost"
+        onClick={onNotify}
+        disabled={entry.status === "seated" || entry.status === "cancelled"}
+      >
+        <SendHorizonal size={16} />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <span className="sr-only">Actions</span>
+            <MoreVertical size={16} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onViewDetails}>
+            <Eye size={14} className="mr-2" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={onNotify}
+            disabled={entry.status === "seated" || entry.status === "cancelled"}
+          >
+            <SendHorizonal size={14} className="mr-2" />
+            Send Notification
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={onCall}
+            disabled={!phoneNumber}
+          >
+            <Phone size={14} className="mr-2" />
+            Call Customer
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={onEmail}
+            disabled={!email}
+          >
+            <Mail size={14} className="mr-2" />
+            Email Customer
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={() => onStatusChange(entry.id, "seated")}
+            disabled={entry.status === "seated" || entry.status === "cancelled"}
+          >
+            <UserCheck size={14} className="mr-2" />
+            Mark as Seated
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => onStatusChange(entry.id, "cancelled")}
+            disabled={entry.status === "cancelled"}
+            className="text-red-500"
+          >
+            <X size={14} className="mr-2" />
+            Cancel
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => onRemove(entry.id)}
+            className="text-red-500"
+          >
+            <UserMinus size={14} className="mr-2" />
+            Remove from Waitlist
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}

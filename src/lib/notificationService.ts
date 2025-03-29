@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from '@/integrations/supabase/types.custom';
 
-// Define type for notification creation that includes all required fields
+// Define type with required fields for notification creation
 type CreateNotificationData = {
   user_id: string;
   title: string;
@@ -22,12 +22,13 @@ export const createNotification = async (notificationData: CreateNotificationDat
   return data;
 };
 
-export const getUserNotifications = async (userId: string) => {
+export const updateNotification = async (id: string, notificationData: Partial<Notification>) => {
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .update(notificationData)
+    .eq('id', id)
+    .select()
+    .single();
   
   if (error) throw error;
   return data;
@@ -65,4 +66,26 @@ export const deleteNotification = async (id: string) => {
   
   if (error) throw error;
   return true;
+};
+
+export const getUserNotifications = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+export const getUnreadNotificationsCount = async (userId: string) => {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_read', false);
+  
+  if (error) throw error;
+  return count || 0;
 };

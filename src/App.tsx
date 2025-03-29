@@ -14,6 +14,13 @@ import BusinessRegister from "./pages/auth/BusinessRegister";
 import UserRegister from "./pages/auth/UserRegister";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import Tables from "./pages/Tables";
+import Customers from "./pages/Customers";
+import Reports from "./pages/Reports";
+import Locations from "./pages/Locations";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
+import Appointments from "./pages/Appointments";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CustomCursor from "./components/CustomCursor";
 import Pricing from "./pages/Pricing";
@@ -42,13 +49,13 @@ const App = () => {
               <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/waitlist" element={<Waitlist />} />
-                <Route path="/appointments" element={<Dashboard />} />
-                <Route path="/tables" element={<Dashboard />} />
-                <Route path="/customers" element={<Dashboard />} />
-                <Route path="/notifications" element={<Dashboard />} />
-                <Route path="/reports" element={<Dashboard />} />
-                <Route path="/locations" element={<Dashboard />} />
-                <Route path="/settings" element={<Dashboard />} />
+                <Route path="/appointments" element={<Appointments />} />
+                <Route path="/tables" element={<Tables />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/locations" element={<Locations />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

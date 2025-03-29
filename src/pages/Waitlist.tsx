@@ -28,6 +28,7 @@ import {
 import { createWaitlist, getBusinessWaitlists, updateWaitlist, deleteWaitlist } from '@/lib/waitlistService';
 import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionService';
 import { WaitlistFeatureGate } from '@/components/waitlist/WaitlistFeatureGate';
+import { supabase } from '@/integrations/supabase/client';
 
 const WaitlistPage = () => {
   const [waitlists, setWaitlists] = useState<any[]>([]);
@@ -38,16 +39,32 @@ const WaitlistPage = () => {
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { close } = useToast();
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [businessId, setBusinessId] = useState<string | null>(null);
   
   useEffect(() => {
-    const fetchWaitlists = async () => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profileData) {
+          setBusinessId(profileData.id);
+          fetchWaitlists(profileData.id);
+        }
+      }
+    };
+    
+    const fetchWaitlists = async (id: string) => {
       try {
         setIsLoading(true);
-        const data = await getBusinessWaitlists();
+        const data = await getBusinessWaitlists(id);
         setWaitlists(data || []);
       } catch (error) {
         console.error("Error fetching waitlists:", error);
@@ -61,9 +78,8 @@ const WaitlistPage = () => {
       }
     };
     
-    fetchWaitlists();
+    getUser();
     
-    // Add this to fetch subscription
     const fetchSubscription = async () => {
       try {
         setSubscriptionLoading(true);
@@ -80,15 +96,30 @@ const WaitlistPage = () => {
   }, []);
   
   const handleCreateWaitlist = async () => {
+    if (!businessId) {
+      toast({
+        title: "Error",
+        description: "Business ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      await createWaitlist({ name, description });
+      await createWaitlist({ 
+        name, 
+        description,
+        business_id: businessId 
+      });
+      
       toast({
         title: "Success",
         description: "Waitlist created successfully.",
       });
+      
       setShowCreateDialog(false);
-      const data = await getBusinessWaitlists();
+      const data = await getBusinessWaitlists(businessId);
       setWaitlists(data || []);
       setName('');
       setDescription('');
@@ -104,16 +135,19 @@ const WaitlistPage = () => {
   };
   
   const handleUpdateWaitlist = async () => {
-    if (!selectedWaitlist) return;
+    if (!selectedWaitlist || !businessId) return;
+    
     try {
       setIsLoading(true);
       await updateWaitlist(selectedWaitlist.id, { name, description });
+      
       toast({
         title: "Success",
         description: "Waitlist updated successfully.",
       });
+      
       setShowEditDialog(false);
-      const data = await getBusinessWaitlists();
+      const data = await getBusinessWaitlists(businessId);
       setWaitlists(data || []);
       setName('');
       setDescription('');
@@ -129,14 +163,18 @@ const WaitlistPage = () => {
   };
   
   const handleDeleteWaitlist = async (waitlistId: string) => {
+    if (!businessId) return;
+    
     try {
       setIsLoading(true);
       await deleteWaitlist(waitlistId);
+      
       toast({
         title: "Success",
         description: "Waitlist deleted successfully.",
       });
-      const data = await getBusinessWaitlists();
+      
+      const data = await getBusinessWaitlists(businessId);
       setWaitlists(data || []);
     } catch (error: any) {
       toast({
@@ -159,7 +197,6 @@ const WaitlistPage = () => {
           </p>
         </div>
         
-        {/* Wrap the Create Waitlist button in WaitlistFeatureGate */}
         <WaitlistFeatureGate 
           subscription={subscription} 
           waitlistCount={waitlists.length}
@@ -171,7 +208,6 @@ const WaitlistPage = () => {
         </WaitlistFeatureGate>
       </div>
       
-      {/* Waitlists List */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {waitlists.map((waitlist) => (
           <Card key={waitlist.id} className="hover:bg-accent/5 transition-colors">
@@ -226,7 +262,6 @@ const WaitlistPage = () => {
         ))}
       </div>
       
-      {/* Create Waitlist Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -258,7 +293,6 @@ const WaitlistPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Edit Waitlist Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

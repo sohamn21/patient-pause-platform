@@ -39,7 +39,6 @@ const ReportsPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Mock data for charts and reports
   const overviewStats = [
     { title: 'Total Customers', value: '1,248', icon: <Users className="h-4 w-4" /> },
     { title: 'Avg. Wait Time', value: '24 min', icon: <Clock className="h-4 w-4" /> },

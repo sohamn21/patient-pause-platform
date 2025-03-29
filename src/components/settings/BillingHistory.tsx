@@ -33,8 +33,8 @@ export const BillingHistory = () => {
   const fetchInvoices = async () => {
     try {
       setIsLoading(true);
-      const { invoices: data } = await getInvoices();
-      setInvoices(data || []);
+      const invoiceData = await getInvoices();
+      setInvoices(invoiceData || []);
     } catch (error: any) {
       toast({
         title: "Error",

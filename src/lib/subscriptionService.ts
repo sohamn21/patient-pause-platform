@@ -163,9 +163,9 @@ export const getInvoices = async () => {
         id: 'inv_mock1',
         number: 'INV-001',
         status: 'paid',
-        amount_paid: 1999,
+        amount_due: 1999,
         currency: 'inr',
-        created: Date.now() - 86400000 * 30,
+        created: new Date(Date.now() - 86400000 * 30).toISOString(),
         invoice_pdf: '#',
         hosted_invoice_url: '#'
       },
@@ -173,9 +173,9 @@ export const getInvoices = async () => {
         id: 'inv_mock2',
         number: 'INV-002',
         status: 'paid',
-        amount_paid: 1999,
+        amount_due: 1999,
         currency: 'inr',
-        created: Date.now() - 86400000 * 60,
+        created: new Date(Date.now() - 86400000 * 60).toISOString(),
         invoice_pdf: '#',
         hosted_invoice_url: '#'
       }

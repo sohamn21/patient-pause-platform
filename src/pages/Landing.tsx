@@ -20,15 +20,15 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-4">
             {isSignedIn ? (
-              <Button asChild>
+              <Button>
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild>
+                <Button variant="ghost">
                   <Link to="/signin">Sign In</Link>
                 </Button>
-                <Button asChild>
+                <Button>
                   <Link to="/signup">Sign Up</Link>
                 </Button>
               </>
@@ -48,10 +48,10 @@ const Landing = () => {
               Manage waitlists, appointments, and reservations in one place. Perfect for clinics, salons, and restaurants.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <GlowButton asChild size="lg">
+              <GlowButton size="lg">
                 <Link to="/signup">Get Started</Link>
               </GlowButton>
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg">
                 <Link to="/signin">Log In</Link>
               </Button>
             </div>
@@ -176,7 +176,7 @@ const Landing = () => {
                   <span>Practitioner preferences</span>
                 </li>
               </ul>
-              <Button className="w-full bg-blue-500 hover:bg-blue-600" asChild>
+              <Button className="w-full bg-blue-500 hover:bg-blue-600">
                 <Link to="/register/business?type=clinic">Get Started</Link>
               </Button>
             </div>
@@ -202,7 +202,7 @@ const Landing = () => {
                   <span>Special event bookings</span>
                 </li>
               </ul>
-              <Button className="w-full bg-purple-500 hover:bg-purple-600" asChild>
+              <Button className="w-full bg-purple-500 hover:bg-purple-600">
                 <Link to="/register/business?type=salon">Get Started</Link>
               </Button>
             </div>
@@ -228,7 +228,7 @@ const Landing = () => {
                   <span>POS & ordering integrations</span>
                 </li>
               </ul>
-              <Button className="w-full bg-amber-500 hover:bg-amber-600" asChild>
+              <Button className="w-full bg-amber-500 hover:bg-amber-600">
                 <Link to="/register/business?type=restaurant">Get Started</Link>
               </Button>
             </div>
@@ -243,7 +243,7 @@ const Landing = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Join thousands of businesses using Waitify to manage their waitlists, appointments, and reservations.
           </p>
-          <GlowButton size="lg" asChild>
+          <GlowButton size="lg">
             <Link to="/signup">Get Started for Free</Link>
           </GlowButton>
         </div>

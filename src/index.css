@@ -62,11 +62,11 @@
 
   /* Custom cursor */
   * {
-    cursor: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIiBmaWxsPSIjODJGOUZGIiBmaWxsLW9wYWNpdHk9IjAuOCIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjExLjUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjIiLz48L3N2Zz4="), auto;
+    cursor: none !important;
   }
 
   a, button, input, select, textarea, [role="button"] {
-    cursor: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI2IiBmaWxsPSIjODJGOUZGIiBmaWxsLW9wYWNpdHk9IjAuOCIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjExLjUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjQiLz48L3N2Zz4="), pointer;
+    cursor: none !important;
   }
 }
 

@@ -10,7 +10,6 @@ import {
   User, 
   CheckCircle, 
   XCircle, 
-  Calendar, 
   ArrowLeft,
   ArrowRight,
   MoreHorizontal
@@ -220,8 +219,10 @@ const AppointmentsPage = () => {
     });
   };
 
-  const handleDateChange = (date: Date) => {
-    setSelectedDate(date);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+    }
   };
 
   const navigateDate = (days: number) => {
@@ -298,6 +299,7 @@ const AppointmentsPage = () => {
                       selected={newAppointment.date}
                       onSelect={(date) => date && setNewAppointment({...newAppointment, date})}
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -351,7 +353,7 @@ const AppointmentsPage = () => {
       <Tabs defaultValue="calendar" className="mb-6">
         <TabsList>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar size={16} />
+            <CalendarIcon size={16} />
             <span>Calendar View</span>
           </TabsTrigger>
           <TabsTrigger value="list" className="flex items-center gap-2">
@@ -379,8 +381,9 @@ const AppointmentsPage = () => {
                       <Calendar
                         mode="single"
                         selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
+                        onSelect={handleDateChange}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type SubscriptionPlan = {
@@ -72,21 +71,14 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   }
 ];
 
-// Get the current subscription for a user - for now, we'll use mock data
 export const getCurrentSubscription = async (): Promise<SubscriptionStatus> => {
   try {
-    // Mock data instead of calling Supabase function
-    // In a production environment, this would be replaced with the real API call
-    
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock response for testing
-    // You can modify this to test different subscription states
     const mockSubscription: SubscriptionStatus = {
       active: true,
-      plan: subscriptionPlans[1], // Professional plan
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      plan: subscriptionPlans[1],
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       cancel_at_period_end: false,
       payment_method: {
         type: 'card',
@@ -97,11 +89,6 @@ export const getCurrentSubscription = async (): Promise<SubscriptionStatus> => {
     };
     
     return mockSubscription;
-    
-    // Commented out real implementation for later use with Stripe
-    // const { data, error } = await supabase.functions.invoke('get-subscription');
-    // if (error) throw error;
-    // return data;
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return {
@@ -114,64 +101,62 @@ export const getCurrentSubscription = async (): Promise<SubscriptionStatus> => {
   }
 };
 
-// Initiate a checkout session for subscription
+export const checkSubscriptionAccess = async (requiredPlan: 'basic' | 'professional' | 'enterprise'): Promise<boolean> => {
+  try {
+    const subscription = await getCurrentSubscription();
+    
+    if (!subscription.active || !subscription.plan) {
+      return false;
+    }
+    
+    switch (requiredPlan) {
+      case 'basic':
+        return true;
+      case 'professional':
+        return ['professional', 'enterprise'].includes(subscription.plan.id);
+      case 'enterprise':
+        return subscription.plan.id === 'enterprise';
+      default:
+        return false;
+    }
+  } catch (error) {
+    console.error('Error checking subscription access:', error);
+    return false;
+  }
+};
+
 export const createCheckoutSession = async (planId: string): Promise<{ url: string }> => {
   try {
-    // For now, simulate a successful checkout with mock data
     console.log(`Creating checkout session for plan: ${planId}`);
     
-    // Return a mock URL that redirects back to the settings page with success parameter
     return { url: '/settings?success=true' };
-    
-    // Real implementation for later
-    // const { data, error } = await supabase.functions.invoke('create-checkout', {
-    //   body: { planId }
-    // });
-    // if (error) throw error;
-    // return data;
   } catch (error) {
     console.error('Error creating checkout session:', error);
     throw error;
   }
 };
 
-// Create a portal session for managing subscription
 export const createPortalSession = async (): Promise<{ url: string }> => {
   try {
-    // Return a mock URL for now
     return { url: '/settings' };
-    
-    // Real implementation for later
-    // const { data, error } = await supabase.functions.invoke('create-portal');
-    // if (error) throw error;
-    // return data;
   } catch (error) {
     console.error('Error creating portal session:', error);
     throw error;
   }
 };
 
-// Update payment method
 export const updatePaymentMethod = async (): Promise<{ url: string }> => {
   try {
-    // Return a mock URL for now
     return { url: '/settings' };
-    
-    // Real implementation for later
-    // const { data, error } = await supabase.functions.invoke('update-payment-method');
-    // if (error) throw error;
-    // return data;
   } catch (error) {
     console.error('Error updating payment method:', error);
     throw error;
   }
 };
 
-// Get subscription invoices
 export const getInvoices = async () => {
   try {
-    // Return mock data for now
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     return [
       {
@@ -180,7 +165,7 @@ export const getInvoices = async () => {
         status: 'paid',
         amount_paid: 1999,
         currency: 'inr',
-        created: Date.now() - 86400000 * 30, // 30 days ago
+        created: Date.now() - 86400000 * 30,
         invoice_pdf: '#',
         hosted_invoice_url: '#'
       },
@@ -190,16 +175,11 @@ export const getInvoices = async () => {
         status: 'paid',
         amount_paid: 1999,
         currency: 'inr',
-        created: Date.now() - 86400000 * 60, // 60 days ago
+        created: Date.now() - 86400000 * 60,
         invoice_pdf: '#',
         hosted_invoice_url: '#'
       }
     ];
-    
-    // Real implementation for later
-    // const { data, error } = await supabase.functions.invoke('get-invoices');
-    // if (error) throw error;
-    // return data;
   } catch (error) {
     console.error('Error fetching invoices:', error);
     return [];

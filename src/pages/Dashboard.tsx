@@ -8,6 +8,7 @@ import { getUserWaitlistEntries } from '@/lib/waitlistService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionService';
+import { SubscriptionFeaturesList } from '@/components/dashboard/SubscriptionFeaturesList';
 
 const Dashboard = () => {
   const { user, profile, loading } = useAuth();
@@ -20,7 +21,6 @@ const Dashboard = () => {
     return <div className="h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // Show different dashboard based on user role
   if (role === 'business') {
     return <BusinessDashboard businessType={businessType} />;
   } else {
@@ -76,14 +76,12 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     fetchSubscription();
   }, [user, toast]);
 
-  // Stats data
   const stats = [
     { title: 'Today\'s Waitlist', value: waitlists.length.toString(), icon: <Clock className="h-4 w-4" /> },
     { title: 'Total Customers', value: '245', icon: <Users className="h-4 w-4" /> },
     { title: 'Monthly Revenue', value: '₹42,500', icon: <DollarSign className="h-4 w-4" /> },
   ];
 
-  // Industry-specific features
   let industryFeatures = [];
   
   if (businessType === 'clinic') {
@@ -155,9 +153,9 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
                       <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Upgrade to Pro</h3>
+                      <h3 className="font-medium">Free Tier Active</h3>
                       <p className="text-sm text-muted-foreground">
-                        Get unlimited waitlists, analytics, and more features
+                        Upgrade to unlock more features and remove limitations
                       </p>
                     </div>
                   </div>
@@ -171,21 +169,35 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         </>
       )}
       
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Button onClick={() => navigate('/waitlist')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Waitlist Entry
-        </Button>
-        <Button variant="outline" onClick={() => navigate('/appointments')}>
-          <Calendar className="mr-2 h-4 w-4" />
-          Schedule Appointment
-        </Button>
-        <Button variant="outline" onClick={() => navigate('/settings')}>
-          <Settings className="mr-2 h-4 w-4" />
-          Business Settings
-        </Button>
-      </div>
+      {/* Features section */}
+      {!subscriptionLoading && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <SubscriptionFeaturesList subscription={subscription} />
+          
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <Button onClick={() => navigate('/waitlist')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Waitlist Entry
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/appointments')}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Schedule Appointment
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Business Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">

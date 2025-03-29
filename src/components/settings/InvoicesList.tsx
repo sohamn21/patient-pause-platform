@@ -13,9 +13,9 @@ interface Invoice {
   id: string;
   number: string;
   status: string;
-  amount_due: number; // Changed from amount_paid to amount_due
+  amount_due: number;
   currency: string;
-  created: string | number; // Support both string and number
+  created: string | number;
   invoice_pdf: string;
   hosted_invoice_url: string;
 }
@@ -45,30 +45,6 @@ export const InvoicesList = () => {
     }
   };
 
-  // Mock data for invoices without Stripe integration
-  const mockInvoices: Invoice[] = [
-    {
-      id: 'inv_mock1',
-      number: 'INV-001',
-      status: 'paid',
-      amount_due: 1999, // Changed from amount_paid to amount_due
-      currency: 'inr',
-      created: Date.now() - 86400000 * 30, // 30 days ago
-      invoice_pdf: '#',
-      hosted_invoice_url: '#'
-    },
-    {
-      id: 'inv_mock2',
-      number: 'INV-002',
-      status: 'paid',
-      amount_due: 1999, // Changed from amount_paid to amount_due
-      currency: 'inr',
-      created: Date.now() - 86400000 * 60, // 60 days ago
-      invoice_pdf: '#',
-      hosted_invoice_url: '#'
-    }
-  ];
-
   // Format currency display
   const formatCurrency = (amount: number, currency: string) => {
     const currencySymbol = currency === 'inr' ? '₹' : '$';
@@ -87,7 +63,7 @@ export const InvoicesList = () => {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
-        ) : invoices.length > 0 || mockInvoices.length > 0 ? (
+        ) : invoices.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -99,8 +75,7 @@ export const InvoicesList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Use mock data instead of real invoices for now */}
-              {mockInvoices.map((invoice) => (
+              {invoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.number}</TableCell>
                   <TableCell>{format(new Date(invoice.created), "MMM d, yyyy")}</TableCell>

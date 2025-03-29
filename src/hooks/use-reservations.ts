@@ -22,17 +22,13 @@ export function useReservations() {
 
     setLoading(true);
     try {
-      // In a production environment, we would fetch from Supabase
-      // For now we just use the state
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('business_id', user.id);
       
-      // Example of fetching if we had a reservations table:
-      // const { data, error } = await supabase
-      //   .from('reservations')
-      //   .select('*')
-      //   .eq('business_id', user.id);
-      
-      // if (error) throw error;
-      // setReservations(data || []);
+      if (error) throw error;
+      setReservations(data || []);
       
       setLoading(false);
     } catch (error) {
@@ -50,24 +46,16 @@ export function useReservations() {
     if (!user) return null;
 
     try {
-      // In a production app, would save to Supabase here
-      // const { data: newReservation, error } = await supabase
-      //   .from('reservations')
-      //   .insert({
-      //     ...data,
-      //     business_id: user.id
-      //   })
-      //   .select()
-      //   .single();
+      const { data: newReservation, error } = await supabase
+        .from('reservations')
+        .insert({
+          ...data,
+          business_id: user.id
+        })
+        .select()
+        .single();
       
-      // if (error) throw error;
-      
-      const newReservation: Reservation = {
-        ...data,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        businessId: user.id,
-      };
+      if (error) throw error;
 
       setReservations((prev) => [...prev, newReservation]);
       
@@ -87,8 +75,6 @@ export function useReservations() {
   }, [user, toast]);
 
   const updateTableStatus = useCallback((tableId: string, status: 'available' | 'occupied' | 'reserved') => {
-    // In a real implementation, this would update a tables table in Supabase
-    // For now we'll just log and show a toast notification
     console.log(`Updating table ${tableId} status to ${status}`);
     
     toast({
@@ -96,7 +82,7 @@ export function useReservations() {
       description: `Table status changed to: ${status}`,
     });
     
-    // If the status is 'available', we should remove any reservations for this table
+    // Remove any reservations for this table if status is 'available'
     if (status === 'available') {
       setReservations(prev => prev.filter(res => res.tableId !== tableId));
     }
@@ -104,30 +90,23 @@ export function useReservations() {
 
   const cancelReservation = useCallback(async (reservationId: string) => {
     try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', reservationId);
+      
+      if (error) throw error;
+      
       // Find the reservation to get the tableId
       const reservation = reservations.find(r => r.id === reservationId);
-      if (!reservation) {
-        toast({
-          title: 'Error',
-          description: 'Reservation not found',
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
-      // In a production app, this would delete from Supabase
-      // const { error } = await supabase
-      //   .from('reservations')
-      //   .delete()
-      //   .eq('id', reservationId);
-      
-      // if (error) throw error;
       
       // Remove from local state
       setReservations(prev => prev.filter(r => r.id !== reservationId));
       
-      // Update table status
-      updateTableStatus(reservation.tableId, 'available');
+      // Update table status if reservation exists
+      if (reservation) {
+        updateTableStatus(reservation.tableId, 'available');
+      }
       
       toast({
         title: 'Reservation Cancelled',

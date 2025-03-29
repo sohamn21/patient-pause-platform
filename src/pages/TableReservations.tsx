@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,38 +7,34 @@ import { ReservationsList } from "@/components/restaurant/ReservationsList";
 import { useReservations } from "@/hooks/use-reservations";
 import { ReservationData } from "@/components/restaurant/TableReservation";
 import { FloorItem } from "@/components/restaurant/types";
-
-// This would normally be imported from a floor plan component
-const mockTableData: FloorItem[] = [
-  {
-    id: "table-1",
-    type: "table",
-    x: 100,
-    y: 100,
-    width: 80,
-    height: 80,
-    number: 1,
-    capacity: 4,
-    status: "available",
-    shape: "rectangle",
-  },
-  {
-    id: "table-2",
-    type: "table",
-    x: 300,
-    y: 100,
-    width: 80,
-    height: 80,
-    number: 2,
-    capacity: 4,
-    status: "reserved",
-    shape: "rectangle",
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 const TableReservationsPage = () => {
+  const { user } = useAuth();
   const { createReservation, updateTableStatus } = useReservations();
-  const [tables, setTables] = useState<FloorItem[]>(mockTableData);
+  const [tables, setTables] = useState<FloorItem[]>([]);
+
+  useEffect(() => {
+    const fetchTables = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('business_id', user.id);
+        
+        if (error) throw error;
+        
+        setTables(data || []);
+      } catch (error) {
+        console.error('Error fetching tables:', error);
+      }
+    };
+
+    fetchTables();
+  }, [user]);
 
   const handleReserveTable = async (tableId: string, data: ReservationData) => {
     const reservation = await createReservation(data);
@@ -109,8 +105,6 @@ const TableReservationsPage = () => {
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            // In a real implementation, this would open the reservation dialog
-                            // For demo purposes, just update the status
                             setTables((prev) =>
                               prev.map((t) =>
                                 t.id === table.id ? { ...t, status: 'reserved' } : t

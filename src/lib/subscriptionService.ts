@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type SubscriptionPlan = {
@@ -73,22 +74,22 @@ export const subscriptionPlans: SubscriptionPlan[] = [
 
 export const getCurrentSubscription = async (): Promise<SubscriptionStatus> => {
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .single();
     
-    const mockSubscription: SubscriptionStatus = {
-      active: true,
-      plan: subscriptionPlans[1],
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      cancel_at_period_end: false,
-      payment_method: {
-        type: 'card',
-        last4: '4242',
-        exp_month: 12,
-        exp_year: 2024
-      }
+    if (error) throw error;
+    
+    const plan = subscriptionPlans.find(p => p.id === data.plan_id);
+    
+    return {
+      active: data.active,
+      plan: plan || null,
+      current_period_end: data.current_period_end,
+      cancel_at_period_end: data.cancel_at_period_end,
+      payment_method: data.payment_method
     };
-    
-    return mockSubscription;
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return {
@@ -126,60 +127,38 @@ export const checkSubscriptionAccess = async (requiredPlan: 'basic' | 'professio
 };
 
 export const createCheckoutSession = async (planId: string): Promise<{ url: string }> => {
-  try {
-    console.log(`Creating checkout session for plan: ${planId}`);
-    
-    return { url: '/settings?success=true' };
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    throw error;
-  }
+  const { data, error } = await supabase.functions.invoke('create-checkout', {
+    body: JSON.stringify({ planId })
+  });
+
+  if (error) throw error;
+  
+  return data;
 };
 
 export const createPortalSession = async (): Promise<{ url: string }> => {
-  try {
-    return { url: '/settings' };
-  } catch (error) {
-    console.error('Error creating portal session:', error);
-    throw error;
-  }
+  const { data, error } = await supabase.functions.invoke('create-portal');
+
+  if (error) throw error;
+  
+  return data;
 };
 
 export const updatePaymentMethod = async (): Promise<{ url: string }> => {
-  try {
-    return { url: '/settings' };
-  } catch (error) {
-    console.error('Error updating payment method:', error);
-    throw error;
-  }
+  const { data, error } = await supabase.functions.invoke('update-payment');
+
+  if (error) throw error;
+  
+  return data;
 };
 
 export const getInvoices = async () => {
   try {
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const { data, error } = await supabase.functions.invoke('get-invoices');
     
-    return [
-      {
-        id: 'inv_mock1',
-        number: 'INV-001',
-        status: 'paid',
-        amount_due: 1999,
-        currency: 'inr',
-        created: new Date(Date.now() - 86400000 * 30).toISOString(),
-        invoice_pdf: '#',
-        hosted_invoice_url: '#'
-      },
-      {
-        id: 'inv_mock2',
-        number: 'INV-002',
-        status: 'paid',
-        amount_due: 1999,
-        currency: 'inr',
-        created: new Date(Date.now() - 86400000 * 60).toISOString(),
-        invoice_pdf: '#',
-        hosted_invoice_url: '#'
-      }
-    ];
+    if (error) throw error;
+    
+    return data;
   } catch (error) {
     console.error('Error fetching invoices:', error);
     return [];

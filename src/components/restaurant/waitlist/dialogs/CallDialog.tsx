@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WaitlistEntryType } from "@/components/restaurant/types";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CallDialogProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ interface CallDialogProps {
 
 export function CallDialog({ isOpen, onOpenChange, entry }: CallDialogProps) {
   const { toast } = useToast();
+  const [calling, setCalling] = useState(false);
 
   const customerName = entry.profiles ? 
     `${entry.profiles.first_name || ''} ${entry.profiles.last_name || ''}`.trim() : 
@@ -27,7 +30,7 @@ export function CallDialog({ isOpen, onOpenChange, entry }: CallDialogProps) {
   
   const phoneNumber = entry.profiles?.phone_number || "";
 
-  const handleCallCustomer = () => {
+  const handleCallCustomer = async () => {
     if (!phoneNumber) {
       toast({
         title: "No Phone Number",
@@ -37,13 +40,42 @@ export function CallDialog({ isOpen, onOpenChange, entry }: CallDialogProps) {
       return;
     }
 
-    window.open(`tel:${phoneNumber}`);
-    onOpenChange(false);
+    setCalling(true);
+    
+    try {
+      // Log the call in the database (in a real app, we would store this in a calls table)
+      // For now, we'll just update the notes on the waitlist entry
+      const currentNotes = entry.notes || "";
+      const timestamp = new Date().toLocaleString();
+      const callNote = `Called on ${timestamp}\n`;
+      
+      const updatedNotes = callNote + currentNotes;
+      
+      await supabase
+        .from('waitlist_entries')
+        .update({ notes: updatedNotes })
+        .eq('id', entry.id);
+      
+      // Initiate the call
+      window.open(`tel:${phoneNumber}`);
+      
+      // Close the dialog
+      onOpenChange(false);
 
-    toast({
-      title: "Calling Customer",
-      description: `Initiating call to ${customerName} at ${phoneNumber}`,
-    });
+      toast({
+        title: "Calling Customer",
+        description: `Initiating call to ${customerName} at ${phoneNumber}`,
+      });
+    } catch (error) {
+      console.error("Error logging call:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log the call",
+        variant: "destructive",
+      });
+    } finally {
+      setCalling(false);
+    }
   };
 
   return (
@@ -61,7 +93,9 @@ export function CallDialog({ isOpen, onOpenChange, entry }: CallDialogProps) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleCallCustomer}>Call Now</Button>
+          <Button onClick={handleCallCustomer} disabled={calling}>
+            {calling ? "Initiating..." : "Call Now"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

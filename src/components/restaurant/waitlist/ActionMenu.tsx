@@ -41,16 +41,20 @@ export function ActionMenu({
 }: ActionMenuProps) {
   const phoneNumber = entry.profiles?.phone_number || "";
   const email = entry.profiles?.email || "";
+  
+  // Check if customer can be emailed
+  const canEmail = email && entry.status !== "seated" && entry.status !== "cancelled";
 
   return (
     <div className="flex items-center justify-end gap-2">
       <Button 
         size="icon" 
         variant="ghost"
-        onClick={onEmail}  // Default to email notification
-        disabled={entry.status === "seated" || entry.status === "cancelled" || !email}
+        onClick={onEmail}
+        disabled={!canEmail}
+        title={canEmail ? "Email customer" : "No email available"}
       >
-        <Mail size={16} />
+        <Mail size={16} className={!canEmail ? "text-muted-foreground" : ""} />
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -68,7 +72,7 @@ export function ActionMenu({
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={onEmail}
-            disabled={entry.status === "seated" || entry.status === "cancelled" || !email}
+            disabled={!canEmail}
           >
             <Mail size={14} className="mr-2" />
             Email Customer

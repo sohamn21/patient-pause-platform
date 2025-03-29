@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { WaitlistEntryType } from "@/components/restaurant/types";
+import { Loader2 } from "lucide-react";
 
 interface EmailDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
   const [emailSubject, setEmailSubject] = useState("Your Table is Ready");
   const [emailMessage, setEmailMessage] = useState("Your table is now ready. Please come to the host stand when you arrive.");
   const [isLoading, setIsLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const { toast } = useToast();
 
   const customerName = entry.profiles ? 
@@ -34,16 +36,18 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
     "Customer";
   
   // Get email from profiles or fetch it
-  const [email, setEmail] = useState<string | null>(null);
-
-  // Fetch profile email when dialog opens
   useEffect(() => {
     const fetchUserEmail = async () => {
       if (!entry.user_id || !isOpen) return;
       
+      // First check if email is already in the entry
+      if (entry.profiles?.email) {
+        setUserEmail(entry.profiles.email);
+        return;
+      }
+      
       try {
         // Retrieve the email using the send-notification edge function
-        // which has service role access and can get the email
         const { data, error } = await supabase.functions.invoke("send-notification", {
           body: {
             action: "get-email",
@@ -53,7 +57,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         
         if (error) throw error;
         if (data && data.email) {
-          setEmail(data.email);
+          setUserEmail(data.email);
         }
       } catch (error) {
         console.error("Error fetching user email:", error);
@@ -61,10 +65,10 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
     };
 
     fetchUserEmail();
-  }, [entry.user_id, isOpen]);
+  }, [entry.user_id, entry.profiles?.email, isOpen]);
 
   const handleEmailCustomer = async () => {
-    if (!email) {
+    if (!userEmail) {
       toast({
         title: "No Email Address",
         description: "Could not find an email address for this customer",
@@ -88,7 +92,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       const { data, error } = await supabase.functions.invoke("send-notification", {
         body: {
           userId: entry.user_id,
-          email: email,
+          email: userEmail,
           subject: emailSubject,
           message: emailMessage,
           waitlistId: entry.waitlist_id,
@@ -99,9 +103,15 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
 
       if (error) throw error;
 
+      // Update the waitlist entry status to notified
+      await supabase
+        .from("waitlist_entries")
+        .update({ status: "notified" })
+        .eq("id", entry.id);
+
       toast({
         title: "Email Sent",
-        description: `Email sent to ${customerName} at ${email}`,
+        description: `Email sent to ${customerName} at ${userEmail}`,
       });
 
       // If refreshEntries function exists, call it to refresh the list
@@ -128,7 +138,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         <DialogHeader>
           <DialogTitle>Email Customer</DialogTitle>
           <DialogDescription>
-            Send an email to {customerName} {email ? `at ${email}` : ""}.
+            Send an email to {customerName} {userEmail ? `at ${userEmail}` : ""}.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -154,8 +164,19 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleEmailCustomer} disabled={isLoading || !email}>
-            {isLoading ? "Sending..." : "Send Email"}
+          <Button 
+            onClick={handleEmailCustomer} 
+            disabled={isLoading || !userEmail}
+            className="flex items-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Send Email"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

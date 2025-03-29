@@ -174,9 +174,14 @@ const WaitlistDetails = () => {
                             <p className="font-medium">
                               {entry.profiles?.first_name} {entry.profiles?.last_name}
                             </p>
-                            <p className="text-sm text-muted-foreground">
-                              {entry.profiles?.phone_number || "No phone"}
-                            </p>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              {entry.profiles?.phone_number && (
+                                <p>{entry.profiles.phone_number}</p>
+                              )}
+                              {entry.profiles?.email && (
+                                <p className="text-primary/80">{entry.profiles.email}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">

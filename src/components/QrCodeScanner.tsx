@@ -4,6 +4,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from '@/components/ui/blur-card';
 import { Camera, StopCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface QrCodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -18,6 +19,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   const [scanner, setScanner] = useState<Html5Qrcode | null>(null);
   const [hasCamera, setHasCamera] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Clean up the scanner when component unmounts
@@ -46,8 +48,13 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
             onScanSuccess(decodedText);
             html5QrCode.stop().catch(() => {});
             setIsScanning(false);
+            toast({
+              title: "QR Code Detected",
+              description: "Successfully scanned a QR code",
+            });
           },
           (errorMessage) => {
+            // This is called for each non-successful scan, so we don't want to show errors here
             if (onScanError) {
               onScanError(errorMessage);
             }
@@ -55,13 +62,27 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
         );
         
         setIsScanning(true);
+        toast({
+          title: "Scanner Started",
+          description: "Point your camera at a QR code",
+        });
       } else {
         setHasCamera(false);
         setErrorMessage("No camera found on this device");
+        toast({
+          title: "Camera Error",
+          description: "No camera found on this device",
+          variant: "destructive",
+        });
       }
     } catch (err) {
       console.error("Error starting QR scanner:", err);
       setErrorMessage("Failed to start camera. Please ensure you've granted camera permissions.");
+      toast({
+        title: "Camera Error",
+        description: "Failed to start camera. Please check permissions.",
+        variant: "destructive",
+      });
       setIsScanning(false);
     }
   };
@@ -70,6 +91,10 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
     if (scanner) {
       scanner.stop().catch(() => {});
       setIsScanning(false);
+      toast({
+        title: "Scanner Stopped",
+        description: "QR code scanner has been stopped",
+      });
     }
   };
 

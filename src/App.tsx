@@ -28,6 +28,8 @@ import CustomerAppointments from './pages/customer/CustomerAppointments';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import CustomCursor from './components/CustomCursor';
 import JoinWaitlist from './pages/JoinWaitlist';
+import AdminPage from './pages/AdminPage';
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
@@ -45,6 +47,9 @@ function App() {
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/join-waitlist" element={<JoinWaitlist />} />
           <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           
           {/* Business routes */}
           <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

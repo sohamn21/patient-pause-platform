@@ -13,7 +13,8 @@ import {
   ListFilter,
   Plus,
   QrCode,
-  Share
+  Share,
+  ShieldCheck
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
@@ -325,6 +326,10 @@ const Waitlist = () => {
           text: 'Scan this QR code to join our waitlist',
           url: shareUrl,
         });
+        toast({
+          title: "Shared",
+          description: "Waitlist join link shared successfully",
+        });
       } else {
         await navigator.clipboard.writeText(shareUrl);
         toast({
@@ -334,6 +339,11 @@ const Waitlist = () => {
       }
     } catch (error) {
       console.error('Error sharing:', error);
+      toast({
+        title: "Share Failed",
+        description: "Failed to share waitlist link",
+        variant: "destructive",
+      });
     }
   };
 

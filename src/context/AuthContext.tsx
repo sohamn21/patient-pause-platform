@@ -127,7 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Redirect based on user role
-      if (profileData.role === 'customer') {
+      if (profileData.role === 'admin') {
+        navigate('/admin');
+      } else if (profileData.role === 'customer') {
         navigate('/customer/dashboard');
       } else {
         navigate('/dashboard');
@@ -179,7 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         // Redirect based on user role
-        if (credentials.role === 'customer') {
+        if (credentials.role === 'admin') {
+          navigate('/admin');
+        } else if (credentials.role === 'customer') {
           navigate('/customer/dashboard');
         } else {
           navigate('/dashboard');

@@ -35,51 +35,58 @@ import TableReservationsPage from './pages/TableReservations';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <CustomCursor />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/user-register" element={<UserRegisterPage />} />
-          <Route path="/register/user" element={<UserRegisterPage />} />
-          <Route path="/business-register" element={<BusinessRegisterPage />} />
-          <Route path="/register/business" element={<BusinessRegisterPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/join-waitlist" element={<JoinWaitlist />} />
-          <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
-          
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
-          
-          {/* Business routes */}
-          <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/waitlist" element={<WaitlistPage />} />
-            <Route path="/appointments" element={<AppointmentsPage />} />
-            <Route path="/tables" element={<TablesPage />} />
-            <Route path="/table-reservations" element={<TableReservationsPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/staff" element={<StaffManagementPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/locations" element={<LocationsPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
-          
-          {/* Customer routes */}
-          <Route path="/customer" element={<ProtectedRoute><CustomerLayout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/customer/dashboard" replace />} />
-            <Route path="dashboard" element={<CustomerDashboard />} />
-            <Route path="profile" element={<CustomerProfile />} />
-            <Route path="waitlists" element={<CustomerWaitlists />} />
-            <Route path="appointments" element={<CustomerAppointments />} />
-          </Route>
-          
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
+      <AppContent />
     </BrowserRouter>
+  );
+}
+
+// Separate component to fix the React hooks issue
+function AppContent() {
+  return (
+    <AuthProvider>
+      <CustomCursor />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/user-register" element={<UserRegisterPage />} />
+        <Route path="/register/user" element={<UserRegisterPage />} />
+        <Route path="/business-register" element={<BusinessRegisterPage />} />
+        <Route path="/register/business" element={<BusinessRegisterPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/join-waitlist" element={<JoinWaitlist />} />
+        <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
+        
+        {/* Admin routes */}
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+        
+        {/* Business routes */}
+        <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/tables" element={<TablesPage />} />
+          <Route path="/table-reservations" element={<TableReservationsPage />} />
+          <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/staff" element={<StaffManagementPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/locations" element={<LocationsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+        
+        {/* Customer routes */}
+        <Route path="/customer" element={<ProtectedRoute><CustomerLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/customer/dashboard" replace />} />
+          <Route path="dashboard" element={<CustomerDashboard />} />
+          <Route path="profile" element={<CustomerProfile />} />
+          <Route path="waitlists" element={<CustomerWaitlists />} />
+          <Route path="appointments" element={<CustomerAppointments />} />
+        </Route>
+        
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 

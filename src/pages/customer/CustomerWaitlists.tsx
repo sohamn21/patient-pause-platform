@@ -112,6 +112,14 @@ const CustomerWaitlists = () => {
     });
   };
 
+  const handleSwitchToDiscoverTab = () => {
+    // Create a safer way to switch to the discover tab
+    const tabsElement = document.querySelector('button[data-value="discover"]') as HTMLButtonElement;
+    if (tabsElement) {
+      tabsElement.click();
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Waitlists</h1>
@@ -172,7 +180,7 @@ const CustomerWaitlists = () => {
               <p className="text-muted-foreground mb-4">
                 You are not currently on any waitlists.
               </p>
-              <Button onClick={() => document.querySelector('[data-value="discover"]')?.click()}>
+              <Button onClick={handleSwitchToDiscoverTab}>
                 Discover Waitlists
               </Button>
             </BlurCard>

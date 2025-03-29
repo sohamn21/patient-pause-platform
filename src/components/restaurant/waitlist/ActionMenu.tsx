@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { 
   Eye, 
-  SendHorizonal, 
-  Phone, 
   Mail, 
+  Phone, 
+  SendHorizonal, 
   MoreVertical, 
   UserCheck, 
   X, 
@@ -47,10 +47,10 @@ export function ActionMenu({
       <Button 
         size="icon" 
         variant="ghost"
-        onClick={onEmail}  // Changed from onNotify to onEmail for the quick action button
-        disabled={entry.status === "seated" || entry.status === "cancelled"}
+        onClick={onEmail}  // Default to email notification
+        disabled={entry.status === "seated" || entry.status === "cancelled" || !email}
       >
-        <Mail size={16} />  {/* Changed from SendHorizonal to Mail icon */}
+        <Mail size={16} />
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -67,10 +67,10 @@ export function ActionMenu({
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={onEmail}  // Changed from onNotify to onEmail as default
-            disabled={entry.status === "seated" || entry.status === "cancelled"}
+            onClick={onEmail}
+            disabled={entry.status === "seated" || entry.status === "cancelled" || !email}
           >
-            <Mail size={14} className="mr-2" />  {/* Changed from SendHorizonal to Mail icon */}
+            <Mail size={14} className="mr-2" />
             Email Customer
           </DropdownMenuItem>
           <DropdownMenuItem 

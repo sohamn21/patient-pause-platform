@@ -136,7 +136,7 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
   
   if (error) throw error;
   
-  // Ensure the status field is properly typed and handle profiles correctly
+  // Safely map the data to the expected type with proper null handling
   return data.map(entry => {
     // Create a properly shaped object that matches WaitlistEntryType
     const typedEntry: WaitlistEntryType = {
@@ -149,13 +149,13 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes: entry.notes,
       created_at: entry.created_at,
       updated_at: entry.updated_at,
-      // Handle profiles mapping correctly
+      // Safely handle profiles which may be null or may have null properties
       profiles: entry.profiles ? {
-        username: entry.profiles.username,
-        first_name: entry.profiles.first_name,
-        last_name: entry.profiles.last_name,
-        phone_number: entry.profiles.phone_number,
-        email: entry.profiles.email
+        username: entry.profiles.username || null,
+        first_name: entry.profiles.first_name || null,
+        last_name: entry.profiles.last_name || null,
+        phone_number: entry.profiles.phone_number || null,
+        email: entry.profiles.email || null
       } : null
     };
     

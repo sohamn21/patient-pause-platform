@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Patient, 
@@ -10,7 +9,7 @@ import {
   Appointment, 
   AppointmentFormData 
 } from "@/types/clinic";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // Practitioners
 export async function getPractitioners(businessId: string): Promise<Practitioner[]> {
@@ -24,11 +23,6 @@ export async function getPractitioners(businessId: string): Promise<Practitioner
     return data || [];
   } catch (error) {
     console.error("Error getting practitioners:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load practitioners",
-      variant: "destructive",
-    });
     return [];
   }
 }
@@ -45,11 +39,6 @@ export async function getPractitioner(id: string): Promise<Practitioner | null> 
     return data;
   } catch (error) {
     console.error("Error getting practitioner:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load practitioner details",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -72,11 +61,6 @@ export async function createPractitioner(formData: PractitionerFormData, busines
     return data;
   } catch (error) {
     console.error("Error creating practitioner:", error);
-    toast({
-      title: "Error",
-      description: "Failed to create practitioner",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -100,11 +84,6 @@ export async function updatePractitioner(id: string, formData: PractitionerFormD
     return data;
   } catch (error) {
     console.error("Error updating practitioner:", error);
-    toast({
-      title: "Error",
-      description: "Failed to update practitioner",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -120,11 +99,6 @@ export async function deletePractitioner(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error deleting practitioner:", error);
-    toast({
-      title: "Error",
-      description: "Failed to delete practitioner",
-      variant: "destructive",
-    });
     return false;
   }
 }
@@ -141,11 +115,6 @@ export async function getServices(businessId: string): Promise<Service[]> {
     return data || [];
   } catch (error) {
     console.error("Error getting services:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load services",
-      variant: "destructive",
-    });
     return [];
   }
 }
@@ -162,11 +131,6 @@ export async function getService(id: string): Promise<Service | null> {
     return data;
   } catch (error) {
     console.error("Error getting service:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load service details",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -189,11 +153,6 @@ export async function createService(formData: ServiceFormData, businessId: strin
     return data;
   } catch (error) {
     console.error("Error creating service:", error);
-    toast({
-      title: "Error",
-      description: "Failed to create service",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -217,11 +176,6 @@ export async function updateService(id: string, formData: ServiceFormData): Prom
     return data;
   } catch (error) {
     console.error("Error updating service:", error);
-    toast({
-      title: "Error",
-      description: "Failed to update service",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -237,11 +191,6 @@ export async function deleteService(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error deleting service:", error);
-    toast({
-      title: "Error",
-      description: "Failed to delete service",
-      variant: "destructive",
-    });
     return false;
   }
 }
@@ -252,30 +201,37 @@ export async function getPatients(): Promise<Patient[]> {
     const { data, error } = await supabase
       .from("patients")
       .select(`
-        *,
-        profile:id (
+        id,
+        medical_history,
+        allergies,
+        emergency_contact,
+        preferred_practitioner_id,
+        notes,
+        date_of_birth,
+        created_at,
+        updated_at,
+        profiles:id (
           first_name,
           last_name,
           phone_number
         )
       `);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error fetching patients:", error);
+      throw error;
+    }
     
-    // Transform the data to match our expected Patient type
+    console.log("Patients data from Supabase:", data);
+    
     const patients = data?.map(patient => ({
       ...patient,
-      profile: patient.profile
+      profile: patient.profiles
     })) || [];
     
     return patients;
   } catch (error) {
     console.error("Error getting patients:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load patients",
-      variant: "destructive",
-    });
     return [];
   }
 }
@@ -285,8 +241,16 @@ export async function getPatient(id: string): Promise<Patient | null> {
     const { data, error } = await supabase
       .from("patients")
       .select(`
-        *,
-        profile:id (
+        id,
+        medical_history,
+        allergies,
+        emergency_contact,
+        preferred_practitioner_id,
+        notes,
+        date_of_birth,
+        created_at,
+        updated_at,
+        profiles:id (
           first_name,
           last_name,
           phone_number
@@ -298,22 +262,16 @@ export async function getPatient(id: string): Promise<Patient | null> {
     if (error) throw error;
     return {
       ...data,
-      profile: data.profile
+      profile: data.profiles
     };
   } catch (error) {
     console.error("Error getting patient:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load patient details",
-      variant: "destructive",
-    });
     return null;
   }
 }
 
 export async function createPatientProfile(userId: string, formData: PatientFormData): Promise<boolean> {
   try {
-    // First update the user's profile
     const { error: profileError } = await supabase
       .from("profiles")
       .update({
@@ -325,7 +283,6 @@ export async function createPatientProfile(userId: string, formData: PatientForm
 
     if (profileError) throw profileError;
 
-    // Then create a patient record
     const { error: patientError } = await supabase
       .from("patients")
       .insert({
@@ -342,18 +299,12 @@ export async function createPatientProfile(userId: string, formData: PatientForm
     return true;
   } catch (error) {
     console.error("Error creating patient profile:", error);
-    toast({
-      title: "Error",
-      description: "Failed to create patient profile",
-      variant: "destructive",
-    });
     return false;
   }
 }
 
 export async function updatePatient(id: string, formData: PatientFormData): Promise<boolean> {
   try {
-    // Update the user's profile
     const { error: profileError } = await supabase
       .from("profiles")
       .update({
@@ -365,7 +316,6 @@ export async function updatePatient(id: string, formData: PatientFormData): Prom
 
     if (profileError) throw profileError;
 
-    // Update the patient record
     const { error: patientError } = await supabase
       .from("patients")
       .update({
@@ -383,11 +333,6 @@ export async function updatePatient(id: string, formData: PatientFormData): Prom
     return true;
   } catch (error) {
     console.error("Error updating patient:", error);
-    toast({
-      title: "Error",
-      description: "Failed to update patient",
-      variant: "destructive",
-    });
     return false;
   }
 }
@@ -416,11 +361,6 @@ export async function getAppointments(businessId: string): Promise<Appointment[]
     return data || [];
   } catch (error) {
     console.error("Error getting appointments:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load appointments",
-      variant: "destructive",
-    });
     return [];
   }
 }
@@ -440,11 +380,6 @@ export async function getPatientAppointments(patientId: string): Promise<Appoint
     return data || [];
   } catch (error) {
     console.error("Error getting patient appointments:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load your appointments",
-      variant: "destructive",
-    });
     return [];
   }
 }
@@ -473,24 +408,17 @@ export async function getAppointment(id: string): Promise<Appointment | null> {
     return data;
   } catch (error) {
     console.error("Error getting appointment:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load appointment details",
-      variant: "destructive",
-    });
     return null;
   }
 }
 
 export async function createAppointment(formData: AppointmentFormData, businessId: string): Promise<Appointment | null> {
   try {
-    // Get the service to calculate end time
     const service = await getService(formData.service_id);
     if (!service) {
       throw new Error("Service not found");
     }
     
-    // Calculate end time based on service duration
     const [hours, minutes] = formData.start_time.split(':');
     const startDate = new Date();
     startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
@@ -519,18 +447,12 @@ export async function createAppointment(formData: AppointmentFormData, businessI
     return data;
   } catch (error) {
     console.error("Error creating appointment:", error);
-    toast({
-      title: "Error",
-      description: "Failed to create appointment",
-      variant: "destructive",
-    });
     return null;
   }
 }
 
 export async function updateAppointment(id: string, formData: AppointmentFormData): Promise<Appointment | null> {
   try {
-    // Get the service to calculate end time if not provided
     let end_time = formData.end_time;
     if (!end_time) {
       const service = await getService(formData.service_id);
@@ -566,11 +488,6 @@ export async function updateAppointment(id: string, formData: AppointmentFormDat
     return data;
   } catch (error) {
     console.error("Error updating appointment:", error);
-    toast({
-      title: "Error",
-      description: "Failed to update appointment",
-      variant: "destructive",
-    });
     return null;
   }
 }
@@ -589,11 +506,6 @@ export async function updateAppointmentStatus(id: string, status: Appointment['s
     return true;
   } catch (error) {
     console.error("Error updating appointment status:", error);
-    toast({
-      title: "Error",
-      description: "Failed to update appointment status",
-      variant: "destructive",
-    });
     return false;
   }
 }
@@ -609,11 +521,6 @@ export async function deleteAppointment(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error deleting appointment:", error);
-    toast({
-      title: "Error",
-      description: "Failed to delete appointment",
-      variant: "destructive",
-    });
     return false;
   }
 }

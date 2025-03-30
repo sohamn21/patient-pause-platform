@@ -15,10 +15,11 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { PlusCircle, Search, Calendar, Info, FileText, Trash } from 'lucide-react';
+import { PlusCircle, Search, Calendar, Info } from 'lucide-react';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PatientsPage = () => {
   const { user } = useAuth();
@@ -26,19 +27,34 @@ const PatientsPage = () => {
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
 
   useEffect(() => {
     const fetchPatients = async () => {
       setIsLoading(true);
-      const data = await getPatients();
-      setPatients(data);
-      setIsLoading(false);
+      setHasError(false);
+      try {
+        console.log("Fetching patients...");
+        const data = await getPatients();
+        console.log("Patients fetched:", data);
+        setPatients(data);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        setHasError(true);
+        toast({
+          title: "Error",
+          description: "Failed to load patients. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchPatients();
-  }, [user]);
+  }, [user, toast]);
 
   const filteredPatients = patients.filter(patient => {
     const fullName = `${patient.profile?.first_name || ''} ${patient.profile?.last_name || ''}`.toLowerCase();
@@ -53,6 +69,25 @@ const PatientsPage = () => {
     navigate(`/appointments?patientId=${patientId}`);
   };
 
+  const refreshPatients = async () => {
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const data = await getPatients();
+      setPatients(data);
+    } catch (error) {
+      console.error("Error refreshing patients:", error);
+      setHasError(true);
+      toast({
+        title: "Error",
+        description: "Failed to refresh patients. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -62,10 +97,17 @@ const PatientsPage = () => {
             Manage and view your patient records
           </p>
         </div>
-        <Button onClick={() => setShowNewPatientForm(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Patient
-        </Button>
+        <div className="flex gap-2">
+          {hasError && (
+            <Button onClick={refreshPatients} variant="outline">
+              Retry
+            </Button>
+          )}
+          <Button onClick={() => setShowNewPatientForm(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New Patient
+          </Button>
+        </div>
       </div>
 
       {showNewPatientForm && (
@@ -79,7 +121,7 @@ const PatientsPage = () => {
               onSuccess={() => {
                 setShowNewPatientForm(false);
                 // Refresh the patients list
-                getPatients().then(setPatients);
+                refreshPatients();
                 toast({
                   title: "Success",
                   description: "Patient added successfully",
@@ -106,7 +148,18 @@ const PatientsPage = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-4">Loading patient records...</div>
+            <div className="space-y-2">
+              {[...Array(5)].map((_, index) => (
+                <Skeleton key={index} className="w-full h-12" />
+              ))}
+            </div>
+          ) : hasError ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">Failed to load patients</p>
+              <Button onClick={refreshPatients} variant="outline">
+                Try Again
+              </Button>
+            </div>
           ) : filteredPatients.length > 0 ? (
             <Table>
               <TableHeader>

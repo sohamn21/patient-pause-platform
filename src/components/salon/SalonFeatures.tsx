@@ -11,7 +11,7 @@ export const SalonFeatures = () => {
   const features = [
     {
       title: 'Stylist Management',
-      description: 'Organize your stylists' schedules, specialties, and client assignments.',
+      description: 'Organize your stylists\' schedules, specialties, and client assignments.',
       icon: <Scissors className="h-6 w-6 text-primary" />,
       action: () => navigate('/staff')
     },
@@ -32,7 +32,7 @@ export const SalonFeatures = () => {
       description: 'Efficiently manage walk-in clients with our digital queue system.',
       icon: <Clock className="h-6 w-6 text-primary" />,
       action: () => navigate('/waitlist')
-    },
+    }
   ];
   
   return (

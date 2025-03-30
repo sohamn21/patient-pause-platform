@@ -11,7 +11,7 @@ export interface Practitioner {
       end: string;
       isAvailable: boolean;
     }
-  } | null;
+  } | null | any; // Add 'any' to handle JSON from database
   created_at: string | null;
   updated_at: string | null;
 }
@@ -54,7 +54,7 @@ export interface Appointment {
   date: string;
   start_time: string;
   end_time: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show' | string; // Add general string to handle database values
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;

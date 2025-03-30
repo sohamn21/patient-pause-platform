@@ -178,9 +178,19 @@ const PatientDetailsPage = () => {
                   patient={patient}
                   onSuccess={(updatedPatient) => {
                     setIsEditing(false);
+                    // Fix by ensuring we convert Date objects to strings
+                    const date_of_birth = typeof updatedPatient.date_of_birth === 'object' && updatedPatient.date_of_birth instanceof Date
+                      ? updatedPatient.date_of_birth.toISOString().split('T')[0]
+                      : updatedPatient.date_of_birth;
+                    
                     setPatient({
                       ...patient,
-                      ...updatedPatient,
+                      date_of_birth: date_of_birth as string | null,
+                      medical_history: updatedPatient.medical_history || null,
+                      allergies: updatedPatient.allergies || null,
+                      emergency_contact: updatedPatient.emergency_contact || null,
+                      preferred_practitioner_id: updatedPatient.preferred_practitioner_id || null,
+                      notes: updatedPatient.notes || null,
                       profile: {
                         ...patient.profile,
                         first_name: updatedPatient.first_name,

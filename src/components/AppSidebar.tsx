@@ -23,7 +23,9 @@ import {
   Heart,
   Clipboard,
   ClipboardList,
-  Brush
+  Brush,
+  Grid2X2,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -71,9 +73,11 @@ export function AppSidebar() {
   
   // Additional menu items
   const secondaryMenuItems = [
+    { name: 'Industry Features', path: '/industry-features', icon: Grid2X2 },
     { name: 'Reports', path: '/reports', icon: BarChart2 },
     { name: 'Locations', path: '/locations', icon: Map },
     { name: 'Notifications', path: '/notifications', icon: Bell },
+    { name: 'Contact', path: '/contact', icon: MessageSquare },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
   

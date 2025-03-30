@@ -18,6 +18,8 @@ import ReportsPage from './pages/Reports';
 import LocationsPage from './pages/Locations';
 import NotificationsPage from './pages/Notifications';
 import SettingsPage from './pages/Settings';
+import ContactPage from './pages/Contact';
+import IndustryFeaturesPage from './pages/IndustryFeatures';
 import NotFoundPage from './pages/NotFound';
 import StaffManagementPage from "./pages/StaffManagement";
 import Layout from './components/Layout';
@@ -62,6 +64,7 @@ function AppContent() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/join-waitlist" element={<JoinWaitlist />} />
         <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
+        <Route path="/contact" element={<ContactPage />} />
         
         {/* Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
@@ -80,6 +83,8 @@ function AppContent() {
           <Route path="/locations" element={<LocationsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/industry-features" element={<IndustryFeaturesPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           
           {/* Clinic specific routes */}
           <Route path="/patients" element={<PatientsPage />} />
@@ -96,6 +101,7 @@ function AppContent() {
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
           <Route path="book" element={<PatientBookingPage />} />
+          <Route path="contact" element={<ContactPage />} />
         </Route>
         
         <Route path="*" element={<NotFoundPage />} />

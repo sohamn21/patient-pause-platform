@@ -19,10 +19,11 @@ import {
   Utensils,
   User,
   Stethoscope,
-  GraduationCap,
+  Scissors,
+  Comb,
+  Heart,
   Clipboard,
-  ClipboardList,
-  ScrollText
+  ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -37,13 +38,13 @@ export function AppSidebar() {
       return [
         { name: 'Patients', path: '/patients', icon: Users },
         { name: 'Practitioners', path: '/practitioners', icon: Stethoscope },
-        { name: 'Services', path: '/services', icon: Clipboard },
+        { name: 'Services', path: '/services', icon: ClipboardList },
       ];
     } else if (businessType === 'salon') {
       return [
         { name: 'Customers', path: '/customers', icon: Users },
-        { name: 'Staff', path: '/staff', icon: User },
-        { name: 'Services', path: '/services', icon: Clipboard },
+        { name: 'Stylists', path: '/staff', icon: Scissors },
+        { name: 'Services', path: '/services', icon: Comb },
       ];
     } else if (businessType === 'restaurant') {
       return [
@@ -75,6 +76,20 @@ export function AppSidebar() {
     { name: 'Notifications', path: '/notifications', icon: Bell },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
+  
+  // Get business type icon for the sidebar footer
+  const getBusinessTypeIcon = () => {
+    switch (businessType) {
+      case 'clinic':
+        return <Heart className="h-4 w-4 text-primary" />;
+      case 'salon':
+        return <Scissors className="h-4 w-4 text-primary" />;
+      case 'restaurant':
+        return <Utensils className="h-4 w-4 text-primary" />;
+      default:
+        return <User className="h-4 w-4 text-primary" />;
+    }
+  };
   
   return (
     <Sidebar>
@@ -133,7 +148,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-4 w-4 text-primary" />
+              {getBusinessTypeIcon()}
             </div>
             <div>
               <p className="text-sm font-medium">{profile?.business_name || 'Your Business'}</p>

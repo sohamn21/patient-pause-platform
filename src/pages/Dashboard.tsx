@@ -2,7 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, UserPlus, Shield, Check, Stethoscope, ClipboardList } from 'lucide-react';
+import { 
+  Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, 
+  UserPlus, Shield, Check, Stethoscope, ClipboardList, Scissors,
+  Utensils, TableProperties, ChefHat, Heart, Comb, Grid2X2
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinessWaitlists } from '@/lib/waitlistService';
 import { getUserWaitlistEntries } from '@/lib/waitlistService';
@@ -83,55 +87,166 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     { title: 'Monthly Revenue', value: '₹42,500', icon: <DollarSign className="h-4 w-4" /> },
   ];
 
-  let industryFeatures = [];
-  
-  if (businessType === 'clinic') {
-    industryFeatures = [
-      { 
-        title: 'Patient Management', 
-        description: 'Manage patient records and history', 
-        icon: <Users />,
-        action: () => navigate('/patients')
-      },
-      { 
-        title: 'Service-Based Scheduling', 
-        description: 'Organize appointments by service type', 
-        icon: <ClipboardList />,
-        action: () => navigate('/services')
-      },
-      { 
-        title: 'Practitioner Preferences', 
-        description: 'Allow patients to choose their preferred healthcare provider', 
-        icon: <Stethoscope />,
-        action: () => navigate('/practitioners')
-      },
-    ];
-  } else if (businessType === 'salon') {
-    industryFeatures = [
-      { title: 'Stylist Management', description: 'Assign appointments to specific stylists', icon: <Users /> },
-      { title: 'Service Duration', description: 'Set different durations for various salon services', icon: <Clock /> },
-      { title: 'Client Preferences', description: 'Track client preferences and history', icon: <UserPlus /> },
-    ];
-  } else if (businessType === 'restaurant') {
-    industryFeatures = [
-      { title: 'Table Management', description: 'Manage seating and table assignments', icon: <Users /> },
-      { title: 'Party Size Handling', description: 'Organize reservations by group size', icon: <UserPlus /> },
-      { title: 'Walk-in Management', description: 'Balance walk-ins with reservations', icon: <Clock /> },
-    ];
-  } else {
-    industryFeatures = [
-      { title: 'Customizable Queues', description: 'Create custom queues for your business needs', icon: <Settings /> },
-      { title: 'Service Tracking', description: 'Track different services and appointment types', icon: <Calendar /> },
-      { title: 'Customer Management', description: 'Maintain customer relationships and history', icon: <Users /> },
-    ];
-  }
+  // Get industry features based on business type
+  const getIndustryFeatures = () => {
+    switch (businessType) {
+      case 'clinic':
+        return [
+          { 
+            title: 'Patient Management', 
+            description: 'Manage patient records and medical history', 
+            icon: <Users />,
+            action: () => navigate('/patients')
+          },
+          { 
+            title: 'Healthcare Services', 
+            description: 'Organize appointments by service type', 
+            icon: <ClipboardList />,
+            action: () => navigate('/services')
+          },
+          { 
+            title: 'Practitioners', 
+            description: 'Manage healthcare providers and specializations', 
+            icon: <Stethoscope />,
+            action: () => navigate('/practitioners')
+          },
+        ];
+      case 'salon':
+        return [
+          { 
+            title: 'Stylist Management', 
+            description: 'Assign appointments to specific stylists', 
+            icon: <Scissors />,
+            action: () => navigate('/staff')
+          },
+          { 
+            title: 'Beauty Services', 
+            description: 'Manage salon services and pricing', 
+            icon: <Comb />,
+            action: () => navigate('/services')
+          },
+          { 
+            title: 'Client History', 
+            description: 'Track client preferences and history', 
+            icon: <UserPlus />,
+            action: () => navigate('/customers')
+          },
+        ];
+      case 'restaurant':
+        return [
+          { 
+            title: 'Table Management', 
+            description: 'Manage seating arrangements and availability', 
+            icon: <TableProperties />,
+            action: () => navigate('/tables')
+          },
+          { 
+            title: 'Reservations', 
+            description: 'Manage table reservations and party sizes', 
+            icon: <Utensils />,
+            action: () => navigate('/table-reservations')
+          },
+          { 
+            title: 'Kitchen Updates', 
+            description: 'Keep track of kitchen status and wait times', 
+            icon: <ChefHat />,
+            action: () => navigate('/waitlist')
+          },
+        ];
+      default:
+        return [
+          { 
+            title: 'Customizable Queues', 
+            description: 'Create custom queues for your business needs', 
+            icon: <Grid2X2 />,
+            action: () => navigate('/waitlist')
+          },
+          { 
+            title: 'Service Tracking', 
+            description: 'Track different services and appointment types', 
+            icon: <Calendar />,
+            action: () => navigate('/appointments')
+          },
+          { 
+            title: 'Customer Database', 
+            description: 'Maintain customer relationships and history', 
+            icon: <Users />,
+            action: () => navigate('/customers')
+          },
+        ];
+    }
+  };
+
+  // Get business type specific title
+  const getBusinessTypeTitle = () => {
+    switch (businessType) {
+      case 'clinic':
+        return 'Healthcare Features';
+      case 'salon':
+        return 'Salon Features';
+      case 'restaurant':
+        return 'Restaurant Features';
+      default:
+        return 'Business Features';
+    }
+  };
+
+  // Get business type specific icon
+  const getBusinessTypeIcon = () => {
+    switch (businessType) {
+      case 'clinic':
+        return <Heart className="mr-2 h-4 w-4" />;
+      case 'salon':
+        return <Scissors className="mr-2 h-4 w-4" />;
+      case 'restaurant':
+        return <Utensils className="mr-2 h-4 w-4" />;
+      default:
+        return <Calendar className="mr-2 h-4 w-4" />;
+    }
+  };
+
+  // Get quick action button
+  const getPrimaryActionButton = () => {
+    switch (businessType) {
+      case 'clinic':
+        return (
+          <Button onClick={() => navigate('/patients')}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            New Patient
+          </Button>
+        );
+      case 'salon':
+        return (
+          <Button onClick={() => navigate('/appointments')}>
+            <Calendar className="mr-2 h-4 w-4" />
+            New Appointment
+          </Button>
+        );
+      case 'restaurant':
+        return (
+          <Button onClick={() => navigate('/table-reservations')}>
+            <TableProperties className="mr-2 h-4 w-4" />
+            New Reservation
+          </Button>
+        );
+      default:
+        return (
+          <Button onClick={() => navigate('/waitlist')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Waitlist Entry
+          </Button>
+        );
+    }
+  };
+
+  const industryFeatures = getIndustryFeatures();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Business Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your business.
+          Welcome back! Here's an overview of your {businessType || 'business'}.
         </p>
       </div>
       
@@ -197,14 +312,13 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4">
-                <Button onClick={() => navigate('/waitlist')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Waitlist Entry
-                </Button>
+                {getPrimaryActionButton()}
+                
                 <Button variant="outline" onClick={() => navigate('/appointments')}>
                   <Calendar className="mr-2 h-4 w-4" />
                   Schedule Appointment
                 </Button>
+                
                 <Button variant="outline" onClick={() => navigate('/settings')}>
                   <Settings className="mr-2 h-4 w-4" />
                   Business Settings
@@ -286,10 +400,7 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
       {/* Industry Features */}
       <div>
         <h2 className="text-xl font-semibold mb-4">
-          {businessType === 'clinic' ? 'Clinic Features' : 
-           businessType === 'salon' ? 'Salon Features' : 
-           businessType === 'restaurant' ? 'Restaurant Features' : 
-           'Business Features'}
+          {getBusinessTypeTitle()}
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
           {industryFeatures.map((feature, index) => (

@@ -153,8 +153,8 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             sender: {
-              name: "Table Ready",
-              email: "no-reply@tableready.app", // Make sure this email is verified in Brevo
+              name: "Waitify",
+              email: "dsacourse899@gmail.com", // Using your specified Gmail address
             },
             to: [
               {
@@ -166,12 +166,12 @@ serve(async (req) => {
             htmlContent: `<html><body>
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
                 <div style="text-align: center; margin-bottom: 20px;">
-                  <h1 style="color: #333;">Table Ready</h1>
+                  <h1 style="color: #333;">Waitify</h1>
                 </div>
                 <div style="padding: 20px;">
                   <p>Hello${userName ? ' ' + userName : ''},</p>
                   <p>${message.replace(/\n/g, '<br>')}</p>
-                  <p style="margin-top: 30px;">Best regards,<br>Table Ready Team</p>
+                  <p style="margin-top: 30px;">Best regards,<br>Waitify Team</p>
                 </div>
               </div>
             </body></html>`,

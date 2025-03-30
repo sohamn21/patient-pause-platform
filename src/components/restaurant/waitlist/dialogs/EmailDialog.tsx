@@ -75,6 +75,11 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       } catch (error) {
         console.error("Error fetching user email:", error);
         setUserEmail(null);
+        toast({
+          title: "Error",
+          description: "Could not retrieve email address. Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoadingEmail(false);
       }
@@ -83,7 +88,7 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
     if (isOpen) {
       fetchUserEmail();
     }
-  }, [entry.user_id, entry.profiles?.email, isOpen]);
+  }, [entry.user_id, entry.profiles?.email, isOpen, toast]);
 
   const handleEmailCustomer = async () => {
     if (!userEmail) {
@@ -127,6 +132,10 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       }
 
       console.log("Email function response:", data);
+      
+      if (!data.success && data.emailError) {
+        throw new Error(data.emailError);
+      }
 
       // Update the waitlist entry status to notified
       await supabase
@@ -145,11 +154,11 @@ export function EmailDialog({ isOpen, onOpenChange, entry, refreshEntries }: Ema
       }
 
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending email:", error);
       toast({
         title: "Error",
-        description: "Failed to send email. Please try again.",
+        description: `Failed to send email: ${error.message}`,
         variant: "destructive",
       });
     } finally {

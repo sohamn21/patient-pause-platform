@@ -40,15 +40,15 @@ export function ActionMenu({
   onRemove
 }: ActionMenuProps) {
   const phoneNumber = entry.profiles?.phone_number || "";
-  const email = entry.profiles?.email || "";
   
-  // Only disable email if customer is already seated/cancelled - treat lack of email in dropdown only
+  // Always enable email button regardless of email presence
+  // The Email dialog will handle the case when email is not available
   const canEmail = entry.status !== "seated" && entry.status !== "cancelled";
 
   console.log("ActionMenu - Entry:", {
     id: entry.id,
     customerName: entry.profiles?.first_name,
-    email: email,
+    email: entry.profiles?.email,
     phoneNumber: phoneNumber,
     status: entry.status,
     canEmail: canEmail

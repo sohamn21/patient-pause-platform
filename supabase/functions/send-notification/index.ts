@@ -26,6 +26,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     const body = await req.json();
+    console.log("Request body:", body);
     
     // Handle email retrieval request
     if (body.action === "get-email") {
@@ -112,12 +113,12 @@ serve(async (req) => {
       console.log(`Sending email to ${email} with subject: ${subject} and message: ${message}`);
       
       if (!brevoApiKey) {
-        console.warn("BREVO_API_KEY not set in environment variables");
+        console.error("BREVO_API_KEY not set in environment variables");
         return new Response(
           JSON.stringify({ 
-            success: true, 
+            success: false, 
             notification, 
-            warning: "Email not sent: Brevo API key not configured" 
+            error: "Email not sent: Brevo API key not configured" 
           }),
           {
             status: 200,
@@ -153,7 +154,7 @@ serve(async (req) => {
           body: JSON.stringify({
             sender: {
               name: "Table Ready",
-              email: "no-reply@tableready.app", // Replace with your sender email
+              email: "no-reply@tableready.app", // Make sure this email is verified in Brevo
             },
             to: [
               {
@@ -177,19 +178,47 @@ serve(async (req) => {
           }),
         });
 
+        if (!brevoResponse.ok) {
+          const errorData = await brevoResponse.json();
+          console.error("Brevo API error response:", errorData);
+          throw new Error(`Brevo API error: ${JSON.stringify(errorData)}`);
+        }
+
         const emailResult = await brevoResponse.json();
         console.log("Brevo API response:", emailResult);
 
-        if (!brevoResponse.ok) {
-          throw new Error(`Brevo API error: ${JSON.stringify(emailResult)}`);
+        // Update waitlist entry status if this is a waitlist notification
+        if (waitlistId && entryId) {
+          const { error: updateError } = await supabase
+            .from("waitlist_entries")
+            .update({ status: "notified" })
+            .eq("id", entryId);
+
+          if (updateError) {
+            console.error("Error updating waitlist entry:", updateError);
+            // We don't throw here since the notification was already created
+          }
         }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            notification, 
+            emailSent: true,
+            messageId: emailResult.messageId 
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       } catch (emailError) {
         console.error("Error sending email with Brevo:", emailError);
         // We don't throw here since the notification was already created
         // But we add the error to the response
         return new Response(
           JSON.stringify({ 
-            success: true, 
+            success: false, 
             notification, 
             emailError: emailError.message 
           }),
@@ -202,7 +231,7 @@ serve(async (req) => {
     }
 
     // Update waitlist entry status if this is a waitlist notification
-    if (waitlistId && entryId && (type === "waitlist" || type === "email")) {
+    if (waitlistId && entryId && (type === "waitlist")) {
       const { error: updateError } = await supabase
         .from("waitlist_entries")
         .update({ status: "notified" })

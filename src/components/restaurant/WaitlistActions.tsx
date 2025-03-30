@@ -26,13 +26,12 @@ export function WaitlistActions({ entry, onStatusChange, onRemove, refreshEntrie
     setIsViewDialogOpen(true);
   };
 
-  // Email is now the default notification method
   const handleNotify = () => {
-    // Check if email exists
     const email = entry.profiles?.email;
     const phoneNumber = entry.profiles?.phone_number;
     
     if (email) {
+      // Prioritize email
       setIsEmailDialogOpen(true);
     } else if (phoneNumber) {
       // Fallback to SMS if no email is available

@@ -20,10 +20,10 @@ import {
   User,
   Stethoscope,
   Scissors,
-  Comb,
   Heart,
   Clipboard,
-  ClipboardList
+  ClipboardList,
+  Brush
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,7 +44,7 @@ export function AppSidebar() {
       return [
         { name: 'Customers', path: '/customers', icon: Users },
         { name: 'Stylists', path: '/staff', icon: Scissors },
-        { name: 'Services', path: '/services', icon: Comb },
+        { name: 'Services', path: '/services', icon: Brush },
       ];
     } else if (businessType === 'restaurant') {
       return [

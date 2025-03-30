@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, 
   UserPlus, Shield, Check, Stethoscope, ClipboardList, Scissors,
-  Utensils, TableProperties, ChefHat, Heart, Comb, Grid2X2
+  Utensils, TableProperties, ChefHat, Heart, Brush, Grid2X2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinessWaitlists } from '@/lib/waitlistService';
@@ -87,7 +86,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     { title: 'Monthly Revenue', value: '₹42,500', icon: <DollarSign className="h-4 w-4" /> },
   ];
 
-  // Get industry features based on business type
   const getIndustryFeatures = () => {
     switch (businessType) {
       case 'clinic':
@@ -122,7 +120,7 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
           { 
             title: 'Beauty Services', 
             description: 'Manage salon services and pricing', 
-            icon: <Comb />,
+            icon: <Brush />,
             action: () => navigate('/services')
           },
           { 
@@ -177,7 +175,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     }
   };
 
-  // Get business type specific title
   const getBusinessTypeTitle = () => {
     switch (businessType) {
       case 'clinic':
@@ -191,7 +188,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     }
   };
 
-  // Get business type specific icon
   const getBusinessTypeIcon = () => {
     switch (businessType) {
       case 'clinic':
@@ -205,7 +201,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     }
   };
 
-  // Get quick action button
   const getPrimaryActionButton = () => {
     switch (businessType) {
       case 'clinic':
@@ -250,7 +245,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         </p>
       </div>
       
-      {/* Subscription Banner */}
       {!subscriptionLoading && (
         <>
           {subscription?.active ? (
@@ -300,12 +294,10 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         </>
       )}
       
-      {/* Features section */}
       {!subscriptionLoading && (
         <div className="grid gap-4 md:grid-cols-2">
           <SubscriptionFeaturesList subscription={subscription} />
           
-          {/* Quick Actions */}
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
@@ -329,7 +321,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         </div>
       )}
       
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         {stats.map((stat, index) => (
           <Card key={index} className="hover:bg-accent/5 transition-colors">
@@ -348,7 +339,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         ))}
       </div>
       
-      {/* Waitlists Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Your Waitlists</h2>
@@ -397,7 +387,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         )}
       </div>
       
-      {/* Industry Features */}
       <div>
         <h2 className="text-xl font-semibold mb-4">
           {getBusinessTypeTitle()}
@@ -462,7 +451,6 @@ const CustomerDashboard = () => {
         </p>
       </div>
       
-      {/* Quick Actions */}
       <div className="flex flex-wrap gap-4">
         <Button onClick={() => navigate('/appointments')}>
           <Calendar className="mr-2 h-4 w-4" />
@@ -474,7 +462,6 @@ const CustomerDashboard = () => {
         </Button>
       </div>
       
-      {/* Current Waitlist Entries */}
       <div>
         <h2 className="text-xl font-semibold mb-4">My Current Waitlists</h2>
         {loading ? (
@@ -533,7 +520,6 @@ const CustomerDashboard = () => {
         )}
       </div>
       
-      {/* Upcoming Appointments */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Upcoming Appointments</h2>
         <Card>

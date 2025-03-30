@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, UserPlus, Shield, Check } from 'lucide-react';
+import { Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, UserPlus, Shield, Check, Stethoscope, ClipboardList } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinessWaitlists } from '@/lib/waitlistService';
 import { getUserWaitlistEntries } from '@/lib/waitlistService';
@@ -86,9 +87,24 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
   
   if (businessType === 'clinic') {
     industryFeatures = [
-      { title: 'Patient Management', description: 'Manage patient records and history', icon: <Users /> },
-      { title: 'Service-Based Scheduling', description: 'Organize appointments by service type', icon: <Calendar /> },
-      { title: 'Practitioner Preferences', description: 'Allow patients to choose their preferred healthcare provider', icon: <UserPlus /> },
+      { 
+        title: 'Patient Management', 
+        description: 'Manage patient records and history', 
+        icon: <Users />,
+        action: () => navigate('/patients')
+      },
+      { 
+        title: 'Service-Based Scheduling', 
+        description: 'Organize appointments by service type', 
+        icon: <ClipboardList />,
+        action: () => navigate('/services')
+      },
+      { 
+        title: 'Practitioner Preferences', 
+        description: 'Allow patients to choose their preferred healthcare provider', 
+        icon: <Stethoscope />,
+        action: () => navigate('/practitioners')
+      },
     ];
   } else if (businessType === 'salon') {
     industryFeatures = [
@@ -277,7 +293,7 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
           {industryFeatures.map((feature, index) => (
-            <Card key={index} className="hover:bg-accent/5 transition-colors">
+            <Card key={index} className="hover:bg-accent/5 transition-colors cursor-pointer" onClick={feature.action}>
               <CardHeader className="flex flex-row items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                   {feature.icon}

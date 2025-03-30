@@ -1,229 +1,152 @@
 
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { SidebarHeader, SidebarContent, SidebarFooter, Sidebar, SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from '@/components/ui/sidebar';
 import { 
   LayoutDashboard, 
   Clock, 
   Calendar, 
-  Utensils, 
   Users, 
-  Bell, 
-  LineChart, 
-  MapPin, 
+  BarChart2, 
   Settings, 
-  LogOut,
-  UserCircle2,
+  LogOut, 
+  Bell, 
+  Map, 
+  Menu,
+  TableProperties,
+  Utensils,
+  User,
+  Stethoscope,
+  GraduationCap,
+  Clipboard,
+  ClipboardList,
+  ScrollText
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
-  const { user, profile, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { signOut, profile } = useAuth();
   const location = useLocation();
-
-  const firstName = profile?.first_name || user?.user_metadata?.first_name || '';
-  const lastName = profile?.last_name || user?.user_metadata?.last_name || '';
-  const fullName = `${firstName} ${lastName}`.trim();
-  const businessName = profile?.business_name || user?.user_metadata?.businessName || '';
-  const avatarUrl = profile?.avatar_url || '';
-  const role = profile?.role || user?.user_metadata?.role || 'customer';
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const businessType = profile?.business_type;
+  
+  // Determine business type specific menu items
+  const getBusinessTypeMenu = () => {
+    if (businessType === 'clinic') {
+      return [
+        { name: 'Patients', path: '/patients', icon: Users },
+        { name: 'Practitioners', path: '/practitioners', icon: Stethoscope },
+        { name: 'Services', path: '/services', icon: Clipboard },
+      ];
+    } else if (businessType === 'salon') {
+      return [
+        { name: 'Customers', path: '/customers', icon: Users },
+        { name: 'Staff', path: '/staff', icon: User },
+        { name: 'Services', path: '/services', icon: Clipboard },
+      ];
+    } else if (businessType === 'restaurant') {
+      return [
+        { name: 'Tables', path: '/tables', icon: TableProperties },
+        { name: 'Reservations', path: '/table-reservations', icon: Utensils },
+      ];
+    } else {
+      return [
+        { name: 'Customers', path: '/customers', icon: Users },
+        { name: 'Staff', path: '/staff', icon: User },
+      ];
+    }
   };
-
-  const dashboardItems = [
-    { 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard size={18} />, 
-      path: '/dashboard',
-      active: location.pathname === '/dashboard' 
-    },
-    { 
-      label: 'Waitlist', 
-      icon: <Clock size={18} />, 
-      path: '/waitlist',
-      active: location.pathname === '/waitlist' 
-    },
-    { 
-      label: 'Appointments', 
-      icon: <Calendar size={18} />, 
-      path: '/appointments',
-      active: location.pathname === '/appointments' 
-    },
+  
+  // Common menu items for all business types
+  const commonMenuItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Waitlist', path: '/waitlist', icon: Clock },
+    { name: 'Appointments', path: '/appointments', icon: Calendar },
   ];
-
-  const businessItems = role === 'business' ? [
-    { 
-      label: 'Tables', 
-      icon: <Utensils size={18} />, 
-      path: '/tables',
-      active: location.pathname === '/tables' 
-    },
-    { 
-      label: 'Customers', 
-      icon: <Users size={18} />, 
-      path: '/customers',
-      active: location.pathname === '/customers' 
-    },
-    { 
-      label: 'Staff', 
-      icon: <UserCircle2 size={18} />, 
-      path: '/staff',
-      active: location.pathname === '/staff' 
-    },
-    { 
-      label: 'Reports', 
-      icon: <LineChart size={18} />, 
-      path: '/reports',
-      active: location.pathname === '/reports' 
-    },
-    { 
-      label: 'Locations', 
-      icon: <MapPin size={18} />, 
-      path: '/locations',
-      active: location.pathname === '/locations' 
-    },
-  ] : [];
-
-  const systemItems = [
-    { 
-      label: 'Notifications', 
-      icon: <Bell size={18} />, 
-      path: '/notifications',
-      active: location.pathname === '/notifications',
-      badge: 2
-    },
-    { 
-      label: 'Settings', 
-      icon: <Settings size={18} />, 
-      path: '/settings',
-      active: location.pathname === '/settings' 
-    },
+  
+  // Combine common menu with business type specific menu
+  const menuItems = [...commonMenuItems, ...getBusinessTypeMenu()];
+  
+  // Additional menu items
+  const secondaryMenuItems = [
+    { name: 'Reports', path: '/reports', icon: BarChart2 },
+    { name: 'Locations', path: '/locations', icon: Map },
+    { name: 'Notifications', path: '/notifications', icon: Bell },
+    { name: 'Settings', path: '/settings', icon: Settings },
   ];
-
+  
   return (
     <Sidebar>
-      <SidebarHeader className="flex flex-col items-center justify-center py-4">
-        <h1 className="text-xl font-bold">PatientPause</h1>
+      <SidebarHeader className="border-b">
+        <div className="px-5 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-6 w-6 text-primary" />
+            <Link to="/dashboard" className="font-bold text-lg">Waitify</Link>
+          </div>
+          <div className="md:hidden">
+            <SidebarTrigger>
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
+          </div>
+        </div>
       </SidebarHeader>
       
-      <SidebarContent>
-        <SidebarGroup>
-          <div className="px-3 py-2">
-            <div className="flex items-center gap-3 mb-2">
-              <Avatar>
-                <AvatarImage src={avatarUrl} />
-                <AvatarFallback>{getInitials(fullName || 'User')}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium text-sm">{fullName || 'User'}</p>
-                <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                  {role === 'business' ? businessName : 'Customer'}
-                </p>
-              </div>
-            </div>
+      <SidebarContent className="px-4 py-2">
+        <div className="space-y-1">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                location.pathname === item.path ? "bg-accent text-accent-foreground" : "transparent"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </div>
+        
+        <div className="mt-8">
+          <h3 className="mb-2 px-4 text-xs font-semibold text-muted-foreground">Management</h3>
+          <div className="space-y-1">
+            {secondaryMenuItems.map((item) => (
+              <Link 
+                key={item.path} 
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                  location.pathname === item.path ? "bg-accent text-accent-foreground" : "transparent"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
           </div>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {dashboardItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    isActive={item.active}
-                    onClick={() => navigate(item.path)}
-                    tooltip={item.label}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        {businessItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Business</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {businessItems.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton 
-                      isActive={item.active}
-                      onClick={() => navigate(item.path)}
-                      tooltip={item.label}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {systemItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    isActive={item.active}
-                    onClick={() => navigate(item.path)}
-                    tooltip={item.label}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.badge && (
-                      <SidebarMenuBadge>
-                        {item.badge}
-                      </SidebarMenuBadge>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        </div>
       </SidebarContent>
       
-      <SidebarFooter>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start"
-          onClick={handleSignOut}
-        >
-          <LogOut size={18} className="mr-2" />
-          <span>Sign Out</span>
-        </Button>
+      <SidebarFooter className="border-t p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">{profile?.business_name || 'Your Business'}</p>
+              <p className="text-xs text-muted-foreground">
+                {businessType ? businessType.charAt(0).toUpperCase() + businessType.slice(1) : 'Business'}
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
 }
-
-export default AppSidebar;

@@ -9,6 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          date: string
+          end_time: string
+          id: string
+          notes: string | null
+          patient_id: string
+          practitioner_id: string
+          service_id: string
+          start_time: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          date: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          practitioner_id: string
+          service_id: string
+          start_time: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          date?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          practitioner_id?: string
+          service_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -41,6 +115,98 @@ export type Database = {
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          allergies: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          emergency_contact: string | null
+          id: string
+          medical_history: string | null
+          notes: string | null
+          preferred_practitioner_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allergies?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          emergency_contact?: string | null
+          id: string
+          medical_history?: string | null
+          notes?: string | null
+          preferred_practitioner_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allergies?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          emergency_contact?: string | null
+          id?: string
+          medical_history?: string | null
+          notes?: string | null
+          preferred_practitioner_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_preferred_practitioner_id_fkey"
+            columns: ["preferred_practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practitioners: {
+        Row: {
+          availability: Json | null
+          bio: string | null
+          business_id: string
+          created_at: string | null
+          id: string
+          name: string
+          specialization: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          availability?: Json | null
+          bio?: string | null
+          business_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          availability?: Json | null
+          bio?: string | null
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioners_business_id_fkey"
+            columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -124,6 +290,47 @@ export type Database = {
           time?: string
         }
         Relationships: []
+      }
+      services: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          name: string
+          price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          name: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          name?: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {

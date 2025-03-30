@@ -32,6 +32,11 @@ import JoinWaitlist from './pages/JoinWaitlist';
 import AdminPage from './pages/AdminPage';
 import AdminRoute from './components/AdminRoute';
 import TableReservationsPage from './pages/TableReservations';
+import PatientsPage from './pages/clinic/PatientsPage';
+import PatientDetailsPage from './pages/clinic/PatientDetailsPage';
+import ServicesPage from './pages/clinic/ServicesPage';
+import PractitionersPage from './pages/clinic/PractitionersPage';
+import PatientBookingPage from './pages/customer/PatientBookingPage';
 
 function App() {
   return (
@@ -75,6 +80,12 @@ function AppContent() {
           <Route path="/locations" element={<LocationsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          
+          {/* Clinic specific routes */}
+          <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/patients/:patientId" element={<PatientDetailsPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/practitioners" element={<PractitionersPage />} />
         </Route>
         
         {/* Customer routes */}
@@ -84,6 +95,7 @@ function AppContent() {
           <Route path="profile" element={<CustomerProfile />} />
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
+          <Route path="book" element={<PatientBookingPage />} />
         </Route>
         
         <Route path="*" element={<NotFoundPage />} />

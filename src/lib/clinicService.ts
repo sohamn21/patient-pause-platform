@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData } from '@/types/clinic';
 
@@ -22,7 +23,8 @@ export const getPatients = async (businessId: string = '') => {
           id,
           first_name,
           last_name,
-          phone_number
+          phone_number,
+          email
         )
       `);
     

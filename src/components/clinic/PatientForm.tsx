@@ -39,7 +39,7 @@ import {
 interface PatientFormProps {
   patient?: Patient;
   userId?: string;
-  onSuccess: (data: PatientFormData) => void;
+  onSuccess: (data?: PatientFormData) => void;
   onCancel: () => void;
 }
 

@@ -41,8 +41,7 @@ export interface Patient {
     first_name: string | null;
     last_name: string | null;
     phone_number: string | null;
-    email?: string | null;
-  } | any; // Support for error cases or missing profile
+  } | null;
 }
 
 export interface Appointment {

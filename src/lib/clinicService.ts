@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData } from '@/types/clinic';
 
@@ -33,8 +34,7 @@ export const getPatients = async (businessId: string = '') => {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, phone_number, email')
-        .in('id', patientIds);
+        .select('id, first_name, last_name, phone_number');
       
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);

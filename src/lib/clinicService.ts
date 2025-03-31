@@ -210,7 +210,7 @@ export async function getPatients(): Promise<Patient[]> {
         date_of_birth,
         created_at,
         updated_at,
-        profiles:id (
+        profile:profiles!id (
           first_name,
           last_name,
           phone_number
@@ -226,7 +226,7 @@ export async function getPatients(): Promise<Patient[]> {
     
     const patients = data?.map(patient => ({
       ...patient,
-      profile: patient.profiles
+      profile: patient.profile
     })) || [];
     
     return patients;
@@ -250,7 +250,7 @@ export async function getPatient(id: string): Promise<Patient | null> {
         date_of_birth,
         created_at,
         updated_at,
-        profiles:id (
+        profile:profiles!id (
           first_name,
           last_name,
           phone_number
@@ -262,7 +262,7 @@ export async function getPatient(id: string): Promise<Patient | null> {
     if (error) throw error;
     return {
       ...data,
-      profile: data.profiles
+      profile: data.profile
     };
   } catch (error) {
     console.error("Error getting patient:", error);
@@ -272,30 +272,105 @@ export async function getPatient(id: string): Promise<Patient | null> {
 
 export async function createPatientProfile(userId: string, formData: PatientFormData): Promise<boolean> {
   try {
-    const { error: profileError } = await supabase
+    console.log("Creating patient profile for user:", userId, formData);
+    
+    // First, check if user exists in profiles table
+    const { data: profileData, error: profileCheckError } = await supabase
       .from("profiles")
-      .update({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phone_number: formData.phone_number || null,
-      })
-      .eq("id", userId);
+      .select("id")
+      .eq("id", userId)
+      .single();
+      
+    if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+      console.error("Error checking profile:", profileCheckError);
+      throw profileCheckError;
+    }
+    
+    // If profile exists, update it. Otherwise this is a new user and we'll create a profile.
+    if (profileData) {
+      console.log("Profile exists, updating...");
+      const { error: profileUpdateError } = await supabase
+        .from("profiles")
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone_number: formData.phone_number || null,
+        })
+        .eq("id", userId);
 
-    if (profileError) throw profileError;
+      if (profileUpdateError) {
+        console.error("Error updating profile:", profileUpdateError);
+        throw profileUpdateError;
+      }
+    } else {
+      console.log("Profile doesn't exist, creating new profile...");
+      const { error: profileInsertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: userId,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone_number: formData.phone_number || null,
+        });
 
-    const { error: patientError } = await supabase
+      if (profileInsertError) {
+        console.error("Error creating profile:", profileInsertError);
+        throw profileInsertError;
+      }
+    }
+
+    // Now check if patient record exists
+    const { data: patientData, error: patientCheckError } = await supabase
       .from("patients")
-      .insert({
-        id: userId,
-        medical_history: formData.medical_history || null,
-        allergies: formData.allergies || null,
-        emergency_contact: formData.emergency_contact || null,
-        preferred_practitioner_id: formData.preferred_practitioner_id || null,
-        notes: formData.notes || null,
-        date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth).toISOString().split('T')[0] : null,
-      });
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+      
+    if (patientCheckError) {
+      console.error("Error checking patient:", patientCheckError);
+      throw patientCheckError;
+    }
+    
+    // If patient exists, update it. Otherwise create a new patient record.
+    if (patientData) {
+      console.log("Patient exists, updating...");
+      const { error: patientUpdateError } = await supabase
+        .from("patients")
+        .update({
+          medical_history: formData.medical_history || null,
+          allergies: formData.allergies || null,
+          emergency_contact: formData.emergency_contact || null,
+          preferred_practitioner_id: formData.preferred_practitioner_id || null,
+          notes: formData.notes || null,
+          date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth).toISOString().split('T')[0] : null,
+        })
+        .eq("id", userId);
 
-    if (patientError) throw patientError;
+      if (patientUpdateError) {
+        console.error("Error updating patient:", patientUpdateError);
+        throw patientUpdateError;
+      }
+    } else {
+      console.log("Patient doesn't exist, creating new patient...");
+      const { error: patientInsertError } = await supabase
+        .from("patients")
+        .insert({
+          id: userId,
+          medical_history: formData.medical_history || null,
+          allergies: formData.allergies || null,
+          emergency_contact: formData.emergency_contact || null,
+          preferred_practitioner_id: formData.preferred_practitioner_id || null,
+          notes: formData.notes || null,
+          date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth).toISOString().split('T')[0] : null,
+        });
+
+      if (patientInsertError) {
+        console.error("Error creating patient:", patientInsertError);
+        throw patientInsertError;
+      }
+    }
+    
+    console.log("Successfully created/updated patient profile");
     return true;
   } catch (error) {
     console.error("Error creating patient profile:", error);

@@ -82,34 +82,46 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       if (!user) return;
       
       try {
+        console.log("Loading practitioners for business:", user.id);
         const data = await getPractitioners(user.id);
+        console.log("Practitioners loaded:", data);
         setPractitioners(data);
       } catch (error) {
         console.error("Error loading practitioners:", error);
+        toast({
+          title: "Error",
+          description: "Could not load practitioners list",
+          variant: "destructive",
+        });
       }
     };
     
     loadPractitioners();
-  }, [user]);
+  }, [user, toast]);
   
   const onSubmit = async (formData: PatientFormData) => {
     setIsLoading(true);
+    console.log("Form submitted with data:", formData);
     
     try {
       let success = false;
       
       if (patient) {
         // Update existing patient
+        console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
         // Create new patient
         const targetUserId = userId || (user?.id as string);
+        console.log("Creating new patient with ID:", targetUserId);
         success = await createPatientProfile(targetUserId, formData);
       }
       
       if (success) {
+        console.log("Patient saved successfully");
         onSuccess(formData);
       } else {
+        console.error("Failed to save patient");
         toast({
           title: "Error",
           description: "Failed to save patient information",

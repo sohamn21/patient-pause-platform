@@ -37,8 +37,9 @@ const PatientsPage = () => {
       setHasError(false);
       try {
         console.log("Fetching patients...");
-        // Pass the user's ID if available, or an empty string as a default
+        // Get businessId from user
         const businessId = user?.id || '';
+        console.log("Using business ID:", businessId);
         const data = await getPatients(businessId);
         console.log("Patients fetched:", data);
         setPatients(data);
@@ -55,7 +56,9 @@ const PatientsPage = () => {
       }
     };
 
-    fetchPatients();
+    if (user) {
+      fetchPatients();
+    }
   }, [user, toast]);
 
   const filteredPatients = patients.filter(patient => {
@@ -75,6 +78,7 @@ const PatientsPage = () => {
     setIsLoading(true);
     setHasError(false);
     try {
+      // Get businessId from user
       const businessId = user?.id || '';
       const data = await getPatients(businessId);
       setPatients(data);

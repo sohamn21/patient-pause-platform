@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -108,6 +109,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
+        // Use the userId prop if provided, otherwise use the current user's ID
         const targetUserId = userId || (user?.id as string);
         console.log("Creating new patient with ID:", targetUserId);
         success = await createPatientProfile(targetUserId, formData);

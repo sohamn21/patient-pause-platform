@@ -1,4 +1,3 @@
-
 export interface Practitioner {
   id: string;
   business_id: string;
@@ -11,7 +10,7 @@ export interface Practitioner {
       end: string;
       isAvailable: boolean;
     }
-  } | null;
+  } | null | any; // Support JSON data from database
   created_at: string | null;
   updated_at: string | null;
 }
@@ -43,7 +42,7 @@ export interface Patient {
     last_name: string | null;
     phone_number: string | null;
     email?: string | null;
-  };
+  } | any; // Support for error cases or missing profile
 }
 
 export interface Appointment {
@@ -60,7 +59,7 @@ export interface Appointment {
   created_at: string | null;
   updated_at: string | null;
   patient?: Patient;
-  practitioner?: Practitioner;
+  practitioner?: Practitioner | any; // Support for JSON data from database
   service?: Service;
 }
 

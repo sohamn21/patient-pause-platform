@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -84,7 +83,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Loading practitioners for business:", user.id);
         const data = await getPractitioners(user.id);
         console.log("Practitioners loaded:", data);
-        setPractitioners(data);
+        setPractitioners(data as Practitioner[]);
       } catch (error) {
         console.error("Error loading practitioners:", error);
         toast({
@@ -183,7 +182,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="Phone number" {...field} />
+                  <Input placeholder="Phone number" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormDescription>
                   Used for appointment reminders
@@ -247,6 +246,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                   placeholder="List any allergies or sensitivities" 
                   rows={3}
                   {...field} 
+                  value={field.value || ''}
                 />
               </FormControl>
               <FormMessage />
@@ -265,6 +265,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                   placeholder="Relevant medical history" 
                   rows={3}
                   {...field} 
+                  value={field.value || ''}
                 />
               </FormControl>
               <FormMessage />
@@ -283,6 +284,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                   <Input 
                     placeholder="Name and phone number" 
                     {...field} 
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormDescription>
@@ -301,7 +303,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                 <FormLabel>Preferred Practitioner</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value || ''}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -337,6 +339,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                   placeholder="Any other relevant information" 
                   rows={3}
                   {...field} 
+                  value={field.value || ''}
                 />
               </FormControl>
               <FormMessage />

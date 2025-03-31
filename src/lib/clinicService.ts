@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData } from '@/types/clinic';
 
@@ -7,6 +6,8 @@ export const getPatients = async (businessId: string = '') => {
   try {
     console.log('Fetching patients for business:', businessId);
     
+    // First get all patients regardless of business ID
+    // We'll filter on the front-end if needed
     const { data, error } = await supabase
       .from('patients')
       .select(`
@@ -18,14 +19,7 @@ export const getPatients = async (businessId: string = '') => {
         emergency_contact,
         preferred_practitioner_id,
         date_of_birth,
-        notes,
-        profile:id (
-          id,
-          first_name,
-          last_name,
-          phone_number,
-          email
-        )
+        notes
       `);
     
     if (error) {
@@ -33,8 +27,35 @@ export const getPatients = async (businessId: string = '') => {
       throw error;
     }
     
-    console.log('Patients fetched:', data);
-    return data || [];
+    // Get profiles for all patients
+    if (data && data.length > 0) {
+      const patientIds = data.map(patient => patient.id);
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, phone_number, email')
+        .in('id', patientIds);
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+      
+      // Combine patient data with profile data
+      const patientsWithProfiles = data.map(patient => {
+        const profile = profilesData?.find(p => p.id === patient.id);
+        return {
+          ...patient,
+          profile: profile || null
+        };
+      });
+      
+      console.log('Patients fetched:', patientsWithProfiles);
+      return patientsWithProfiles;
+    }
+    
+    console.log('No patients found');
+    return [];
   } catch (error) {
     console.error('Failed to get patients:', error);
     throw error;

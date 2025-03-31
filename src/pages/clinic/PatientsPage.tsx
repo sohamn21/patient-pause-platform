@@ -40,9 +40,13 @@ const PatientsPage = () => {
         // Get businessId from user
         const businessId = user?.id || '';
         console.log("Using business ID:", businessId);
-        const data = await getPatients(businessId);
-        console.log("Patients fetched:", data);
-        setPatients(data);
+        
+        const fetchedPatients = await getPatients(businessId);
+        
+        // Cast the data to ensure TypeScript compatibility
+        setPatients(fetchedPatients as Patient[]);
+        
+        console.log("Patients set in state:", fetchedPatients);
       } catch (error) {
         console.error("Error fetching patients:", error);
         setHasError(true);
@@ -62,7 +66,10 @@ const PatientsPage = () => {
   }, [user, toast]);
 
   const filteredPatients = patients.filter(patient => {
-    const fullName = `${patient.profile?.first_name || ''} ${patient.profile?.last_name || ''}`.toLowerCase();
+    if (!patient.profile) return false;
+    const firstName = patient.profile.first_name || '';
+    const lastName = patient.profile.last_name || '';
+    const fullName = `${firstName} ${lastName}`.toLowerCase();
     return fullName.includes(searchQuery.toLowerCase());
   });
 
@@ -80,8 +87,10 @@ const PatientsPage = () => {
     try {
       // Get businessId from user
       const businessId = user?.id || '';
-      const data = await getPatients(businessId);
-      setPatients(data);
+      const fetchedPatients = await getPatients(businessId);
+      
+      // Cast the data to ensure TypeScript compatibility
+      setPatients(fetchedPatients as Patient[]);
     } catch (error) {
       console.error("Error refreshing patients:", error);
       setHasError(true);

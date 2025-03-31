@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData } from '@/types/clinic';
+import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData } from '@/types/clinic';
 
 // Get all patients for a business
 export const getPatients = async (businessId: string = '') => {
@@ -364,7 +364,7 @@ export const deleteService = async (id: string) => {
 };
 
 // Create a new practitioner
-export const createPractitioner = async (formData: any, businessId: string) => {
+export const createPractitioner = async (formData: PractitionerFormData, businessId: string) => {
   try {
     console.log('Creating practitioner with data:', formData);
     
@@ -394,7 +394,7 @@ export const createPractitioner = async (formData: any, businessId: string) => {
 };
 
 // Update an existing practitioner
-export const updatePractitioner = async (id: string, formData: any) => {
+export const updatePractitioner = async (id: string, formData: PractitionerFormData) => {
   try {
     console.log('Updating practitioner with ID:', id, 'and data:', formData);
     
@@ -642,7 +642,7 @@ export const updateAppointment = async (id: string, formData: AppointmentFormDat
 };
 
 // Update the status of an appointment
-export const updateAppointmentStatus = async (id: string, status: Appointment['status']) => {
+export const updateAppointmentStatus = async (id: string, status: string) => {
   try {
     console.log('Updating appointment status for ID:', id, 'to:', status);
     

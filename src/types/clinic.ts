@@ -64,7 +64,7 @@ export interface Appointment {
 }
 
 export type AppointmentFormData = {
-  patient_id: string;
+  patient_id?: string;
   practitioner_id: string;
   service_id: string;
   date: Date;

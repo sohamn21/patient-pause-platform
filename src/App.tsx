@@ -39,6 +39,7 @@ import PatientDetailsPage from './pages/clinic/PatientDetailsPage';
 import ServicesPage from './pages/clinic/ServicesPage';
 import PractitionersPage from './pages/clinic/PractitionersPage';
 import PatientBookingPage from './pages/customer/PatientBookingPage';
+import BookAppointmentPage from './pages/customer/BookAppointmentPage';
 
 function App() {
   return (
@@ -101,6 +102,7 @@ function AppContent() {
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
           <Route path="book" element={<PatientBookingPage />} />
+          <Route path="book/:businessId" element={<BookAppointmentPage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
         

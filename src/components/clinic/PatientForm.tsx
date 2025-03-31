@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -119,6 +118,10 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       
       if (success) {
         console.log("Patient saved successfully");
+        toast({
+          title: patient ? "Patient Updated" : "Patient Created",
+          description: patient ? "Patient information has been updated" : "New patient has been added",
+        });
         onSuccess(formData);
       } else {
         console.error("Failed to save patient");

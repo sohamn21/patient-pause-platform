@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/components/ui/blur-card";
 import { 
@@ -63,8 +63,9 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format, addDays, isSameDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { getServices } from "@/lib/clinicService";
+import { Service } from "@/types/clinic";
 
-// Define an appointment data structure
 interface Appointment {
   id: string;
   customerName: string;
@@ -81,8 +82,10 @@ const AppointmentsPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Sample appointments data
   const [appointments, setAppointments] = useState<Appointment[]>([
     { 
       id: "1", 
@@ -150,13 +153,34 @@ const AppointmentsPage = () => {
     notes: ""
   });
 
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!user || profile?.business_type !== "clinic") return;
+      
+      try {
+        setIsLoading(true);
+        const servicesData = await getServices(user.id);
+        setServices(servicesData);
+      } catch (error) {
+        console.error("Error loading services:", error);
+        toast({
+          title: "Error",
+          description: "Could not load services",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchServices();
+  }, [user, profile, toast]);
+
   const filteredAppointments = appointments.filter(appointment => {
-    // Filter by search
     const matchesSearch = 
       appointment.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       appointment.service.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Filter by date
     const matchesDate = isSameDay(appointment.date, selectedDate);
     
     return matchesSearch && matchesDate;
@@ -265,21 +289,40 @@ const AppointmentsPage = () => {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="service" className="text-right">Service</Label>
-                <Select 
-                  value={newAppointment.service}
-                  onValueChange={value => setNewAppointment({...newAppointment, service: value})}
-                >
-                  <SelectTrigger id="service" className="col-span-3">
-                    <SelectValue placeholder="Select service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table Reservation">Table Reservation</SelectItem>
-                    <SelectItem value="Private Dining">Private Dining</SelectItem>
-                    <SelectItem value="Lunch Reservation">Lunch Reservation</SelectItem>
-                    <SelectItem value="Dinner Reservation">Dinner Reservation</SelectItem>
-                    <SelectItem value="Special Event">Special Event</SelectItem>
-                  </SelectContent>
-                </Select>
+                {profile?.business_type === "clinic" && services.length > 0 ? (
+                  <Select 
+                    value={newAppointment.service}
+                    onValueChange={value => setNewAppointment({...newAppointment, service: value})}
+                  >
+                    <SelectTrigger id="service" className="col-span-3">
+                      <SelectValue placeholder="Select service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {services.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name} ({service.duration} min)
+                          {service.price ? ` - $${service.price}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select 
+                    value={newAppointment.service}
+                    onValueChange={value => setNewAppointment({...newAppointment, service: value})}
+                  >
+                    <SelectTrigger id="service" className="col-span-3">
+                      <SelectValue placeholder="Select service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Table Reservation">Table Reservation</SelectItem>
+                      <SelectItem value="Private Dining">Private Dining</SelectItem>
+                      <SelectItem value="Lunch Reservation">Lunch Reservation</SelectItem>
+                      <SelectItem value="Dinner Reservation">Dinner Reservation</SelectItem>
+                      <SelectItem value="Special Event">Special Event</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="date" className="text-right">Date</Label>

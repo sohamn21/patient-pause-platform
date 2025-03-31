@@ -76,7 +76,6 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   });
 
   useEffect(() => {
-    // Load practitioners for selection
     const loadPractitioners = async () => {
       if (!user) return;
       
@@ -106,11 +105,9 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       let success = false;
       
       if (patient) {
-        // Update existing patient
         console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
-        // Create new patient
         const targetUserId = userId || (user?.id as string);
         console.log("Creating new patient with ID:", targetUserId);
         success = await createPatientProfile(targetUserId, formData);

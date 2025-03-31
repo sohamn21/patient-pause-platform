@@ -37,7 +37,9 @@ const PatientsPage = () => {
       setHasError(false);
       try {
         console.log("Fetching patients...");
-        const data = await getPatients();
+        // Pass the user's ID if available, or an empty string as a default
+        const businessId = user?.id || '';
+        const data = await getPatients(businessId);
         console.log("Patients fetched:", data);
         setPatients(data);
       } catch (error) {
@@ -73,7 +75,8 @@ const PatientsPage = () => {
     setIsLoading(true);
     setHasError(false);
     try {
-      const data = await getPatients();
+      const businessId = user?.id || '';
+      const data = await getPatients(businessId);
       setPatients(data);
     } catch (error) {
       console.error("Error refreshing patients:", error);

@@ -1,8 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData } from '@/types/clinic';
+import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData } from '@/types/clinic';
 
 // Get all patients for a business
-export const getPatients = async (businessId: string) => {
+export const getPatients = async (businessId: string = '') => {
   try {
     console.log('Fetching patients for business:', businessId);
     
@@ -99,12 +99,17 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
       throw profileError;
     }
     
+    // Convert date to string format for database storage
+    const dateOfBirth = formData.date_of_birth 
+      ? formData.date_of_birth.toISOString().split('T')[0] 
+      : null;
+      
     // Insert the patient-specific information
     const { data, error } = await supabase
       .from('patients')
       .insert({
         id: userId,
-        date_of_birth: formData.date_of_birth,
+        date_of_birth: dateOfBirth,
         medical_history: formData.medical_history,
         allergies: formData.allergies,
         emergency_contact: formData.emergency_contact,
@@ -123,6 +128,58 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
     return true;
   } catch (error) {
     console.error('Failed to create patient profile:', error);
+    return false;
+  }
+};
+
+// Update an existing patient
+export const updatePatient = async (patientId: string, formData: PatientFormData) => {
+  console.log('Updating patient with ID:', patientId, 'with data:', formData);
+  
+  try {
+    // Update profile information first
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number,
+      })
+      .eq('id', patientId);
+    
+    if (profileError) {
+      console.error('Error updating profile:', profileError);
+      throw profileError;
+    }
+    
+    // Convert date to string format for database storage
+    const dateOfBirth = formData.date_of_birth 
+      ? formData.date_of_birth.toISOString().split('T')[0] 
+      : null;
+    
+    // Update patient-specific information
+    const { error } = await supabase
+      .from('patients')
+      .update({
+        date_of_birth: dateOfBirth,
+        medical_history: formData.medical_history,
+        allergies: formData.allergies,
+        emergency_contact: formData.emergency_contact,
+        preferred_practitioner_id: formData.preferred_practitioner_id,
+        notes: formData.notes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', patientId);
+    
+    if (error) {
+      console.error('Error updating patient:', error);
+      throw error;
+    }
+    
+    console.log('Patient updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Failed to update patient:', error);
     return false;
   }
 };
@@ -302,6 +359,90 @@ export const deleteService = async (id: string) => {
     return true;
   } catch (error) {
     console.error('Failed to delete service:', error);
+    return false;
+  }
+};
+
+// Create a new practitioner
+export const createPractitioner = async (formData: any, businessId: string) => {
+  try {
+    console.log('Creating practitioner with data:', formData);
+    
+    const { data, error } = await supabase
+      .from('practitioners')
+      .insert({
+        business_id: businessId,
+        name: formData.name,
+        specialization: formData.specialization || null,
+        bio: formData.bio || null,
+        availability: formData.availability || null,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating practitioner:', error);
+      throw error;
+    }
+    
+    console.log('Practitioner created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to create practitioner:', error);
+    throw error;
+  }
+};
+
+// Update an existing practitioner
+export const updatePractitioner = async (id: string, formData: any) => {
+  try {
+    console.log('Updating practitioner with ID:', id, 'and data:', formData);
+    
+    const { data, error } = await supabase
+      .from('practitioners')
+      .update({
+        name: formData.name,
+        specialization: formData.specialization || null,
+        bio: formData.bio || null,
+        availability: formData.availability || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating practitioner:', error);
+      throw error;
+    }
+    
+    console.log('Practitioner updated successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to update practitioner:', error);
+    throw error;
+  }
+};
+
+// Delete a practitioner
+export const deletePractitioner = async (id: string) => {
+  try {
+    console.log('Deleting practitioner with ID:', id);
+    
+    const { error } = await supabase
+      .from('practitioners')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting practitioner:', error);
+      throw error;
+    }
+    
+    console.log('Practitioner deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Failed to delete practitioner:', error);
     return false;
   }
 };

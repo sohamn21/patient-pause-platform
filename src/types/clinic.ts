@@ -62,6 +62,20 @@ export interface Appointment {
   service?: Service;
 }
 
+export interface Invoice {
+  id?: string;
+  patient_id: string;
+  patient_name: string;
+  invoice_date: string;
+  due_date: string | null;
+  items: { description: string; amount: number }[];
+  total_amount: number;
+  status: 'paid' | 'unpaid' | 'overdue' | 'cancelled' | string;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type AppointmentFormData = {
   patient_id?: string;
   practitioner_id: string;

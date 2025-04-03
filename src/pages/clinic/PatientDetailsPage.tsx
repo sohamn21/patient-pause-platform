@@ -1,421 +1,311 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPatient, getPatientAppointments, updatePatient, deleteAppointment } from '@/lib/clinicService';
+import { useAuth } from '@/context/AuthContext';
+import { getPatient, getPatientAppointments } from '@/lib/clinicService';
 import { Patient, Appointment } from '@/types/clinic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { PatientForm } from '@/components/clinic/PatientForm';
-import { format } from 'date-fns';
-import { 
-  Calendar, 
-  Clock, 
-  Edit, 
-  Trash, 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle,
-  User,
-  Phone,
-  Mail,
-  CalendarClock,
-  Heart,
-  AlertCircle,
-  FileText,
-  UserCog
-} from 'lucide-react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calendar, Clock, FileText, ArrowLeft, Edit, User } from 'lucide-react';
+import { InvoiceGenerator } from '@/components/clinic/InvoiceGenerator';
 
 const PatientDetailsPage = () => {
-  const { patientId } = useParams<{ patientId: string }>();
+  const { patientId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { toast } = useToast();
-  
   const [patient, setPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
-  
+  const [hasError, setHasError] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
+
   useEffect(() => {
+    if (!patientId) return;
+
     const fetchPatientData = async () => {
-      if (!patientId) return;
-      
       setIsLoading(true);
-      const patientData = await getPatient(patientId);
-      if (patientData) {
-        setPatient(patientData);
-        
+      setHasError(false);
+      try {
+        console.log("Fetching patient details for ID:", patientId);
+        const patientData = await getPatient(patientId);
+        setPatient(patientData as Patient);
+
+        console.log("Fetching patient appointments");
         const appointmentsData = await getPatientAppointments(patientId);
-        setAppointments(appointmentsData);
+        setAppointments(appointmentsData as Appointment[]);
+      } catch (error) {
+        console.error("Error fetching patient data:", error);
+        setHasError(true);
+        toast({
+          title: "Error",
+          description: "Failed to load patient information. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
-    
+
     fetchPatientData();
-  }, [patientId]);
-  
-  const handleDeleteAppointment = async () => {
-    if (!appointmentToDelete) return;
+  }, [patientId, toast]);
+
+  const handleRefresh = async () => {
+    if (!patientId) return;
     
-    const success = await deleteAppointment(appointmentToDelete);
-    if (success) {
-      toast({
-        title: "Appointment Deleted",
-        description: "The appointment has been successfully deleted.",
-      });
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const patientData = await getPatient(patientId);
+      setPatient(patientData as Patient);
       
-      // Update the appointments list
-      setAppointments(appointments.filter(a => a.id !== appointmentToDelete));
-    }
-    
-    setDeleteDialogOpen(false);
-    setAppointmentToDelete(null);
-  };
-  
-  const confirmDeleteAppointment = (id: string) => {
-    setAppointmentToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'scheduled':
-        return <Badge className="bg-blue-500">Scheduled</Badge>;
-      case 'completed':
-        return <Badge className="bg-green-500">Completed</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-500">Cancelled</Badge>;
-      case 'no-show':
-        return <Badge className="bg-amber-500">No Show</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+      const appointmentsData = await getPatientAppointments(patientId);
+      setAppointments(appointmentsData as Appointment[]);
+      
+      toast({
+        title: "Success",
+        description: "Patient information refreshed.",
+      });
+    } catch (error) {
+      console.error("Error refreshing patient data:", error);
+      setHasError(true);
+      toast({
+        title: "Error",
+        description: "Failed to refresh patient information.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-64">Loading patient details...</div>;
-  }
-  
-  if (!patient) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Patient Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            The patient record you're looking for doesn't exist or you don't have permission to view it.
-          </p>
-          <Button onClick={() => navigate('/patients')}>Return to Patients</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-  
+
+  const handleBack = () => {
+    navigate('/patients');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Patient Details</h1>
-          <p className="text-muted-foreground">
-            View and manage patient information
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={() => navigate(`/appointments?patientId=${patient.id}`)}
-            variant="outline"
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            New Appointment
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Patients
           </Button>
-          <Button 
-            onClick={() => setIsEditing(true)}
-            variant={isEditing ? "secondary" : "default"}
-          >
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isLoading ? (
+              <Skeleton className="h-8 w-48" />
+            ) : (
+              patient ? `${patient.profile?.first_name || ''} ${patient.profile?.last_name || ''}` : 'Patient Details'
+            )}
+          </h1>
+        </div>
+        
+        {!isLoading && patient && !showEditForm && (
+          <Button onClick={() => setShowEditForm(true)}>
             <Edit className="mr-2 h-4 w-4" />
-            {isEditing ? "Cancel Edit" : "Edit Patient"}
+            Edit Patient
           </Button>
-        </div>
+        )}
       </div>
-      
-      <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details">Patient Details</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments History</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details" className="space-y-4 mt-4">
-          {isEditing ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Patient</CardTitle>
-                <CardDescription>Update patient information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PatientForm 
-                  patient={patient}
-                  onSuccess={(updatedPatient) => {
-                    setIsEditing(false);
-                    // Fix by ensuring we convert Date objects to strings
-                    const date_of_birth = typeof updatedPatient.date_of_birth === 'object' && updatedPatient.date_of_birth instanceof Date
-                      ? updatedPatient.date_of_birth.toISOString().split('T')[0]
-                      : updatedPatient.date_of_birth;
-                    
-                    setPatient({
-                      ...patient,
-                      date_of_birth: date_of_birth as string | null,
-                      medical_history: updatedPatient.medical_history || null,
-                      allergies: updatedPatient.allergies || null,
-                      emergency_contact: updatedPatient.emergency_contact || null,
-                      preferred_practitioner_id: updatedPatient.preferred_practitioner_id || null,
-                      notes: updatedPatient.notes || null,
-                      profile: {
-                        ...patient.profile,
-                        first_name: updatedPatient.first_name,
-                        last_name: updatedPatient.last_name,
-                        phone_number: updatedPatient.phone_number || null,
-                      }
-                    });
-                    toast({
-                      title: "Patient Updated",
-                      description: "Patient information has been updated successfully.",
-                    });
-                  }}
-                  onCancel={() => setIsEditing(false)}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      ) : hasError ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <p className="text-muted-foreground">Failed to load patient information</p>
+              <Button onClick={handleRefresh}>Try Again</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : showEditForm ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Patient Information</CardTitle>
+            <CardDescription>Update patient details and medical information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PatientForm 
+              patient={patient}
+              onSuccess={() => {
+                setShowEditForm(false);
+                handleRefresh();
+                toast({
+                  title: "Success",
+                  description: "Patient information updated successfully",
+                });
+              }}
+              onCancel={() => setShowEditForm(false)}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="details">
+                <User className="mr-2 h-4 w-4" />
+                Patient Details
+              </TabsTrigger>
+              <TabsTrigger value="appointments">
+                <Calendar className="mr-2 h-4 w-4" />
+                Appointments
+              </TabsTrigger>
+              <TabsTrigger value="invoice">
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Invoice
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="space-y-6 mt-6">
+              {patient && (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Patient Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Personal Details</h3>
+                          <dl className="space-y-3">
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Name</dt>
+                              <dd>{patient.profile?.first_name} {patient.profile?.last_name}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
+                              <dd>{patient.profile?.phone_number || 'Not provided'}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Date of Birth</dt>
+                              <dd>
+                                {patient.date_of_birth 
+                                  ? format(new Date(patient.date_of_birth), 'MMMM d, yyyy')
+                                  : 'Not provided'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Emergency Contact</dt>
+                              <dd>{patient.emergency_contact || 'Not provided'}</dd>
+                            </div>
+                          </dl>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Medical Information</h3>
+                          <dl className="space-y-3">
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Medical History</dt>
+                              <dd className="whitespace-pre-line">{patient.medical_history || 'No medical history recorded'}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Allergies</dt>
+                              <dd className="whitespace-pre-line">{patient.allergies || 'No allergies recorded'}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-muted-foreground">Preferred Practitioner</dt>
+                              <dd>{patient.preferred_practitioner_id || 'No preference'}</dd>
+                            </div>
+                          </dl>
+                        </div>
+                      </div>
+                      
+                      {patient.notes && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-semibold mb-2">Additional Notes</h3>
+                          <p className="whitespace-pre-line">{patient.notes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="appointments" className="space-y-6 mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
+                  <CardTitle>Appointment History</CardTitle>
+                  <CardDescription>View past and upcoming appointments</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-start gap-3">
-                      <User className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Name</p>
-                        <p className="text-muted-foreground">
-                          {patient.profile?.first_name} {patient.profile?.last_name}
-                        </p>
-                      </div>
+                  {appointments.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Time</TableHead>
+                          <TableHead>Service</TableHead>
+                          <TableHead>Practitioner</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {appointments.map(appointment => (
+                          <TableRow key={appointment.id}>
+                            <TableCell>
+                              {format(new Date(appointment.date), 'MMM d, yyyy')}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {appointment.start_time} - {appointment.end_time}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {appointment.service?.name || 'Unknown Service'}
+                            </TableCell>
+                            <TableCell>
+                              {appointment.practitioner?.name || 'Unknown Practitioner'}
+                            </TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                appointment.status === 'no-show' ? 'bg-amber-100 text-amber-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No appointments found for this patient</p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate(`/appointments?patientId=${patientId}`)}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Schedule Appointment
+                      </Button>
                     </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <Phone className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Phone Number</p>
-                        <p className="text-muted-foreground">
-                          {patient.profile?.phone_number || 'Not provided'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <CalendarClock className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Date of Birth</p>
-                        <p className="text-muted-foreground">
-                          {patient.date_of_birth 
-                            ? format(new Date(patient.date_of_birth), 'MMMM d, yyyy')
-                            : 'Not provided'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <UserCog className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Preferred Practitioner</p>
-                        <p className="text-muted-foreground">
-                          {patient.preferred_practitioner_id || 'None specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Medical Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Allergies</p>
-                        <p className="text-muted-foreground whitespace-pre-line">
-                          {patient.allergies || 'None recorded'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <Heart className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Medical History</p>
-                        <p className="text-muted-foreground whitespace-pre-line">
-                          {patient.medical_history || 'None recorded'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <Phone className="h-5 w-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="font-medium">Emergency Contact</p>
-                        <p className="text-muted-foreground">
-                          {patient.emergency_contact || 'Not provided'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {patient.notes && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-start gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground mt-1" />
-                      <p className="text-muted-foreground whitespace-pre-line">
-                        {patient.notes}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="appointments" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment History</CardTitle>
-              <CardDescription>
-                View all past and upcoming appointments for this patient
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {appointments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Practitioner</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {appointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell>
-                          {format(new Date(appointment.date), 'MMM d, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          {appointment.start_time} - {appointment.end_time}
-                        </TableCell>
-                        <TableCell>
-                          {appointment.service?.name || 'Unknown service'}
-                        </TableCell>
-                        <TableCell>
-                          {appointment.practitioner?.name || 'Unknown practitioner'}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(appointment.status)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/appointments?id=${appointment.id}`)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => confirmDeleteAppointment(appointment.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Appointments Found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    This patient doesn't have any appointments yet.
-                  </p>
-                  <Button onClick={() => navigate(`/appointments?patientId=${patient.id}`)}>
-                    Schedule New Appointment
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Appointment</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this appointment? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAppointment}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </TabsContent>
+            
+            <TabsContent value="invoice" className="space-y-6 mt-6">
+              {patient && <InvoiceGenerator patient={patient} />}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </div>
   );
 };

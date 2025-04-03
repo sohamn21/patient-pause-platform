@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData } from '@/types/clinic';
+import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 
 // Get all patients for a business
 export const getPatients = async (businessId: string = '') => {
@@ -738,5 +738,54 @@ export const deleteAppointment = async (id: string) => {
   } catch (error) {
     console.error('Failed to delete appointment:', error);
     return false;
+  }
+};
+
+// Generate an invoice for a patient
+export const generatePatientInvoice = async (
+  patientId: string, 
+  items: { description: string; amount: number }[], 
+  invoiceDate: Date,
+  dueDate?: Date | null
+): Promise<Invoice> => {
+  try {
+    console.log('Generating invoice for patient:', patientId);
+    
+    // Get patient details to include in the invoice
+    const patient = await getPatient(patientId);
+    if (!patient) {
+      throw new Error('Patient not found');
+    }
+    
+    const patientName = `${patient.profile?.first_name || ''} ${patient.profile?.last_name || ''}`.trim();
+    
+    // Calculate total amount
+    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+    
+    // Create invoice object
+    const invoiceData: Invoice = {
+      patient_id: patientId,
+      patient_name: patientName,
+      invoice_date: invoiceDate.toISOString().split('T')[0],
+      due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+      items: items,
+      total_amount: totalAmount,
+      status: 'unpaid',
+      notes: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // In a real application, you would save this to a database
+    // For now, we'll just return the invoice object
+    console.log('Invoice generated:', invoiceData);
+    
+    // Simulating database insertion with a fake ID
+    invoiceData.id = `inv_${Date.now()}`;
+    
+    return invoiceData;
+  } catch (error) {
+    console.error('Failed to generate invoice:', error);
+    throw error;
   }
 };

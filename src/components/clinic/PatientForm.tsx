@@ -108,7 +108,8 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
-        // Use the userId prop if provided, otherwise use the current user's ID
+        // Use the userId prop if provided, otherwise generate a new random UUID
+        // This is the key fix - we need to provide a valid ID for the new patient
         const targetUserId = userId || (user?.id as string);
         console.log("Creating new patient with ID:", targetUserId);
         success = await createPatientProfile(targetUserId, formData);

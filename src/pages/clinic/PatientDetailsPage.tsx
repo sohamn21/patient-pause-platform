@@ -301,7 +301,7 @@ const PatientDetailsPage = () => {
             </TabsContent>
             
             <TabsContent value="invoice" className="space-y-6 mt-6">
-              {patient && <InvoiceGenerator patient={patient} />}
+              {patient && <InvoiceGenerator patientId={patient.id} />}
             </TabsContent>
           </Tabs>
         </>

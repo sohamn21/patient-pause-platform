@@ -106,76 +106,50 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
   console.log('Creating patient profile for user ID:', userId, 'with data:', formData);
   
   try {
-    // Check if the user exists in the profiles table and update their profile information
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phone_number: formData.phone_number || null,
-      })
-      .eq('id', userId);
+    // Generate a unique ID for the new patient
+    const patientId = crypto.randomUUID();
     
-    if (profileError) {
-      console.error('Error updating profile:', profileError);
-      throw profileError;
-    }
+    console.log('Generated new patient ID:', patientId);
     
     // Convert date to string format for database storage
     const dateOfBirth = formData.date_of_birth 
       ? formData.date_of_birth.toISOString().split('T')[0] 
       : null;
     
-    // Check if a patient record already exists for this user
-    const { data: existingPatient } = await supabase
+    // Insert the patient record first
+    const { error: patientError } = await supabase
       .from('patients')
-      .select('id')
-      .eq('id', userId)
-      .maybeSingle();
-      
-    if (existingPatient) {
-      // Update existing patient record
-      const { error } = await supabase
-        .from('patients')
-        .update({
-          date_of_birth: dateOfBirth,
-          medical_history: formData.medical_history || null,
-          allergies: formData.allergies || null,
-          emergency_contact: formData.emergency_contact || null,
-          preferred_practitioner_id: formData.preferred_practitioner_id || null,
-          notes: formData.notes || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-      
-      if (error) {
-        console.error('Error updating existing patient:', error);
-        throw error;
-      }
-      
-      console.log('Existing patient updated successfully');
-    } else {
-      // Insert the patient-specific information
-      const { error } = await supabase
-        .from('patients')
-        .insert({
-          id: userId,
-          date_of_birth: dateOfBirth,
-          medical_history: formData.medical_history || null,
-          allergies: formData.allergies || null,
-          emergency_contact: formData.emergency_contact || null,
-          preferred_practitioner_id: formData.preferred_practitioner_id || null,
-          notes: formData.notes || null,
-        });
-      
-      if (error) {
-        console.error('Error creating patient:', error);
-        throw error;
-      }
-      
-      console.log('New patient created successfully');
+      .insert({
+        id: patientId,
+        date_of_birth: dateOfBirth,
+        medical_history: formData.medical_history || null,
+        allergies: formData.allergies || null,
+        emergency_contact: formData.emergency_contact || null,
+        preferred_practitioner_id: formData.preferred_practitioner_id || null,
+        notes: formData.notes || null,
+      });
+    
+    if (patientError) {
+      console.error('Error creating patient:', patientError);
+      throw patientError;
     }
     
+    // Now create or update the profile information
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: patientId,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number || null,
+      });
+    
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      throw profileError;
+    }
+    
+    console.log('New patient created successfully with ID:', patientId);
     return true;
   } catch (error) {
     console.error('Failed to create patient profile:', error);

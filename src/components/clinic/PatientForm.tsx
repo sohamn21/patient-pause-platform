@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -109,9 +110,13 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         success = await updatePatient(patient.id, formData);
       } else {
         // Use the userId prop if provided, otherwise generate a new random UUID
-        // This is the key fix - we need to provide a valid ID for the new patient
         const targetUserId = userId || (user?.id as string);
-        console.log("Creating new patient with ID:", targetUserId);
+        console.log("Creating new patient with business ID:", targetUserId);
+        
+        if (!targetUserId) {
+          throw new Error("No user ID available for creating patient");
+        }
+        
         success = await createPatientProfile(targetUserId, formData);
       }
       

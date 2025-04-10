@@ -134,6 +134,7 @@ const PatientsPage = () => {
           </CardHeader>
           <CardContent>
             <PatientForm 
+              userId={user?.id}
               onSuccess={() => {
                 setShowNewPatientForm(false);
                 // Refresh the patients list

@@ -12,8 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Clock, FileText, ArrowLeft, Edit, User } from 'lucide-react';
+import { Calendar, Clock, FileText, ArrowLeft, Edit, User, ClipboardList, PlusCircle, BarChart, Bell, FileUp, Pill } from 'lucide-react';
 import { InvoiceGenerator } from '@/components/clinic/InvoiceGenerator';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 const PatientDetailsPage = () => {
   const { patientId } = useParams();
@@ -26,6 +28,24 @@ const PatientDetailsPage = () => {
   const [hasError, setHasError] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  // Dummy data for new features
+  const [prescriptions, setPrescriptions] = useState([
+    { id: '1', name: 'Amoxicillin', dosage: '500mg', frequency: 'Every 8 hours', startDate: '2023-10-05', endDate: '2023-10-15', notes: 'Take with food', status: 'active' },
+    { id: '2', name: 'Ibuprofen', dosage: '400mg', frequency: 'Every 6 hours as needed', startDate: '2023-09-22', endDate: '2023-10-01', notes: 'For pain relief', status: 'completed' },
+  ]);
+  
+  const [progressData, setProgressData] = useState([
+    { date: '2023-08-01', measurement: 'Blood Pressure', value: '120/80', notes: 'Normal range' },
+    { date: '2023-09-01', measurement: 'Blood Pressure', value: '118/75', notes: 'Improved' },
+    { date: '2023-10-01', measurement: 'Blood Pressure', value: '115/75', notes: 'Stable' },
+  ]);
+  
+  const [medicalRecords, setMedicalRecords] = useState([
+    { id: '1', filename: 'blood_work_results.pdf', uploadDate: '2023-09-15', type: 'Lab Results', size: '1.2 MB' },
+    { id: '2', filename: 'xray_scan.jpg', uploadDate: '2023-08-22', type: 'Imaging', size: '3.4 MB' },
+  ]);
 
   useEffect(() => {
     if (!patientId) return;
@@ -88,6 +108,36 @@ const PatientDetailsPage = () => {
 
   const handleBack = () => {
     navigate('/patients');
+  };
+
+  const handleFileUpload = () => {
+    setUploadingFile(true);
+    // Simulate file upload
+    setTimeout(() => {
+      setMedicalRecords([
+        ...medicalRecords,
+        { 
+          id: (medicalRecords.length + 1).toString(), 
+          filename: 'new_medical_record.pdf', 
+          uploadDate: format(new Date(), 'yyyy-MM-dd'), 
+          type: 'Medical History', 
+          size: '0.8 MB' 
+        }
+      ]);
+      setUploadingFile(false);
+      toast({
+        title: "Success",
+        description: "Medical record uploaded successfully.",
+      });
+    }, 1500);
+  };
+
+  const handleAddPrescription = () => {
+    // In a real app, this would open a form to add a new prescription
+    toast({
+      title: "Feature Coming Soon",
+      description: "Prescription management will be available in the next update.",
+    });
   };
 
   return (
@@ -153,18 +203,30 @@ const PatientDetailsPage = () => {
       ) : (
         <>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
+            <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
               <TabsTrigger value="details">
                 <User className="mr-2 h-4 w-4" />
-                Patient Details
+                Details
               </TabsTrigger>
               <TabsTrigger value="appointments">
                 <Calendar className="mr-2 h-4 w-4" />
                 Appointments
               </TabsTrigger>
+              <TabsTrigger value="medical-records">
+                <FileUp className="mr-2 h-4 w-4" />
+                Records
+              </TabsTrigger>
+              <TabsTrigger value="prescriptions">
+                <Pill className="mr-2 h-4 w-4" />
+                Prescriptions
+              </TabsTrigger>
+              <TabsTrigger value="progress">
+                <BarChart className="mr-2 h-4 w-4" />
+                Progress
+              </TabsTrigger>
               <TabsTrigger value="invoice">
                 <FileText className="mr-2 h-4 w-4" />
-                Generate Invoice
+                Invoice
               </TabsTrigger>
             </TabsList>
             
@@ -293,6 +355,196 @@ const PatientDetailsPage = () => {
                       >
                         <Calendar className="mr-2 h-4 w-4" />
                         Schedule Appointment
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="medical-records" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div>
+                    <CardTitle>Medical Records</CardTitle>
+                    <CardDescription>Upload and manage patient medical records</CardDescription>
+                  </div>
+                  <Button size="sm" onClick={handleFileUpload} disabled={uploadingFile}>
+                    {uploadingFile ? (
+                      <>
+                        <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <FileUp className="mr-2 h-4 w-4" />
+                        Upload Record
+                      </>
+                    )}
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {medicalRecords.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Filename</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Upload Date</TableHead>
+                          <TableHead>Size</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {medicalRecords.map(record => (
+                          <TableRow key={record.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center">
+                                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {record.filename}
+                              </div>
+                            </TableCell>
+                            <TableCell>{record.type}</TableCell>
+                            <TableCell>{record.uploadDate}</TableCell>
+                            <TableCell>{record.size}</TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button variant="outline" size="sm">
+                                  View
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  Download
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No medical records found for this patient</p>
+                      <Button variant="outline" onClick={handleFileUpload}>
+                        <FileUp className="mr-2 h-4 w-4" />
+                        Upload First Record
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="prescriptions" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div>
+                    <CardTitle>Prescriptions</CardTitle>
+                    <CardDescription>Manage patient prescriptions</CardDescription>
+                  </div>
+                  <Button size="sm" onClick={handleAddPrescription}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Prescription
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {prescriptions.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Medication</TableHead>
+                          <TableHead>Dosage</TableHead>
+                          <TableHead>Frequency</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {prescriptions.map(prescription => (
+                          <TableRow key={prescription.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center">
+                                <Pill className="mr-2 h-4 w-4 text-muted-foreground" />
+                                {prescription.name}
+                              </div>
+                            </TableCell>
+                            <TableCell>{prescription.dosage}</TableCell>
+                            <TableCell>{prescription.frequency}</TableCell>
+                            <TableCell>{prescription.startDate} to {prescription.endDate}</TableCell>
+                            <TableCell>
+                              <Badge variant={prescription.status === 'active' ? 'default' : 'secondary'}>
+                                {prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{prescription.notes}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No prescriptions found for this patient</p>
+                      <Button variant="outline" onClick={handleAddPrescription}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add First Prescription
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="progress" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Patient Progress</CardTitle>
+                  <CardDescription>Track patient health metrics over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {progressData.length > 0 ? (
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <h3 className="text-sm font-medium">Blood Pressure Trend</h3>
+                          <span className="text-sm text-muted-foreground">Improving</span>
+                        </div>
+                        <Progress value={75} className="h-2" />
+                      </div>
+                      
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Measurement</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {progressData.map((entry, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{entry.date}</TableCell>
+                              <TableCell>{entry.measurement}</TableCell>
+                              <TableCell className="font-medium">{entry.value}</TableCell>
+                              <TableCell>{entry.notes}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      
+                      <div className="flex justify-end">
+                        <Button variant="outline">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add New Measurement
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No progress data found for this patient</p>
+                      <Button variant="outline">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add First Measurement
                       </Button>
                     </div>
                   )}

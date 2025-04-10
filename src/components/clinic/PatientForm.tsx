@@ -109,8 +109,8 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
-        // Use the userId prop if provided, otherwise generate a new random UUID
-        const targetUserId = userId || (user?.id as string);
+        // Use the userId prop if provided, otherwise use the user.id from context
+        const targetUserId = userId || (user?.id || '');
         console.log("Creating new patient with business ID:", targetUserId);
         
         if (!targetUserId) {

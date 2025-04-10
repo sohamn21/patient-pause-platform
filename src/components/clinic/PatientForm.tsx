@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -37,7 +38,7 @@ import {
 
 interface PatientFormProps {
   patient?: Patient;
-  userId?: string;
+  userId: string;
   onSuccess: (data?: PatientFormData) => void;
   onCancel: () => void;
 }
@@ -77,11 +78,17 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
 
   useEffect(() => {
     const loadPractitioners = async () => {
-      if (!user) return;
+      // Use the userId prop if provided, otherwise use the user context
+      const businessId = userId || (user?.id || '');
+      
+      if (!businessId) {
+        console.error("No business ID available for loading practitioners");
+        return;
+      }
       
       try {
-        console.log("Loading practitioners for business:", user.id);
-        const data = await getPractitioners(user.id);
+        console.log("Loading practitioners for business:", businessId);
+        const data = await getPractitioners(businessId);
         console.log("Practitioners loaded:", data);
         setPractitioners(data as Practitioner[]);
       } catch (error) {
@@ -95,7 +102,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
     };
     
     loadPractitioners();
-  }, [user, toast]);
+  }, [user, userId, toast]);
   
   const onSubmit = async (formData: PatientFormData) => {
     setIsLoading(true);

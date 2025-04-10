@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -30,7 +29,6 @@ const PatientDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Dummy data for new features
   const [prescriptions, setPrescriptions] = useState([
     { id: '1', name: 'Amoxicillin', dosage: '500mg', frequency: 'Every 8 hours', startDate: '2023-10-05', endDate: '2023-10-15', notes: 'Take with food', status: 'active' },
     { id: '2', name: 'Ibuprofen', dosage: '400mg', frequency: 'Every 6 hours as needed', startDate: '2023-09-22', endDate: '2023-10-01', notes: 'For pain relief', status: 'completed' },
@@ -188,6 +186,7 @@ const PatientDetailsPage = () => {
           <CardContent>
             <PatientForm 
               patient={patient}
+              userId={user?.id || ''}
               onSuccess={() => {
                 setShowEditForm(false);
                 handleRefresh();

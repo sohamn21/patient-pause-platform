@@ -115,6 +115,7 @@ const BookAppointmentPage = () => {
             </CardHeader>
             <CardContent>
               <PatientForm 
+                userId={user?.id || ''}
                 onSuccess={handlePatientFormSuccess}
                 onCancel={() => navigate('/customer/dashboard')}
               />

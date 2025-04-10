@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -267,6 +266,7 @@ const PatientBookingPage = () => {
           </CardHeader>
           <CardContent>
             <PatientForm 
+              userId={user?.id || ''}
               onSuccess={handlePatientFormSuccess}
               onCancel={() => navigate(-1)}
             />

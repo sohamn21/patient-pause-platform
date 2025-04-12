@@ -15,36 +15,40 @@ const CustomerProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const [patientExists, setPatientExists] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
   const [profileCreated, setProfileCreated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    // Immediately check if user is available
-    if (!user) {
-      setIsLoading(false);
-      setIsCheckingProfile(false);
-      return;
-    }
+    console.log("Profile check effect running, attempt:", checkAttempts);
     
-    // Only proceed with the check if we haven't exceeded the attempt limit
+    // Don't do anything if we've already checked twice
     if (checkAttempts >= 2) {
       setIsLoading(false);
       setIsCheckingProfile(false);
       return;
     }
     
-    // Increment attempt counter first to avoid multiple checks
-    setCheckAttempts(prevAttempts => prevAttempts + 1);
+    // Skip if no user is available
+    if (!user) {
+      console.log("No user available, skipping profile check");
+      setIsLoading(false);
+      setIsCheckingProfile(false);
+      return;
+    }
+
+    // Set checking state and increment attempts
+    setIsCheckingProfile(true);
+    setCheckAttempts(prev => prev + 1);
     
     const checkPatientProfile = async () => {
       try {
         console.log("Checking patient profile for user:", user.id);
-        setIsCheckingProfile(true);
         const exists = await checkPatientExists(user.id);
-        console.log("Patient profile exists:", exists);
+        console.log("Patient profile check result:", exists);
+        
         setPatientExists(exists);
         setError(null);
       } catch (error) {
@@ -56,12 +60,14 @@ const CustomerProfile = () => {
           variant: "destructive",
         });
       } finally {
+        // Always update these states regardless of success/failure
+        console.log("Finishing profile check, setting loading states to false");
         setIsLoading(false);
         setIsCheckingProfile(false);
       }
     };
     
-    // Run the check immediately
+    // Execute the check
     checkPatientProfile();
   }, [user, toast, checkAttempts]);
   
@@ -78,11 +84,12 @@ const CustomerProfile = () => {
     setError(null);
     setCheckAttempts(0);
     setIsLoading(true);
-    setIsCheckingProfile(true);
   };
   
-  // Show loading state only on initial load
-  if (isLoading && checkAttempts === 1) {
+  console.log("Render states:", { isLoading, isCheckingProfile, patientExists, checkAttempts });
+  
+  // Show initial loading state only on first attempt
+  if (isLoading && checkAttempts <= 1) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center">

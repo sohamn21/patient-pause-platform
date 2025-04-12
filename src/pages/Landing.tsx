@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
@@ -9,68 +10,66 @@ import {
   Users,
   MessageSquare,
   ChevronRight,
-  CheckCircle,
   Building,
   Utensils,
   Scissors,
   Stethoscope,
-  Menu,
-  X
+  Menu
 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Card, CardContent } from '@/components/ui/card';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const features = [
     {
       title: 'Smart Waitlist',
-      description: 'Reduce wait times and improve customer experience with a digital waitlist system.',
-      icon: <Clock className="w-12 h-12 text-primary" />
+      description: 'Reduce wait times and improve customer experience',
+      icon: <Clock className="w-10 h-10 text-primary" />
     },
     {
       title: 'Appointment Scheduling',
-      description: 'Allow customers to book appointments online and reduce no-shows with reminders.',
-      icon: <CalendarClock className="w-12 h-12 text-primary" />
+      description: 'Book appointments online with automatic reminders',
+      icon: <CalendarClock className="w-10 h-10 text-primary" />
     },
     {
       title: 'Customer Management',
-      description: 'Keep track of customer preferences and history to provide personalized service.',
-      icon: <Users className="w-12 h-12 text-primary" />
+      description: 'Track customer preferences and history',
+      icon: <Users className="w-10 h-10 text-primary" />
     },
     {
       title: 'Notifications',
-      description: 'Send automatic updates to customers via SMS, email, or in-app notifications.',
-      icon: <MessageSquare className="w-12 h-12 text-primary" />
+      description: 'Automatic updates via SMS or email',
+      icon: <MessageSquare className="w-10 h-10 text-primary" />
     }
   ];
 
   const businessTypes = [
     {
       type: 'Restaurants',
-      description: 'Manage table turnover, reduce wait times, and improve customer satisfaction.',
-      icon: <Utensils className="w-10 h-10 text-primary" />
+      description: 'Manage table turnover and reduce wait times',
+      icon: <Utensils className="w-8 h-8 text-primary" />
     },
     {
       type: 'Salons',
-      description: 'Schedule appointments, manage stylists, and keep clients informed about wait times.',
-      icon: <Scissors className="w-10 h-10 text-primary" />
+      description: 'Schedule appointments and manage stylists',
+      icon: <Scissors className="w-8 h-8 text-primary" />
     },
     {
       type: 'Clinics',
-      description: 'Organize patient flow, reduce waiting room congestion, and improve patient experience.',
-      icon: <Stethoscope className="w-10 h-10 text-primary" />
+      description: 'Organize patient flow and improve experience',
+      icon: <Stethoscope className="w-8 h-8 text-primary" />
     },
     {
       type: 'Any Service Business',
-      description: 'Perfect for any business that deals with customer queues and appointments.',
-      icon: <Building className="w-10 h-10 text-primary" />
+      description: 'Perfect for any business with customer queues',
+      icon: <Building className="w-8 h-8 text-primary" />
     }
   ];
 
@@ -137,7 +136,7 @@ const Landing = () => {
               Stop the Wait,<br />Start the Experience
             </h1>
             <p className="max-w-[600px] text-muted-foreground md:text-xl">
-              PatientPause helps businesses manage customer queues, reduce wait times, and improve service. Perfect for restaurants, salons, clinics, and more.
+              PatientPause helps businesses manage customer queues, reduce wait times, and improve service.
             </p>
           </div>
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -149,10 +148,10 @@ const Landing = () => {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <div className="relative h-[350px] w-[350px] sm:h-[500px] sm:w-[500px]">
+          <div className="relative h-[300px] w-[300px] sm:h-[400px] sm:w-[400px]">
             <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-br from-primary to-purple-500 opacity-20 blur-[100px]" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Clock className="h-32 w-32 text-primary" />
+              <Clock className="h-24 w-24 text-primary" />
             </div>
           </div>
         </div>
@@ -160,95 +159,49 @@ const Landing = () => {
 
       {/* Features Section */}
       <section className="container py-12 md:py-24">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Key Features</h2>
-          <p className="mt-4 text-muted-foreground md:text-xl">
-            Everything you need to manage customer flow and enhance service quality
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Key Features</h2>
+          <p className="mt-2 text-muted-foreground md:text-lg">
+            Everything you need to manage customer flow
           </p>
         </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
-            <div key={index} className="flex flex-col items-center text-center p-4 border rounded-lg hover:shadow-md transition-shadow">
-              <div className="mb-4">
-                {feature.icon}
-              </div>
-              <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
+            <Card key={index} className="hover:shadow-md transition-shadow">
+              <CardContent className="flex flex-col items-center text-center p-6">
+                <div className="mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
 
       {/* Business Types Section */}
-      <section className="container py-12 md:py-24 bg-muted/50 rounded-lg my-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-            Perfect For All Business Types
+      <section className="container py-12 md:py-24 bg-muted/30 rounded-lg my-8">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+            For All Business Types
           </h2>
-          <p className="mt-4 text-muted-foreground md:text-xl">
-            Our solution adapts to the unique needs of various service businesses
+          <p className="mt-2 text-muted-foreground md:text-lg">
+            Our solution adapts to your unique needs
           </p>
         </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {businessTypes.map((business, index) => (
-            <div key={index} className="bg-background p-6 rounded-lg shadow-sm">
-              <div className="flex items-center justify-center mb-4">
-                {business.icon}
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-center">{business.type}</h3>
-              <p className="text-muted-foreground text-center">{business.description}</p>
-            </div>
+            <Card key={index} className="bg-background">
+              <CardContent className="flex flex-col items-center text-center p-6">
+                <div className="mb-4">
+                  {business.icon}
+                </div>
+                <h3 className="text-lg font-bold mb-2">{business.type}</h3>
+                <p className="text-muted-foreground">{business.description}</p>
+              </CardContent>
+            </Card>
           ))}
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="container py-12 md:py-24">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-            What Our Customers Say
-          </h2>
-          <p className="mt-4 text-muted-foreground md:text-xl">
-            Join the thousands of businesses improving their customer experience
-          </p>
-        </div>
-        <div className="grid gap-8 md:grid-cols-3">
-          <div className="bg-muted/30 p-6 rounded-lg border">
-            <p className="italic mb-4">"PatientPause transformed our waiting room experience. Our patients love the transparency and reduced wait times."</p>
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-bold">AC</span>
-              </div>
-              <div>
-                <p className="font-medium">Dr. Arun Chopra</p>
-                <p className="text-sm text-muted-foreground">Sunrise Medical Clinic</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-muted/30 p-6 rounded-lg border">
-            <p className="italic mb-4">"Table turnover has improved by 30% since implementing PatientPause. Our customers are happier, and we're seeing more revenue."</p>
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-bold">PS</span>
-              </div>
-              <div>
-                <p className="font-medium">Priya Sharma</p>
-                <p className="text-sm text-muted-foreground">Spice Garden Restaurant</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-muted/30 p-6 rounded-lg border">
-            <p className="italic mb-4">"Our stylists can now focus on their clients instead of managing the waiting area. The scheduling is seamless, and we've reduced no-shows."</p>
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-bold">KM</span>
-              </div>
-              <div>
-                <p className="font-medium">Kavita Malhotra</p>
-                <p className="text-sm text-muted-foreground">Elegance Hair Studio</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -274,39 +227,9 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t">
-        <div className="container py-8 md:py-12">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-medium">Product</h3>
-              <Button variant="link" className="justify-start h-auto p-0">Features</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Pricing</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Integrations</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Updates</Button>
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-medium">Resources</h3>
-              <Button variant="link" className="justify-start h-auto p-0">Documentation</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Guides</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Support</Button>
-              <Button variant="link" className="justify-start h-auto p-0">API</Button>
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-medium">Company</h3>
-              <Button variant="link" className="justify-start h-auto p-0">About</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Blog</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Careers</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Contact</Button>
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-medium">Legal</h3>
-              <Button variant="link" className="justify-start h-auto p-0">Privacy</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Terms</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Cookie Policy</Button>
-              <Button variant="link" className="justify-start h-auto p-0">Licenses</Button>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center mt-12 pt-8 border-t">
+      <footer className="border-t mt-auto">
+        <div className="container py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Clock className="h-5 w-5" />
               <span className="font-bold">PatientPause</span>

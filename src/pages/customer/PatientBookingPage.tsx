@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -24,10 +25,10 @@ import { format } from 'date-fns';
 import { 
   CalendarIcon, 
   Clock, 
-  Calendar as CalendarIcon2, 
   User, 
   Stethoscope,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -208,7 +209,10 @@ const PatientBookingPage = () => {
   if (isLoading && currentStep === 'patient-info') {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+          <p className="text-muted-foreground">Loading your information...</p>
+        </div>
       </div>
     );
   }
@@ -259,7 +263,7 @@ const PatientBookingPage = () => {
           </p>
         </div>
         
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Patient Information</CardTitle>
             <CardDescription>

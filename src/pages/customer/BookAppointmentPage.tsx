@@ -86,6 +86,20 @@ const BookAppointmentPage = () => {
     );
   }
   
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+        <p className="text-muted-foreground mb-6">
+          Please sign in to book an appointment.
+        </p>
+        <Button onClick={() => navigate('/signin')}>
+          Sign In
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div>
@@ -115,7 +129,7 @@ const BookAppointmentPage = () => {
             </CardHeader>
             <CardContent>
               <PatientForm 
-                userId={user?.id || ''}
+                userId={user.id}
                 onSuccess={handlePatientFormSuccess}
                 onCancel={() => navigate('/customer/dashboard')}
               />

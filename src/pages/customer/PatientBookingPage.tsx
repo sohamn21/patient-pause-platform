@@ -31,31 +31,6 @@ import {
 } from 'lucide-react';
 import { PatientForm } from '@/components/clinic/PatientForm';
 
-import { 
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 const appointmentFormSchema = z.object({
   service_id: z.string().min(1, "Please select a service"),
   practitioner_id: z.string().min(1, "Please select a practitioner"),
@@ -64,7 +39,6 @@ const appointmentFormSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Generate time slots at 30-minute intervals
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 8; hour < 20; hour++) {
@@ -154,7 +128,15 @@ const PatientBookingPage = () => {
   }, [form.watch('service_id'), services]);
   
   const handlePatientFormSuccess = async (patientData: PatientFormData) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to book an appointment",
+        variant: "destructive",
+      });
+      navigate('/signin');
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -225,6 +207,20 @@ const PatientBookingPage = () => {
     );
   }
   
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+        <p className="text-muted-foreground mb-6">
+          Please sign in to book an appointment.
+        </p>
+        <Button onClick={() => navigate('/signin')}>
+          Sign In
+        </Button>
+      </div>
+    );
+  }
+  
   if (appointmentSuccess) {
     return (
       <Card className="max-w-md mx-auto">
@@ -266,7 +262,7 @@ const PatientBookingPage = () => {
           </CardHeader>
           <CardContent>
             <PatientForm 
-              userId={user?.id || ''}
+              userId={user.id}
               onSuccess={handlePatientFormSuccess}
               onCancel={() => navigate(-1)}
             />

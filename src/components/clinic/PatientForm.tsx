@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -78,19 +77,16 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
 
   useEffect(() => {
     const loadPractitioners = async () => {
-      // Use the userId prop if provided, otherwise use the user context
-      const businessId = userId || (user?.id || '');
-      
-      if (!businessId) {
-        console.error("No business ID available for loading practitioners");
+      if (!userId) {
+        console.error("No user ID available for loading practitioners");
         return;
       }
       
       try {
-        console.log("Loading practitioners for business:", businessId);
-        const data = await getPractitioners(businessId);
+        console.log("Loading practitioners using ID:", userId);
+        const data = await getPractitioners(userId);
         console.log("Practitioners loaded:", data);
-        setPractitioners(data as Practitioner[]);
+        setPractitioners(data);
       } catch (error) {
         console.error("Error loading practitioners:", error);
         toast({
@@ -102,11 +98,22 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
     };
     
     loadPractitioners();
-  }, [user, userId, toast]);
+  }, [userId, toast]);
   
   const onSubmit = async (formData: PatientFormData) => {
     setIsLoading(true);
     console.log("Form submitted with data:", formData);
+    console.log("Using userId for operation:", userId);
+    
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID is missing. Please sign in again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
     
     try {
       let success = false;
@@ -115,15 +122,8 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
-        // Use the userId prop if provided, otherwise use the user.id from context
-        const targetUserId = userId || (user?.id || '');
-        console.log("Creating new patient with business ID:", targetUserId);
-        
-        if (!targetUserId) {
-          throw new Error("No user ID available for creating patient");
-        }
-        
-        success = await createPatientProfile(targetUserId, formData);
+        console.log("Creating new patient with user ID:", userId);
+        success = await createPatientProfile(userId, formData);
       }
       
       if (success) {

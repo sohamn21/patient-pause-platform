@@ -22,13 +22,24 @@ const CustomerProfile = () => {
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
+    // Immediately check if user is available
+    if (!user) {
+      setIsLoading(false);
+      setIsCheckingProfile(false);
+      return;
+    }
+    
+    // Only proceed with the check if we haven't exceeded the attempt limit
+    if (checkAttempts >= 2) {
+      setIsLoading(false);
+      setIsCheckingProfile(false);
+      return;
+    }
+    
+    // Increment attempt counter first to avoid multiple checks
+    setCheckAttempts(prevAttempts => prevAttempts + 1);
+    
     const checkPatientProfile = async () => {
-      if (!user) {
-        setIsLoading(false);
-        setIsCheckingProfile(false);
-        return;
-      }
-      
       try {
         console.log("Checking patient profile for user:", user.id);
         setIsCheckingProfile(true);
@@ -50,15 +61,8 @@ const CustomerProfile = () => {
       }
     };
     
-    // Only check if user exists and we haven't made too many attempts
-    // Limit to 2 attempts to prevent infinite checking
-    if (user && checkAttempts < 2) {
-      checkPatientProfile();
-      setCheckAttempts(prev => prev + 1);
-    } else {
-      setIsLoading(false);
-      setIsCheckingProfile(false);
-    }
+    // Run the check immediately
+    checkPatientProfile();
   }, [user, toast, checkAttempts]);
   
   const handleSuccess = () => {
@@ -77,7 +81,8 @@ const CustomerProfile = () => {
     setIsCheckingProfile(true);
   };
   
-  if (isLoading && checkAttempts <= 1) {
+  // Show loading state only on initial load
+  if (isLoading && checkAttempts === 1) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center">

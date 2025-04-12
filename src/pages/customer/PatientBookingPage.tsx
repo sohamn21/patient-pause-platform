@@ -30,6 +30,12 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { PatientForm } from '@/components/clinic/PatientForm';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
 
 const appointmentFormSchema = z.object({
   service_id: z.string().min(1, "Please select a service"),

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const BookAppointmentPage = () => {
   const { businessId } = useParams();
@@ -67,7 +68,10 @@ const BookAppointmentPage = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+          <p className="text-muted-foreground">Loading your information...</p>
+        </div>
       </div>
     );
   }
@@ -109,42 +113,38 @@ const BookAppointmentPage = () => {
         </p>
       </div>
       
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'profile' | 'appointment')}>
-        <TabsList className="grid grid-cols-2 mb-6">
-          <TabsTrigger value="profile" disabled={!isPatient && activeTab === 'profile'}>
-            Patient Information
-          </TabsTrigger>
-          <TabsTrigger value="appointment" disabled={!isPatient}>
-            Appointment Details
-          </TabsTrigger>
-        </TabsList>
+      <Card className="shadow-sm">
+        <CardHeader className="bg-muted/30 pb-4">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'profile' | 'appointment')}>
+            <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
+              <TabsTrigger value="profile" disabled={!isPatient && activeTab === 'profile'}>
+                Patient Information
+              </TabsTrigger>
+              <TabsTrigger value="appointment" disabled={!isPatient}>
+                Appointment Details
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
         
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Patient Information</CardTitle>
-              <CardDescription>
-                Please provide your personal and medical information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PatientForm 
-                userId={user.id}
-                onSuccess={handlePatientFormSuccess}
-                onCancel={() => navigate('/customer/dashboard')}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="appointment">
-          <PatientAppointmentBooking 
-            businessId={businessId}
-            onSuccess={handleAppointmentSuccess}
-            onCancel={() => navigate('/customer/dashboard')}
-          />
-        </TabsContent>
-      </Tabs>
+        <CardContent className="pt-6">
+          <TabsContent value="profile">
+            <PatientForm 
+              userId={user.id}
+              onSuccess={handlePatientFormSuccess}
+              onCancel={() => navigate('/customer/dashboard')}
+            />
+          </TabsContent>
+          
+          <TabsContent value="appointment">
+            <PatientAppointmentBooking 
+              businessId={businessId}
+              onSuccess={handleAppointmentSuccess}
+              onCancel={() => navigate('/customer/dashboard')}
+            />
+          </TabsContent>
+        </CardContent>
+      </Card>
     </div>
   );
 };

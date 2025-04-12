@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -7,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 
 import { 
   Form,
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PatientFormProps {
   patient?: Patient;
@@ -59,13 +61,17 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   const { toast } = useToast();
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Pre-fill form with user data where available
+  const { profile } = useAuth();
+  
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
-      first_name: patient?.profile?.first_name || '',
-      last_name: patient?.profile?.last_name || '',
-      phone_number: patient?.profile?.phone_number || '',
+      first_name: patient?.profile?.first_name || profile?.first_name || '',
+      last_name: patient?.profile?.last_name || profile?.last_name || '',
+      phone_number: patient?.profile?.phone_number || profile?.phone_number || '',
       date_of_birth: patient?.date_of_birth ? new Date(patient.date_of_birth) : undefined,
       medical_history: patient?.medical_history || '',
       allergies: patient?.allergies || '',
@@ -74,6 +80,15 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       notes: patient?.notes || '',
     },
   });
+
+  useEffect(() => {
+    // Update form values if profile data becomes available
+    if (profile && !form.getValues('first_name') && !form.getValues('last_name')) {
+      form.setValue('first_name', profile.first_name || '');
+      form.setValue('last_name', profile.last_name || '');
+      form.setValue('phone_number', profile.phone_number || '');
+    }
+  }, [profile, form]);
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -101,11 +116,13 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   }, [userId, toast]);
   
   const onSubmit = async (formData: PatientFormData) => {
+    setError(null);
     setIsLoading(true);
     console.log("Form submitted with data:", formData);
     console.log("Using userId for operation:", userId);
     
     if (!userId) {
+      setError("User ID is missing. Please sign in again.");
       toast({
         title: "Error",
         description: "User ID is missing. Please sign in again.",
@@ -130,11 +147,12 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         console.log("Patient saved successfully");
         toast({
           title: patient ? "Patient Updated" : "Patient Created",
-          description: patient ? "Patient information has been updated" : "New patient has been added",
+          description: patient ? "Patient information has been updated" : "Your health profile has been created",
         });
         onSuccess(formData);
       } else {
         console.error("Failed to save patient");
+        setError("Failed to save patient information. Please try again.");
         toast({
           title: "Error",
           description: "Failed to save patient information",
@@ -143,6 +161,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       }
     } catch (error) {
       console.error("Error saving patient:", error);
+      setError("An unexpected error occurred. Please try again.");
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -155,6 +174,12 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   
   return (
     <Form {...form}>
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -364,11 +389,19 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
             type="button" 
             variant="outline"
             onClick={onCancel}
+            disabled={isLoading}
           >
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : patient ? 'Update Patient' : 'Create Patient'}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {patient ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              patient ? 'Update Profile' : 'Create Profile'
+            )}
           </Button>
         </div>
       </form>

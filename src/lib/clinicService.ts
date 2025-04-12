@@ -107,11 +107,12 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
   console.log('Creating patient profile for user ID:', userId, 'with data:', formData);
   
   try {
-    // Generate a unique ID for the new patient
-    const patientId = crypto.randomUUID();
-    
-    console.log('Generated new patient ID:', patientId);
-    
+    // First, check if a profile entry already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId);
+
     // Convert date to string format for database storage
     const dateOfBirth = formData.date_of_birth 
       ? formData.date_of_birth.toISOString().split('T')[0] 
@@ -121,7 +122,7 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
     const { error: patientError } = await supabase
       .from('patients')
       .insert({
-        id: patientId,
+        id: userId, // Use the userId directly as the patient ID
         date_of_birth: dateOfBirth,
         medical_history: formData.medical_history || null,
         allergies: formData.allergies || null,
@@ -135,22 +136,22 @@ export const createPatientProfile = async (userId: string, formData: PatientForm
       throw patientError;
     }
     
-    // Now create or update the profile information
+    // Now update the profile information
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: patientId,
+        id: userId,
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone_number: formData.phone_number || null,
       });
     
     if (profileError) {
-      console.error('Error creating profile:', profileError);
+      console.error('Error updating profile:', profileError);
       throw profileError;
     }
     
-    console.log('New patient created successfully with ID:', patientId);
+    console.log('Patient profile created successfully with ID:', userId);
     return true;
   } catch (error) {
     console.error('Failed to create patient profile:', error);

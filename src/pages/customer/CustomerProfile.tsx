@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { checkPatientExists } from '@/lib/clinicService';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, UserPlus, UserCheck } from 'lucide-react';
+import { Loader2, UserPlus, UserCheck, CircleCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,7 @@ const CustomerProfile = () => {
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [patientExists, setPatientExists] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
+  const [profileCreated, setProfileCreated] = useState(false);
   
   useEffect(() => {
     const checkPatientProfile = async () => {
@@ -61,6 +62,7 @@ const CustomerProfile = () => {
   
   const handleSuccess = () => {
     setPatientExists(true);
+    setProfileCreated(true);
     toast({
       title: "Success",
       description: patientExists ? "Your profile has been updated" : "Your health profile has been created",
@@ -88,6 +90,39 @@ const CustomerProfile = () => {
         <Button onClick={() => navigate('/signin')}>
           Sign In
         </Button>
+      </div>
+    );
+  }
+  
+  if (profileCreated) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Health Profile Complete</h1>
+          <p className="text-muted-foreground">
+            Your health profile has been successfully created
+          </p>
+        </div>
+        
+        <Card className="shadow-sm">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <CircleCheck className="h-16 w-16 text-green-500 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Profile Created Successfully</h2>
+            <p className="text-center text-muted-foreground mb-6">
+              You can now book appointments and manage your healthcare
+            </p>
+            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 w-full sm:justify-center">
+              <Button onClick={() => navigate('/customer/book')}>
+                Book an Appointment
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setProfileCreated(false);
+              }}>
+                Edit Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

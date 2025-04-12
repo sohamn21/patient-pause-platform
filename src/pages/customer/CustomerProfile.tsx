@@ -5,9 +5,10 @@ import { useAuth } from '@/context/AuthContext';
 import { checkPatientExists } from '@/lib/clinicService';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, UserPlus, UserCheck, CircleCheck } from 'lucide-react';
+import { Loader2, UserPlus, UserCheck, CircleCheck, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const CustomerProfile = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const CustomerProfile = () => {
   const [patientExists, setPatientExists] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
   const [profileCreated, setProfileCreated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const checkPatientProfile = async () => {
@@ -33,8 +35,10 @@ const CustomerProfile = () => {
         const exists = await checkPatientExists(user.id);
         console.log("Patient profile exists:", exists);
         setPatientExists(exists);
+        setError(null);
       } catch (error) {
         console.error("Error checking patient profile:", error);
+        setError("Could not retrieve your patient information. Please try again later.");
         toast({
           title: "Error",
           description: "Could not retrieve your patient information",
@@ -47,13 +51,10 @@ const CustomerProfile = () => {
     };
     
     // Only check if user exists and we haven't made too many attempts
-    if (user && checkAttempts < 3) {
-      const timer = setTimeout(() => {
-        checkPatientProfile();
-        setCheckAttempts(prev => prev + 1);
-      }, 500);
-      
-      return () => clearTimeout(timer);
+    // Limit to 2 attempts to prevent infinite checking
+    if (user && checkAttempts < 2) {
+      checkPatientProfile();
+      setCheckAttempts(prev => prev + 1);
     } else {
       setIsLoading(false);
       setIsCheckingProfile(false);
@@ -68,8 +69,15 @@ const CustomerProfile = () => {
       description: patientExists ? "Your profile has been updated" : "Your health profile has been created",
     });
   };
+
+  const handleRetry = () => {
+    setError(null);
+    setCheckAttempts(0);
+    setIsLoading(true);
+    setIsCheckingProfile(true);
+  };
   
-  if (isLoading) {
+  if (isLoading && checkAttempts <= 1) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center">
@@ -90,6 +98,30 @@ const CustomerProfile = () => {
         <Button onClick={() => navigate('/signin')}>
           Sign In
         </Button>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">My Health Profile</h1>
+          <p className="text-muted-foreground">
+            There was a problem loading your profile information
+          </p>
+        </div>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        
+        <div className="flex justify-end">
+          <Button onClick={handleRetry}>
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }

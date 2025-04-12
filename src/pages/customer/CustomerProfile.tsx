@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { checkPatientExists } from '@/lib/clinicService';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserPlus, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
@@ -14,17 +14,21 @@ const CustomerProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [patientExists, setPatientExists] = useState(false);
+  const [checkAttempts, setCheckAttempts] = useState(0);
   
   useEffect(() => {
     const checkPatientProfile = async () => {
       if (!user) {
         setIsLoading(false);
+        setIsCheckingProfile(false);
         return;
       }
       
       try {
         console.log("Checking patient profile for user:", user.id);
+        setIsCheckingProfile(true);
         const exists = await checkPatientExists(user.id);
         console.log("Patient profile exists:", exists);
         setPatientExists(exists);
@@ -37,16 +41,23 @@ const CustomerProfile = () => {
         });
       } finally {
         setIsLoading(false);
+        setIsCheckingProfile(false);
       }
     };
     
-    // Small delay to ensure auth is fully loaded
-    const timer = setTimeout(() => {
-      checkPatientProfile();
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [user, toast]);
+    // Only check if user exists and we haven't made too many attempts
+    if (user && checkAttempts < 3) {
+      const timer = setTimeout(() => {
+        checkPatientProfile();
+        setCheckAttempts(prev => prev + 1);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoading(false);
+      setIsCheckingProfile(false);
+    }
+  }, [user, toast, checkAttempts]);
   
   const handleSuccess = () => {
     setPatientExists(true);
@@ -94,20 +105,35 @@ const CustomerProfile = () => {
       
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>
-            {patientExists ? "Update Health Information" : "Complete Health Profile"}
-          </CardTitle>
+          <div className="flex items-center space-x-2">
+            {patientExists ? 
+              <UserCheck className="h-5 w-5 text-green-500" /> :
+              <UserPlus className="h-5 w-5 text-blue-500" />
+            }
+            <CardTitle>
+              {patientExists ? "Update Health Information" : "Complete Health Profile"}
+            </CardTitle>
+          </div>
           <CardDescription>
             Your information will be shared with healthcare providers during appointments
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {user.id && (
+          {isCheckingProfile ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-6 w-6 text-primary animate-spin" />
+              <span className="ml-2">Checking profile status...</span>
+            </div>
+          ) : user.id ? (
             <PatientForm
               userId={user.id}
               onSuccess={handleSuccess}
               onCancel={() => navigate('/customer/dashboard')}
             />
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              User information is not available. Please try signing in again.
+            </div>
           )}
         </CardContent>
       </Card>

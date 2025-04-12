@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 
@@ -237,18 +238,18 @@ export const checkPatientExists = async (userId: string) => {
   try {
     console.log('Checking if patient exists for user ID:', userId);
     
-    const { data, error } = await supabase
+    // Fixed approach: Use count instead of single to avoid content negotiation issues
+    const { count, error } = await supabase
       .from('patients')
-      .select('id')
-      .eq('id', userId)
-      .single();
+      .select('*', { count: 'exact', head: true })
+      .eq('id', userId);
     
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error checking patient existence:', error);
       throw error;
     }
     
-    const exists = !!data;
+    const exists = count ? count > 0 : false;
     console.log('Patient exists:', exists);
     return exists;
   } catch (error) {

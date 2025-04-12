@@ -1,153 +1,116 @@
 
-import React, { useState } from 'react';
-import { BlurCard } from "@/components/ui/blur-card";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { checkPatientExists } from '@/lib/clinicService';
+import { PatientForm } from '@/components/clinic/PatientForm';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
 const CustomerProfile = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: profile?.first_name || '',
-    lastName: profile?.last_name || '',
-    phoneNumber: profile?.phone_number || '',
-    avatarUrl: profile?.avatar_url || '',
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [isLoading, setIsLoading] = useState(true);
+  const [patientExists, setPatientExists] = useState(false);
+  
+  useEffect(() => {
+    const checkPatientProfile = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        console.log("Checking patient profile for user:", user.id);
+        const exists = await checkPatientExists(user.id);
+        console.log("Patient profile exists:", exists);
+        setPatientExists(exists);
+      } catch (error) {
+        console.error("Error checking patient profile:", error);
+        toast({
+          title: "Error",
+          description: "Could not retrieve your patient information",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    try {
-      setIsLoading(true);
-      
-      await updateProfile({
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone_number: formData.phoneNumber,
-        avatar_url: formData.avatarUrl,
-      });
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      
-      toast({
-        title: "Update Failed",
-        description: "There was an error updating your profile.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Small delay to ensure auth is fully loaded
+    const timer = setTimeout(() => {
+      checkPatientProfile();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [user, toast]);
+  
+  const handleSuccess = () => {
+    setPatientExists(true);
+    toast({
+      title: "Success",
+      description: patientExists ? "Your profile has been updated" : "Your health profile has been created",
+    });
   };
-
-  return (
-    <div className="animate-fade-in">
-      <h1 className="text-3xl font-bold tracking-tight mb-6">My Profile</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <BlurCard>
-            <div className="p-6 flex flex-col items-center text-center">
-              <Avatar className="w-24 h-24 mb-4">
-                <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback>
-                  <User className="w-12 h-12" />
-                </AvatarFallback>
-              </Avatar>
-              <h2 className="text-xl font-semibold">
-                {profile?.first_name} {profile?.last_name}
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                {profile?.username || user?.email}
-              </p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Account type: Customer
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Member since: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
-              </p>
-            </div>
-          </BlurCard>
-        </div>
-        
-        <div className="md:col-span-2">
-          <BlurCard>
-            <div className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Edit Profile</h3>
-              <Separator className="mb-6" />
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="avatarUrl">Avatar URL</Label>
-                  <Input
-                    id="avatarUrl"
-                    name="avatarUrl"
-                    value={formData.avatarUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="mt-4"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Updating..." : "Save Changes"}
-                </Button>
-              </form>
-            </div>
-          </BlurCard>
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+          <p className="text-muted-foreground">Loading your information...</p>
         </div>
       </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+        <p className="text-muted-foreground mb-6">
+          Please sign in to access your profile
+        </p>
+        <Button onClick={() => navigate('/signin')}>
+          Sign In
+        </Button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">My Health Profile</h1>
+        <p className="text-muted-foreground">
+          {patientExists 
+            ? "Update your health information and preferences" 
+            : "Complete your health profile to book appointments more easily"}
+        </p>
+      </div>
+      
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>
+            {patientExists ? "Update Health Information" : "Complete Health Profile"}
+          </CardTitle>
+          <CardDescription>
+            Your information will be shared with healthcare providers during appointments
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {user.id && (
+            <PatientForm
+              userId={user.id}
+              onSuccess={handleSuccess}
+              onCancel={() => navigate('/customer/dashboard')}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

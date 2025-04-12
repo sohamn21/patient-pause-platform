@@ -23,11 +23,16 @@ const BookAppointmentPage = () => {
   
   useEffect(() => {
     const checkPatientStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       
-      setIsLoading(true);
       try {
+        console.log("Checking patient status for user:", user.id);
         const patientExists = await checkPatientExists(user.id);
+        console.log("Patient exists:", patientExists);
+        
         setIsPatient(patientExists);
         
         if (patientExists) {
@@ -37,7 +42,7 @@ const BookAppointmentPage = () => {
         console.error("Error checking patient status:", error);
         toast({
           title: "Error",
-          description: "Could not check patient status",
+          description: "Could not check patient status. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -45,7 +50,12 @@ const BookAppointmentPage = () => {
       }
     };
     
-    checkPatientStatus();
+    // Small delay to ensure auth is fully loaded
+    const timer = setTimeout(() => {
+      checkPatientStatus();
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [user, toast]);
   
   const handlePatientFormSuccess = () => {
@@ -129,11 +139,13 @@ const BookAppointmentPage = () => {
         
         <CardContent className="pt-6">
           <TabsContent value="profile">
-            <PatientForm 
-              userId={user.id}
-              onSuccess={handlePatientFormSuccess}
-              onCancel={() => navigate('/customer/dashboard')}
-            />
+            {user && (
+              <PatientForm 
+                userId={user.id}
+                onSuccess={handlePatientFormSuccess}
+                onCancel={() => navigate('/customer/dashboard')}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="appointment">

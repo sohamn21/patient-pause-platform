@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent } from '@/components/ui/blur-card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, User, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, User, ArrowRight, FileEdit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const CustomerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const quickActions = [
     {
@@ -25,12 +27,18 @@ const CustomerDashboard = () => {
       description: 'Add yourself to a business waitlist',
       icon: <Clock className="w-10 h-10 text-primary" />,
       action: () => navigate('/customer/waitlists')
+    },
+    {
+      title: 'Complete Health Profile',
+      description: 'Set up your medical information for appointments',
+      icon: <FileEdit className="w-10 h-10 text-primary" />,
+      action: () => navigate('/customer/profile')
     }
   ];
 
   return (
     <div className="animate-fade-in space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-6">Welcome, {profile?.first_name || 'Patient'}</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
@@ -52,6 +60,14 @@ const CustomerDashboard = () => {
                 <Badge variant="outline" className="mt-2">
                   {profile?.role || 'customer'}
                 </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => navigate('/customer/profile')}
+                >
+                  Edit Profile
+                </Button>
               </div>
             </BlurCardContent>
           </BlurCard>
@@ -62,7 +78,7 @@ const CustomerDashboard = () => {
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {quickActions.map((action, index) => (
                 <Button 
                   key={index}

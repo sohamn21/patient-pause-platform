@@ -57,14 +57,11 @@ const patientFormSchema = z.object({
 });
 
 export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFormProps) => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Pre-fill form with user data where available
-  const { profile } = useAuth();
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientFormSchema),
@@ -92,23 +89,14 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
 
   useEffect(() => {
     const loadPractitioners = async () => {
-      if (!userId) {
-        console.error("No user ID available for loading practitioners");
-        return;
-      }
+      if (!userId) return;
       
       try {
-        console.log("Loading practitioners using ID:", userId);
         const data = await getPractitioners(userId);
-        console.log("Practitioners loaded:", data);
         setPractitioners(data);
       } catch (error) {
         console.error("Error loading practitioners:", error);
-        toast({
-          title: "Error",
-          description: "Could not load practitioners list",
-          variant: "destructive",
-        });
+        // Don't show an error toast here - non-critical failure
       }
     };
     
@@ -118,55 +106,34 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   const onSubmit = async (formData: PatientFormData) => {
     setError(null);
     setIsLoading(true);
-    console.log("Form submitted with data:", formData);
-    console.log("Using userId for operation:", userId);
     
     if (!userId) {
       setError("User ID is missing. Please sign in again.");
-      toast({
-        title: "Error",
-        description: "User ID is missing. Please sign in again.",
-        variant: "destructive",
-      });
       setIsLoading(false);
       return;
     }
     
     try {
-      let success = false;
+      let success;
       
       if (patient) {
-        console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
-        console.log("Creating new patient with user ID:", userId);
         success = await createPatientProfile(userId, formData);
       }
       
       if (success) {
-        console.log("Patient saved successfully");
         toast({
-          title: patient ? "Patient Updated" : "Patient Created",
-          description: patient ? "Patient information has been updated" : "Your health profile has been created",
+          title: patient ? "Profile Updated" : "Profile Created",
+          description: patient ? "Your information has been updated" : "Your health profile has been created",
         });
         onSuccess(formData);
       } else {
-        console.error("Failed to save patient");
-        setError("Failed to save patient information. Please try again.");
-        toast({
-          title: "Error",
-          description: "Failed to save patient information",
-          variant: "destructive",
-        });
+        setError("Failed to save your information. Please try again.");
       }
     } catch (error) {
       console.error("Error saving patient:", error);
       setError("An unexpected error occurred. Please try again.");
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -175,13 +142,13 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
   return (
     <Form {...form}>
       {error && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="first_name"
@@ -211,7 +178,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="phone_number"
@@ -263,9 +230,6 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                     />
                   </PopoverContent>
                 </Popover>
-                <FormDescription>
-                  Patient's date of birth
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -281,7 +245,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
               <FormControl>
                 <Textarea 
                   placeholder="List any allergies or sensitivities" 
-                  rows={3}
+                  rows={2}
                   {...field} 
                   value={field.value || ''}
                 />
@@ -300,7 +264,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
               <FormControl>
                 <Textarea 
                   placeholder="Relevant medical history" 
-                  rows={3}
+                  rows={2}
                   {...field} 
                   value={field.value || ''}
                 />
@@ -310,7 +274,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
           )}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="emergency_contact"
@@ -324,9 +288,6 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                     value={field.value || ''}
                   />
                 </FormControl>
-                <FormDescription>
-                  Who to contact in case of emergency
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -356,9 +317,6 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>
-                  Patient's preferred healthcare provider
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -373,8 +331,8 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
               <FormLabel>Additional Notes</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Any other relevant information" 
-                  rows={3}
+                  placeholder="Any other information your healthcare provider should know" 
+                  rows={2}
                   {...field} 
                   value={field.value || ''}
                 />
@@ -384,7 +342,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
           )}
         />
         
-        <div className="flex justify-end space-x-2 pt-4">
+        <div className="flex justify-end space-x-2 pt-2">
           <Button 
             type="button" 
             variant="outline"
@@ -397,7 +355,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {patient ? 'Updating...' : 'Creating...'}
+                {patient ? 'Updating...' : 'Create Profile'}
               </>
             ) : (
               patient ? 'Update Profile' : 'Create Profile'

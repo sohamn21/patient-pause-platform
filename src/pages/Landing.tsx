@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { GlowButton } from '@/components/ui/glow-button';
@@ -80,7 +79,7 @@ const Landing = () => {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-6 w-6" />
-            <span className="text-xl font-bold tracking-tight">PatientPause</span>
+            <span className="text-xl font-bold tracking-tight">Waitwise</span>
           </div>
           
           {/* Desktop Navigation */}
@@ -136,7 +135,7 @@ const Landing = () => {
               Stop the Wait,<br />Start the Experience
             </h1>
             <p className="max-w-[600px] text-muted-foreground md:text-xl">
-              PatientPause helps businesses manage customer queues, reduce wait times, and improve service.
+              Waitwise helps businesses manage customer queues, reduce wait times, and improve service.
             </p>
           </div>
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -232,10 +231,10 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Clock className="h-5 w-5" />
-              <span className="font-bold">PatientPause</span>
+              <span className="font-bold">Waitwise</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2023 PatientPause. All rights reserved.
+              © 2023 Waitwise. All rights reserved.
             </p>
           </div>
         </div>

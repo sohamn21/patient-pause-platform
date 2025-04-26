@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getPatientAppointments, checkPatientExists } from '@/lib/clinicService';
@@ -21,6 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import QrCodeScanner from '@/components/QrCodeScanner';
+import { AppointmentQRCode } from '@/components/clinic/AppointmentQRCode';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const CustomerAppointments = () => {
   const { user } = useAuth();
@@ -31,6 +32,8 @@ const CustomerAppointments = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPatient, setIsPatient] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [showQRDialog, setShowQRDialog] = useState(false);
   
   useEffect(() => {
     const loadData = async () => {
@@ -110,6 +113,11 @@ const CustomerAppointments = () => {
     return grouped;
   };
   
+  const handleShowQRCode = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setShowQRDialog(true);
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -164,6 +172,22 @@ const CustomerAppointments = () => {
         </Card>
       )}
       
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="max-w-3xl">
+          {selectedAppointment && (
+            <AppointmentQRCode 
+              appointment={selectedAppointment}
+              onInvoiceGenerated={() => {
+                toast({
+                  title: "Invoice Generated",
+                  description: "The invoice has been generated successfully"
+                });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
       {Object.keys(groupedAppointments).length > 0 ? (
         <div className="space-y-6">
           {Object.entries(groupedAppointments).map(([date, dateAppointments]) => (
@@ -214,13 +238,21 @@ const CustomerAppointments = () => {
                         )}
                       </div>
                     </CardContent>
-                    {appointment.status === 'scheduled' && (
-                      <CardFooter className="pt-2">
-                        <Button variant="destructive" size="sm" className="w-full">
+                    <CardFooter className="pt-2 flex justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShowQRCode(appointment)}
+                      >
+                        <QrCode className="mr-2 h-4 w-4" />
+                        Show QR Code
+                      </Button>
+                      {appointment.status === 'scheduled' && (
+                        <Button variant="destructive" size="sm">
                           Cancel Appointment
                         </Button>
-                      </CardFooter>
-                    )}
+                      )}
+                    </CardFooter>
                   </Card>
                 ))}
               </div>

@@ -6,9 +6,10 @@ import { getAppointments } from '@/lib/clinicService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw, QrCode, ScanIcon } from 'lucide-react';
+import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import QRCode from 'react-qr-code';
 import { 
   Table,
   TableBody,
@@ -20,7 +21,6 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppointmentQRCode } from '@/components/clinic/AppointmentQRCode';
-import QrCodeScanner from '@/components/QrCodeScanner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const AppointmentsPage = () => {
@@ -34,6 +34,7 @@ const AppointmentsPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showClinicQR, setShowClinicQR] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -140,6 +141,15 @@ const AppointmentsPage = () => {
     setShowQRDialog(true);
   };
 
+  const handleCopyClinicLink = () => {
+    const clinicUrl = `${window.location.origin}/customer/book-appointment?businessId=${user?.id}`;
+    navigator.clipboard.writeText(clinicUrl);
+    toast({
+      title: "Clinic Link Copied",
+      description: "The clinic appointment booking link has been copied to your clipboard.",
+    });
+  };
+
   const handleRefresh = () => {
     setRetryCount(prev => prev + 1);
   };
@@ -187,17 +197,36 @@ const AppointmentsPage = () => {
           <p className="text-muted-foreground">View and manage your appointments</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleRefresh} 
-            variant="outline" 
-            className="flex items-center gap-2"
-            disabled={isLoading}
-          >
+          <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2" disabled={isLoading}>
             <RefreshCw className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
             Refresh
           </Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Clinic QR Code</CardTitle>
+          <CardDescription>
+            Share this QR code with patients to let them book appointments easily
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="bg-white p-4 rounded-lg">
+              <QRCode
+                value={`${window.location.origin}/customer/book-appointment?businessId=${user?.id}`}
+                size={200}
+                level="H"
+              />
+            </div>
+            <Button variant="outline" onClick={handleCopyClinicLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Booking Link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {fetchError && (
         <div className="bg-destructive/15 text-destructive p-4 rounded-md flex items-center justify-between">

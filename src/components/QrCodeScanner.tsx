@@ -5,30 +5,62 @@ import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from '@/components/ui/blur-card';
 import { Camera, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface QrCodeScannerProps {
-  onScanSuccess: (decodedText: string) => void;
+  onScanSuccess?: (decodedText: string) => void;
   onScanError?: (error: string) => void;
+  mode?: 'appointment' | 'custom';
 }
 
 const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   onScanSuccess,
-  onScanError
+  onScanError,
+  mode = 'custom'
 }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanner, setScanner] = useState<Html5Qrcode | null>(null);
   const [hasCamera, setHasCamera] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Clean up the scanner when component unmounts
     return () => {
       if (scanner) {
         scanner.stop().catch(() => {});
       }
     };
   }, [scanner]);
+
+  const handleScanSuccess = (decodedText: string) => {
+    if (mode === 'appointment') {
+      try {
+        const url = new URL(decodedText);
+        if (url.pathname.includes('book-appointment')) {
+          navigate(url.pathname + url.search);
+          toast({
+            title: "Appointment Found",
+            description: "Redirecting to appointment booking...",
+          });
+        } else {
+          toast({
+            title: "Invalid QR Code",
+            description: "This QR code is not for an appointment",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Invalid QR Code",
+          description: "Unable to process the QR code",
+          variant: "destructive",
+        });
+      }
+    } else if (onScanSuccess) {
+      onScanSuccess(decodedText);
+    }
+  };
 
   const startScanner = async () => {
     try {
@@ -45,7 +77,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
           { facingMode: "environment" },
           config,
           (decodedText) => {
-            onScanSuccess(decodedText);
+            handleScanSuccess(decodedText);
             html5QrCode.stop().catch(() => {});
             setIsScanning(false);
             toast({
@@ -54,7 +86,6 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
             });
           },
           (errorMessage) => {
-            // This is called for each non-successful scan, so we don't want to show errors here
             if (onScanError) {
               onScanError(errorMessage);
             }
@@ -101,7 +132,9 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   return (
     <BlurCard>
       <BlurCardHeader>
-        <BlurCardTitle>Scan QR Code</BlurCardTitle>
+        <BlurCardTitle>
+          {mode === 'appointment' ? 'Scan Appointment QR Code' : 'Scan QR Code'}
+        </BlurCardTitle>
       </BlurCardHeader>
       <BlurCardContent>
         <div className="flex flex-col items-center space-y-4">

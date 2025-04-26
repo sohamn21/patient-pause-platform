@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from '@/components/ui/blur-card';
-import { Camera, StopCircle } from 'lucide-react';
+import { Camera, StopCircle, ScanIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -155,7 +156,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   return (
     <BlurCard>
       <BlurCardHeader>
-        <BlurCardTitle>
+        <BlurCardTitle className="flex items-center">
+          <ScanIcon className="mr-2 h-5 w-5 text-primary" />
           {mode === 'appointment' ? 'Scan Appointment QR Code' : 'Scan QR Code'}
         </BlurCardTitle>
       </BlurCardHeader>
@@ -180,16 +182,20 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
           
           <div className="flex space-x-4">
             {!isScanning ? (
-              <Button onClick={startScanner} disabled={!hasCamera || isScanning}>
+              <Button onClick={startScanner} disabled={!hasCamera || isScanning} className="flex items-center">
                 <Camera className="mr-2 h-4 w-4" />
                 Start Scanning
               </Button>
             ) : (
-              <Button variant="destructive" onClick={stopScanner}>
+              <Button variant="destructive" onClick={stopScanner} className="flex items-center">
                 <StopCircle className="mr-2 h-4 w-4" />
                 Stop Scanning
               </Button>
             )}
+          </div>
+
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            <p>Point your camera at an appointment QR code to join or view the appointment details.</p>
           </div>
         </div>
       </BlurCardContent>

@@ -6,7 +6,7 @@ import { getAppointments } from '@/lib/clinicService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
+import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw, QrCode, ScanIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -33,13 +33,10 @@ const AppointmentsPage = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showQrScanner, setShowQrScanner] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
 
   useEffect(() => {
-    // Only attempt to fetch if we have a user
     if (user) {
-      // Add a small delay to ensure auth is fully processed
       const timer = setTimeout(() => {
         fetchAppointments();
       }, 1000);
@@ -75,29 +72,24 @@ const AppointmentsPage = () => {
         throw new Error("Invalid response format");
       }
       
-      // Sort appointments by date (newest first)
       const sortedAppointments = [...appointmentsData].sort((a, b) => {
-        // First sort by date
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
         const dateDiff = dateB.getTime() - dateA.getTime();
         
         if (dateDiff !== 0) return dateDiff;
         
-        // If same date, sort by time
         return a.start_time.localeCompare(b.start_time);
       }) as Appointment[];
       
       setAppointments(sortedAppointments);
       
-      // If we successfully got appointments, show a confirmation toast
       if (sortedAppointments.length > 0) {
         toast({
           title: "Appointments Loaded",
           description: `Successfully loaded ${sortedAppointments.length} appointment(s).`,
         });
         
-        // Auto-select the first appointment to show QR code
         if (!selectedAppointment && sortedAppointments.length > 0) {
           setSelectedAppointment(sortedAppointments[0]);
         }
@@ -125,7 +117,6 @@ const AppointmentsPage = () => {
     console.log("Selected appointment:", appointment);
     setSelectedAppointment(appointment);
     
-    // Scroll to the QR code section
     setTimeout(() => {
       document.getElementById('appointment-qr-section')?.scrollIntoView({ 
         behavior: 'smooth' 
@@ -134,7 +125,7 @@ const AppointmentsPage = () => {
   };
 
   const handleCopyAppointmentLink = (appointment: Appointment, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent row click event
+    event.stopPropagation();
     const appointmentLink = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}&appointmentId=${appointment.id}`;
     navigator.clipboard.writeText(appointmentLink);
     toast({
@@ -144,7 +135,7 @@ const AppointmentsPage = () => {
   };
 
   const handleShowQRCode = (appointment: Appointment, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent row click event
+    event.stopPropagation();
     setSelectedAppointment(appointment);
     setShowQRDialog(true);
   };
@@ -153,7 +144,6 @@ const AppointmentsPage = () => {
     setRetryCount(prev => prev + 1);
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-64 space-y-4">
@@ -163,7 +153,6 @@ const AppointmentsPage = () => {
     );
   }
 
-  // Show authentication required state
   if (!user) {
     return (
       <div className="space-y-6">
@@ -211,7 +200,7 @@ const AppointmentsPage = () => {
             onClick={() => setShowQrScanner(!showQrScanner)}
             variant="outline"
           >
-            <QrCode className="mr-2 h-4 w-4" />
+            <ScanIcon className="mr-2 h-4 w-4" />
             {showQrScanner ? "Hide Scanner" : "Scan QR Code"}
           </Button>
         </div>
@@ -330,12 +319,14 @@ const AppointmentsPage = () => {
                             <Copy className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="secondary"
                             size="sm"
                             onClick={(e) => handleShowQRCode(appointment, e)}
-                            title="Show QR code"
+                            title="Generate QR code for this appointment"
+                            className="flex items-center"
                           >
-                            <QrCode className="h-4 w-4" />
+                            <QrCode className="h-4 w-4 mr-1" />
+                            QR Code
                           </Button>
                         </div>
                       </TableCell>

@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Loader2 } from 'lucide-react';
 import { Appointment } from '@/types/clinic';
 import { format } from 'date-fns';
 import { InvoiceGenerator } from './InvoiceGenerator';
@@ -15,26 +15,41 @@ interface AppointmentQRCodeProps {
 }
 
 export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: AppointmentQRCodeProps) => {
+  const [isDownloading, setIsDownloading] = useState(false);
   const appointmentUrl = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}`;
   
   const downloadQRCode = () => {
-    const svg = document.getElementById("appointment-qr-code");
-    if (svg) {
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `appointment-${appointment.id}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      };
-      img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    setIsDownloading(true);
+    try {
+      const svg = document.getElementById("appointment-qr-code");
+      if (svg) {
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+          const pngFile = canvas.toDataURL("image/png");
+          const downloadLink = document.createElement("a");
+          downloadLink.download = `appointment-${appointment.id}.png`;
+          downloadLink.href = pngFile;
+          downloadLink.click();
+          setIsDownloading(false);
+        };
+        img.onerror = () => {
+          console.error("Error loading QR code image");
+          setIsDownloading(false);
+        };
+        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+      } else {
+        console.error("QR code element not found");
+        setIsDownloading(false);
+      }
+    } catch (error) {
+      console.error("Error downloading QR code:", error);
+      setIsDownloading(false);
     }
   };
 
@@ -70,9 +85,19 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
               variant="outline"
               className="flex-1"
               onClick={downloadQRCode}
+              disabled={isDownloading}
             >
-              <Download className="mr-2 h-4 w-4" />
-              Download QR
+              {isDownloading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download QR
+                </>
+              )}
             </Button>
             
             <Dialog>

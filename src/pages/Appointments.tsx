@@ -134,7 +134,7 @@ const AppointmentsPage = () => {
     });
   };
 
-  const handleShowQRCode = (appointment: Appointment, event: React.MouseEvent) => {
+  const handleGenerateQRCode = (appointment: Appointment, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedAppointment(appointment);
     setShowQRDialog(true);
@@ -196,13 +196,6 @@ const AppointmentsPage = () => {
             <RefreshCw className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
             Refresh
           </Button>
-          <Button
-            onClick={() => setShowQrScanner(!showQrScanner)}
-            variant="outline"
-          >
-            <ScanIcon className="mr-2 h-4 w-4" />
-            {showQrScanner ? "Hide Scanner" : "Scan QR Code"}
-          </Button>
         </div>
       </div>
 
@@ -223,18 +216,6 @@ const AppointmentsPage = () => {
         </div>
       )}
       
-      {showQrScanner && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Scan Appointment QR Code</CardTitle>
-            <CardDescription>Scan a QR code to join or view an appointment</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <QrCodeScanner mode="appointment" />
-          </CardContent>
-        </Card>
-      )}
-
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -321,12 +302,12 @@ const AppointmentsPage = () => {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={(e) => handleShowQRCode(appointment, e)}
+                            onClick={(e) => handleGenerateQRCode(appointment, e)}
                             title="Generate QR code for this appointment"
                             className="flex items-center"
                           >
                             <QrCode className="h-4 w-4 mr-1" />
-                            QR Code
+                            Generate QR Code
                           </Button>
                         </div>
                       </TableCell>

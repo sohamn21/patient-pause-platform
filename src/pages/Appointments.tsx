@@ -7,7 +7,7 @@ import { getAppointments } from '@/lib/clinicService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -35,7 +35,17 @@ const AppointmentsPage = () => {
   const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
-    fetchAppointments();
+    // Only attempt to fetch if we have a user
+    if (user) {
+      // Add a small delay to ensure auth is fully processed
+      const timer = setTimeout(() => {
+        fetchAppointments();
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoading(false);
+      setFetchError("Authentication required");
+    }
   }, [user, retryCount]);
 
   const fetchAppointments = async () => {
@@ -56,9 +66,6 @@ const AppointmentsPage = () => {
     try {
       console.log("Fetching appointments for user ID:", user.id);
       
-      // Add a small delay to ensure authentication is fully processed
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       const appointmentsData = await getAppointments(user.id);
       console.log("Appointments data received:", appointmentsData);
       
@@ -66,14 +73,32 @@ const AppointmentsPage = () => {
         throw new Error("Invalid response format");
       }
       
-      setAppointments(appointmentsData);
+      // Sort appointments by date (newest first)
+      const sortedAppointments = [...appointmentsData].sort((a, b) => {
+        // First sort by date
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        const dateDiff = dateB.getTime() - dateA.getTime();
+        
+        if (dateDiff !== 0) return dateDiff;
+        
+        // If same date, sort by time
+        return a.start_time.localeCompare(b.start_time);
+      });
+      
+      setAppointments(sortedAppointments);
       
       // If we successfully got appointments, show a confirmation toast
-      if (appointmentsData.length > 0) {
+      if (sortedAppointments.length > 0) {
         toast({
           title: "Appointments Loaded",
-          description: `Successfully loaded ${appointmentsData.length} appointment(s).`,
+          description: `Successfully loaded ${sortedAppointments.length} appointment(s).`,
         });
+        
+        // Auto-select the first appointment to show QR code
+        if (!selectedAppointment && sortedAppointments.length > 0) {
+          setSelectedAppointment(sortedAppointments[0]);
+        }
       } else {
         toast({
           title: "No Appointments Found",
@@ -108,7 +133,7 @@ const AppointmentsPage = () => {
 
   const handleCopyAppointmentLink = (appointment: Appointment, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent row click event
-    const appointmentLink = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}`;
+    const appointmentLink = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}&appointmentId=${appointment.id}`;
     navigator.clipboard.writeText(appointmentLink);
     toast({
       title: "Appointment Link Copied",
@@ -118,9 +143,19 @@ const AppointmentsPage = () => {
 
   const handleRefresh = () => {
     setRetryCount(prev => prev + 1);
-    fetchAppointments();
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading appointments...</p>
+      </div>
+    );
+  }
+
+  // Show authentication required state
   if (!user) {
     return (
       <div className="space-y-6">
@@ -147,15 +182,6 @@ const AppointmentsPage = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-64 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading appointments...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -177,6 +203,7 @@ const AppointmentsPage = () => {
             onClick={() => setShowScanner(!showScanner)}
             variant="outline"
           >
+            <QrCode className="mr-2 h-4 w-4" />
             {showScanner ? "Hide Scanner" : "Scan QR Code"}
           </Button>
         </div>
@@ -209,18 +236,17 @@ const AppointmentsPage = () => {
         <div id="appointment-qr-section" className="scroll-mt-8">
           <AppointmentQRCode 
             appointment={selectedAppointment}
-            onInvoiceGenerated={() => {
-              // Refresh appointments list after invoice generation
-              fetchAppointments();
-            }}
+            onInvoiceGenerated={fetchAppointments}
           />
         </div>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Appointments</CardTitle>
-          <CardDescription>Here's a list of your appointments. Click on an appointment to view its QR code.</CardDescription>
+          <CardTitle>Your Appointments</CardTitle>
+          <CardDescription>
+            Click on an appointment to view its QR code and details.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {appointments.length === 0 ? (
@@ -248,16 +274,33 @@ const AppointmentsPage = () => {
                 </TableHeader>
                 <TableBody>
                   {appointments.map((appointment) => (
-                    <TableRow key={appointment.id} onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hover:bg-accent">
-                      <TableCell className="font-medium">{format(new Date(appointment.date), 'PPP')}</TableCell>
+                    <TableRow 
+                      key={appointment.id} 
+                      onClick={() => handleAppointmentClick(appointment)} 
+                      className={`cursor-pointer hover:bg-accent ${selectedAppointment?.id === appointment.id ? 'bg-accent/50' : ''}`}
+                    >
+                      <TableCell className="font-medium">
+                        {format(new Date(appointment.date), 'PPP')}
+                      </TableCell>
                       <TableCell>{appointment.start_time}</TableCell>
                       <TableCell>{appointment.service?.name || 'N/A'}</TableCell>
                       <TableCell>{appointment.practitioner?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{appointment.status}</Badge>
+                        <Badge variant={
+                          appointment.status === 'scheduled' ? 'secondary' :
+                          appointment.status === 'completed' ? 'success' :
+                          appointment.status === 'cancelled' ? 'destructive' : 'outline'
+                        }>
+                          {appointment.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={(e) => handleCopyAppointmentLink(appointment, e)}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={(e) => handleCopyAppointmentLink(appointment, e)}
+                          title="Copy appointment link to clipboard"
+                        >
                           <Copy className="h-4 w-4 mr-2" />
                           Copy Link
                         </Button>

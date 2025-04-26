@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 
@@ -474,26 +473,45 @@ export const deletePractitioner = async (id: string) => {
   }
 };
 
-// Get all appointments for a business
+// Get all appointments for a user (either as patient or business owner)
 export const getAppointments = async (userId: string) => {
   try {
     console.log('Fetching appointments for user ID:', userId);
     
-    // Check if the user has any appointments as a patient first
+    if (!userId) {
+      console.error('No user ID provided');
+      return [];
+    }
+    
+    // First, check if the user has any appointments as a patient
     const { data: patientAppointments, error: patientError } = await supabase
       .from('appointments')
       .select(`
-        *,
+        id,
+        business_id,
+        patient_id,
+        practitioner_id,
+        service_id,
+        date,
+        start_time,
+        end_time,
+        status,
+        notes,
+        created_at,
+        updated_at,
         patient:patient_id (
-          *,
-          profile:id (
-            first_name,
-            last_name,
-            phone_number
-          )
+          id,
+          medical_history
         ),
-        practitioner:practitioner_id (*),
-        service:service_id (*)
+        practitioner:practitioner_id (
+          id,
+          name
+        ),
+        service:service_id (
+          id,
+          name,
+          price
+        )
       `)
       .eq('patient_id', userId);
     
@@ -502,27 +520,37 @@ export const getAppointments = async (userId: string) => {
       throw patientError;
     }
     
-    // If we found appointments as a patient, return those
-    if (patientAppointments && patientAppointments.length > 0) {
-      console.log('Found appointments as a patient:', patientAppointments);
-      return patientAppointments;
-    }
+    console.log('Patient appointments found:', patientAppointments?.length || 0);
     
-    // If no appointments found as patient, try as a business owner
+    // Next, check if the user has any appointments as a business owner
     const { data: businessAppointments, error: businessError } = await supabase
       .from('appointments')
       .select(`
-        *,
+        id,
+        business_id,
+        patient_id,
+        practitioner_id,
+        service_id,
+        date,
+        start_time,
+        end_time,
+        status,
+        notes,
+        created_at,
+        updated_at,
         patient:patient_id (
-          *,
-          profile:id (
-            first_name,
-            last_name,
-            phone_number
-          )
+          id,
+          medical_history
         ),
-        practitioner:practitioner_id (*),
-        service:service_id (*)
+        practitioner:practitioner_id (
+          id,
+          name
+        ),
+        service:service_id (
+          id,
+          name,
+          price
+        )
       `)
       .eq('business_id', userId);
     
@@ -531,8 +559,16 @@ export const getAppointments = async (userId: string) => {
       throw businessError;
     }
     
-    console.log('Appointments fetched:', businessAppointments || []);
-    return businessAppointments || [];
+    console.log('Business appointments found:', businessAppointments?.length || 0);
+    
+    // Combine both sets of appointments
+    const allAppointments = [
+      ...(patientAppointments || []),
+      ...(businessAppointments || [])
+    ];
+    
+    console.log('Total appointments found:', allAppointments.length);
+    return allAppointments;
   } catch (error) {
     console.error('Failed to get appointments:', error);
     throw error;
@@ -544,12 +580,35 @@ export const getPatientAppointments = async (patientId: string) => {
   try {
     console.log('Fetching patient appointments for ID:', patientId);
     
+    if (!patientId) {
+      console.error('No patient ID provided');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('appointments')
       .select(`
-        *,
-        practitioner:practitioner_id (*),
-        service:service_id (*)
+        id,
+        business_id,
+        patient_id,
+        practitioner_id,
+        service_id,
+        date,
+        start_time,
+        end_time,
+        status,
+        notes,
+        created_at,
+        updated_at,
+        practitioner:practitioner_id (
+          id,
+          name
+        ),
+        service:service_id (
+          id,
+          name,
+          price
+        )
       `)
       .eq('patient_id', patientId);
     
@@ -558,7 +617,7 @@ export const getPatientAppointments = async (patientId: string) => {
       throw error;
     }
     
-    console.log('Patient appointments fetched:', data);
+    console.log('Patient appointments fetched:', data?.length || 0);
     return data || [];
   } catch (error) {
     console.error('Failed to get patient appointments:', error);

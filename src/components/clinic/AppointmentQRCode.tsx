@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Loader2, Link } from 'lucide-react';
+import { FileText, Download, Loader2, Link, QrCode, ZoomIn, ZoomOut } from 'lucide-react';
 import { Appointment } from '@/types/clinic';
 import { format } from 'date-fns';
 import { InvoiceGenerator } from './InvoiceGenerator';
@@ -21,7 +21,7 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
   const { toast } = useToast();
   
   // Create a direct appointment URL that can be shared
-  const appointmentUrl = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}`;
+  const appointmentUrl = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}&appointmentId=${appointment.id}`;
   
   const downloadQRCode = () => {
     setIsDownloading(true);
@@ -90,38 +90,53 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appointment QR Code</CardTitle>
+        <CardTitle className="flex items-center">
+          <QrCode className="mr-2 h-5 w-5 text-primary" />
+          Appointment QR Code
+        </CardTitle>
         <CardDescription>
           Share this QR code with the patient to let them access their appointment details
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center space-y-4">
-          <div 
-            className={`bg-white p-4 rounded-lg ${showQrFull ? 'w-full max-w-md' : 'w-[200px] h-[200px]'}`}
-            onClick={() => setShowQrFull(!showQrFull)}
-          >
-            <QRCode
-              id="appointment-qr-code"
-              value={appointmentUrl}
-              size={showQrFull ? 300 : 200}
-              level="H"
-              className="cursor-pointer w-full h-full"
-            />
+          <div className="flex items-center justify-center bg-white p-4 rounded-lg cursor-pointer" 
+            onClick={() => setShowQrFull(!showQrFull)}>
+            <div className={`transition-all duration-300 ease-in-out ${showQrFull ? 'w-full max-w-md' : 'w-[200px]'}`}>
+              <QRCode
+                id="appointment-qr-code"
+                value={appointmentUrl}
+                size={showQrFull ? 256 : 200}
+                level="H"
+                className="w-full h-full"
+              />
+            </div>
           </div>
           
-          {showQrFull && (
-            <p className="text-sm text-center text-muted-foreground">
-              Click on the QR code to resize
-            </p>
-          )}
+          <p className="text-sm text-center text-muted-foreground flex items-center">
+            {showQrFull ? (
+              <>
+                <ZoomOut className="mr-1 h-4 w-4" />
+                Click to shrink QR code
+              </>
+            ) : (
+              <>
+                <ZoomIn className="mr-1 h-4 w-4" />
+                Click to enlarge QR code
+              </>
+            )}
+          </p>
           
           <div className="w-full text-sm space-y-2 text-muted-foreground">
-            <p>Date: {format(new Date(appointment.date), 'PPP')}</p>
-            <p>Time: {appointment.start_time}</p>
+            <p><span className="font-medium text-foreground">Date:</span> {format(new Date(appointment.date), 'PPP')}</p>
+            <p><span className="font-medium text-foreground">Time:</span> {appointment.start_time} - {appointment.end_time}</p>
             {appointment.service?.name && (
-              <p>Service: {appointment.service.name}</p>
+              <p><span className="font-medium text-foreground">Service:</span> {appointment.service.name}</p>
             )}
+            {appointment.practitioner?.name && (
+              <p><span className="font-medium text-foreground">Provider:</span> {appointment.practitioner.name}</p>
+            )}
+            <p><span className="font-medium text-foreground">Status:</span> {appointment.status}</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2 w-full">

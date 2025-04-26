@@ -2,18 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getPatientAppointments, checkPatientExists } from '@/lib/clinicService';
 import { Appointment } from '@/types/clinic';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
 import { 
   Calendar, 
   Clock, 
@@ -22,9 +12,12 @@ import {
   PlusCircle,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
+  QrCode
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import QrCodeScanner from '@/components/QrCodeScanner';
 
 const CustomerAppointments = () => {
   const { user } = useAuth();
@@ -34,6 +27,7 @@ const CustomerAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPatient, setIsPatient] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   
   useEffect(() => {
     const loadData = async () => {
@@ -41,12 +35,10 @@ const CustomerAppointments = () => {
       
       setIsLoading(true);
       try {
-        // Check if user is a registered patient
         const patientExists = await checkPatientExists(user.id);
         setIsPatient(patientExists);
         
         if (patientExists) {
-          // Load appointments
           const data = await getPatientAppointments(user.id);
           setAppointments(data as Appointment[]);
         }
@@ -98,14 +90,12 @@ const CustomerAppointments = () => {
   const groupAppointmentsByDate = () => {
     const grouped: { [date: string]: Appointment[] } = {};
     
-    // Sort appointments by date (newest first) and time
     const sorted = [...appointments].sort((a, b) => {
       const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateComparison !== 0) return dateComparison;
       return a.start_time.localeCompare(b.start_time);
     });
     
-    // Group by date
     sorted.forEach(appointment => {
       const dateKey = appointment.date;
       if (!grouped[dateKey]) {
@@ -151,11 +141,25 @@ const CustomerAppointments = () => {
           <h1 className="text-2xl font-bold tracking-tight">My Appointments</h1>
           <p className="text-muted-foreground">View and manage your healthcare appointments</p>
         </div>
-        <Button onClick={() => navigate('/customer/book')}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Book Appointment
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowScanner(!showScanner)} variant="outline">
+            <QrCode className="mr-2 h-4 w-4" />
+            {showScanner ? "Hide Scanner" : "Scan Appointment"}
+          </Button>
+          <Button onClick={() => navigate('/customer/book')}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Book Appointment
+          </Button>
+        </div>
       </div>
+      
+      {showScanner && (
+        <Card>
+          <CardContent className="pt-6">
+            <QrCodeScanner mode="appointment" />
+          </CardContent>
+        </Card>
+      )}
       
       {Object.keys(groupedAppointments).length > 0 ? (
         <div className="space-y-6">

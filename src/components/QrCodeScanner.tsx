@@ -38,11 +38,23 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
       try {
         const url = new URL(decodedText);
         if (url.pathname.includes('book-appointment')) {
-          navigate(url.pathname + url.search);
-          toast({
-            title: "Appointment Found",
-            description: "Redirecting to appointment booking...",
-          });
+          // Extract businessId and appointmentId from URL parameters
+          const businessId = url.searchParams.get('businessId');
+          const appointmentId = url.searchParams.get('appointmentId');
+          
+          if (businessId && appointmentId) {
+            navigate(`/customer/book-appointment?businessId=${businessId}&appointmentId=${appointmentId}&join=true`);
+            toast({
+              title: "Appointment Found",
+              description: "Redirecting to join appointment...",
+            });
+          } else {
+            toast({
+              title: "Invalid QR Code",
+              description: "This QR code doesn't contain valid appointment information",
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Invalid QR Code",

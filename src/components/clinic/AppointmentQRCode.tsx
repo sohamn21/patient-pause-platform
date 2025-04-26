@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,8 +19,8 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
   const [showQrFull, setShowQrFull] = useState(false);
   const { toast } = useToast();
   
-  // Create a direct appointment URL that can be shared
-  const appointmentUrl = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}&appointmentId=${appointment.id}`;
+  // Create a direct appointment URL that can be shared and joined
+  const appointmentUrl = `${window.location.origin}/customer/book-appointment?businessId=${appointment.business_id}&appointmentId=${appointment.id}&join=true`;
   
   const downloadQRCode = () => {
     setIsDownloading(true);

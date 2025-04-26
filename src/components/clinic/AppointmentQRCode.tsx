@@ -3,7 +3,7 @@ import React from 'react';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileInvoice, Download } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { Appointment } from '@/types/clinic';
 import { format } from 'date-fns';
 import { InvoiceGenerator } from './InvoiceGenerator';
@@ -78,7 +78,7 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="flex-1">
-                  <FileInvoice className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   Generate Invoice
                 </Button>
               </DialogTrigger>

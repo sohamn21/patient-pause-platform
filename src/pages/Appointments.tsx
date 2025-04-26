@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -32,7 +31,7 @@ const AppointmentsPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [showScanner, setShowScanner] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     // Only attempt to fetch if we have a user
@@ -200,11 +199,11 @@ const AppointmentsPage = () => {
             Refresh
           </Button>
           <Button
-            onClick={() => setShowScanner(!showScanner)}
+            onClick={() => setShowQRCode(!showQRCode)}
             variant="outline"
           >
             <QrCode className="mr-2 h-4 w-4" />
-            {showScanner ? "Hide Scanner" : "Scan QR Code"}
+            {showQRCode ? "Hide QR Code" : "Generate QR Code"}
           </Button>
         </div>
       </div>
@@ -226,14 +225,8 @@ const AppointmentsPage = () => {
         </div>
       )}
       
-      {showScanner && (
+      {showQRCode && selectedAppointment && (
         <div className="mb-6">
-          <QrCodeScanner mode="appointment" />
-        </div>
-      )}
-
-      {selectedAppointment && (
-        <div id="appointment-qr-section" className="scroll-mt-8">
           <AppointmentQRCode 
             appointment={selectedAppointment}
             onInvoiceGenerated={fetchAppointments}

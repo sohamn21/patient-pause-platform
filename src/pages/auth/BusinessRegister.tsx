@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,11 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/context/AuthContext';
+import { BusinessTypeFeatures } from '@/components/business/BusinessTypeFeatures';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface BusinessFormData {
   firstName: string;
@@ -197,6 +201,40 @@ const BusinessRegister = () => {
     }
   };
 
+  const profileFormSchema = z.object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    phoneNumber: z.string().optional(),
+  });
+  
+  const businessFormSchema = z.object({
+    businessName: z.string().min(1, "Business name is required"),
+    businessType: z.enum(["restaurant", "salon", "clinic", "other"]),
+    termsAccepted: z.literal(true, { errorMap: () => ({ message: "You must accept the terms and conditions" }) }),
+  });
+
+  const profileForm = useForm({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      username: '',
+      phoneNumber: '',
+    },
+  });
+
+  const businessForm = useForm({
+    resolver: zodResolver(businessFormSchema),
+    defaultValues: {
+      businessName: '',
+      businessType: 'restaurant',
+      termsAccepted: false,
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="absolute top-6 left-6">
@@ -211,12 +249,79 @@ const BusinessRegister = () => {
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold">Create Business Account</h1>
             <p className="text-muted-foreground mt-2">
-              {step === 1 ? "First, tell us about yourself" : "Now, tell us about your business"}
+              {step === 1 ? "Select your business type to see available features" : "Complete your business profile"}
             </p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {step === 1 ? (
+              <>
+                <FormField
+                  control={businessForm.control}
+                  name="businessType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Type</FormLabel>
+                      <Select 
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setFormData(prev => ({ ...prev, businessType: value }));
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your business type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="restaurant">Restaurant</SelectItem>
+                          <SelectItem value="salon">Salon & Spa</SelectItem>
+                          <SelectItem value="clinic">Medical Clinic</SelectItem>
+                          <SelectItem value="other">Other Business</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {formData.businessType && (
+                  <BusinessTypeFeatures businessType={formData.businessType} />
+                )}
+                
+                <div className="flex items-center space-x-2 mt-4">
+                  <Checkbox 
+                    id="terms" 
+                    checked={formData.termsAccepted}
+                    onCheckedChange={handleCheckboxChange}
+                  />
+                  <label
+                    htmlFor="terms"
+                    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                      errors.termsAccepted ? "text-destructive" : ""
+                    }`}
+                  >
+                    I agree to the{" "}
+                    <Link to="/terms" className="text-primary hover:underline">
+                      terms and conditions
+                    </Link>
+                  </label>
+                </div>
+                {errors.termsAccepted && (
+                  <p className="text-xs text-destructive">{errors.termsAccepted}</p>
+                )}
+                
+                <Button 
+                  type="button" 
+                  className="w-full"
+                  onClick={nextStep}
+                  disabled={!formData.businessType || !formData.termsAccepted}
+                >
+                  Continue to Account Details
+                </Button>
+              </>
+            ) : (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -328,74 +433,6 @@ const BusinessRegister = () => {
                     <p className="text-xs text-destructive">{errors.confirmPassword}</p>
                   )}
                 </div>
-                
-                <Button 
-                  type="button" 
-                  className="w-full" 
-                  onClick={nextStep}
-                >
-                  Continue
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="businessName">Business Name</Label>
-                  <Input 
-                    id="businessName" 
-                    name="businessName"
-                    placeholder="Your Business Name" 
-                    value={formData.businessName}
-                    onChange={handleChange}
-                    className={errors.businessName ? "border-destructive" : ""}
-                  />
-                  {errors.businessName && (
-                    <p className="text-xs text-destructive">{errors.businessName}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="businessType">Business Type</Label>
-                  <Select
-                    value={formData.businessType}
-                    onValueChange={handleSelectChange}
-                  >
-                    <SelectTrigger id="businessType" className={errors.businessType ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Select your business type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="clinic">Medical Clinic</SelectItem>
-                      <SelectItem value="salon">Salon / Spa</SelectItem>
-                      <SelectItem value="restaurant">Restaurant</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.businessType && (
-                    <p className="text-xs text-destructive">{errors.businessType}</p>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-2 mt-4">
-                  <Checkbox 
-                    id="terms" 
-                    checked={formData.termsAccepted}
-                    onCheckedChange={handleCheckboxChange}
-                  />
-                  <label
-                    htmlFor="terms"
-                    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-                      errors.termsAccepted ? "text-destructive" : ""
-                    }`}
-                  >
-                    I agree to the{" "}
-                    <Link to="/terms" className="text-primary hover:underline">
-                      terms and conditions
-                    </Link>
-                  </label>
-                </div>
-                {errors.termsAccepted && (
-                  <p className="text-xs text-destructive">{errors.termsAccepted}</p>
-                )}
                 
                 <div className="flex space-x-3 mt-6">
                   <Button 

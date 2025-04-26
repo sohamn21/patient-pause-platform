@@ -73,7 +73,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       medical_history: patient?.medical_history || '',
       allergies: patient?.allergies || '',
       emergency_contact: patient?.emergency_contact || '',
-      preferred_practitioner_id: patient?.preferred_practitioner_id || '',
+      preferred_practitioner_id: patient?.preferred_practitioner_id || undefined,
       notes: patient?.notes || '',
     },
   });
@@ -315,7 +315,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                 <FormLabel>Preferred Practitioner</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
-                  value={field.value || ''}
+                  value={field.value || undefined}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -323,7 +323,8 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No preference</SelectItem>
+                    {/* Fix: Use 'none' instead of empty string for no preference */}
+                    <SelectItem value="none">No preference</SelectItem>
                     {practitioners.map((practitioner) => (
                       <SelectItem key={practitioner.id} value={practitioner.id}>
                         {practitioner.name}

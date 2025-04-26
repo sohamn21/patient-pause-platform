@@ -117,6 +117,13 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       console.log("Submitting patient form with data:", formData);
       console.log("User ID:", userId);
       
+      // Make sure we have the required fields
+      if (!formData.first_name || !formData.last_name) {
+        setError("First name and last name are required.");
+        setIsLoading(false);
+        return;
+      }
+      
       let success;
       
       if (patient) {

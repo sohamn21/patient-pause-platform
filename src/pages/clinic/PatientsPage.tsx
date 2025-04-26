@@ -31,8 +31,22 @@ const PatientsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access the patients page.",
+        variant: "destructive",
+      });
+      navigate('/signin');
+    }
+  }, [user, navigate, toast]);
+
   useEffect(() => {
     const fetchPatients = async () => {
+      if (!user) return; // Don't fetch if not authenticated
+      
       setIsLoading(true);
       setHasError(false);
       try {
@@ -82,15 +96,21 @@ const PatientsPage = () => {
   };
 
   const refreshPatients = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     setHasError(false);
     try {
       // Get businessId from user
       const businessId = user?.id || '';
+      console.log("Refreshing patients for business ID:", businessId);
+      
       const fetchedPatients = await getPatients(businessId);
       
       // Cast the data to ensure TypeScript compatibility
       setPatients(fetchedPatients as Patient[]);
+      
+      console.log("Patients refreshed:", fetchedPatients);
     } catch (error) {
       console.error("Error refreshing patients:", error);
       setHasError(true);
@@ -103,6 +123,11 @@ const PatientsPage = () => {
       setIsLoading(false);
     }
   };
+
+  // Don't render content if not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -135,7 +160,7 @@ const PatientsPage = () => {
           <CardContent>
             <PatientForm 
               userId={user?.id || ''}
-              onSuccess={() => {
+              onSuccess={(formData) => {
                 setShowNewPatientForm(false);
                 // Refresh the patients list
                 refreshPatients();

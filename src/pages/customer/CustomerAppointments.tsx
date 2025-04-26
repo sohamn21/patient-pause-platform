@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getPatientAppointments, checkPatientExists } from '@/lib/clinicService';
@@ -49,7 +48,7 @@ const CustomerAppointments = () => {
         if (patientExists) {
           // Load appointments
           const data = await getPatientAppointments(user.id);
-          setAppointments(data);
+          setAppointments(data as Appointment[]);
         }
       } catch (error) {
         console.error("Error loading appointments:", error);

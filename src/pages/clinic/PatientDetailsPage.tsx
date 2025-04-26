@@ -61,7 +61,7 @@ const PatientDetailsPage = () => {
         ]);
         
         setPatient(patientData);
-        setAppointments(appointmentsData);
+        setAppointments(appointmentsData as Appointment[]);
       } catch (error) {
         console.error("Error loading patient data:", error);
         toast({

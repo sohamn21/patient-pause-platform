@@ -1,3 +1,4 @@
+
 export interface Practitioner {
   id: string;
   business_id: string;
@@ -57,9 +58,9 @@ export interface Appointment {
   notes: string | null;
   created_at: string | null;
   updated_at: string | null;
-  patient?: Patient;
+  patient?: Patient | any; // Make this more flexible with API responses
   practitioner?: Practitioner | any; // Support for JSON data from database
-  service?: Service;
+  service?: Service | any; // Make this more flexible with API responses
 }
 
 export interface Invoice {

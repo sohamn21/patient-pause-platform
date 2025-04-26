@@ -84,7 +84,7 @@ const AppointmentsPage = () => {
         
         // If same date, sort by time
         return a.start_time.localeCompare(b.start_time);
-      });
+      }) as Appointment[];
       
       setAppointments(sortedAppointments);
       
@@ -288,7 +288,7 @@ const AppointmentsPage = () => {
                       <TableCell>
                         <Badge variant={
                           appointment.status === 'scheduled' ? 'secondary' :
-                          appointment.status === 'completed' ? 'success' :
+                          appointment.status === 'completed' ? 'default' :
                           appointment.status === 'cancelled' ? 'destructive' : 'outline'
                         }>
                           {appointment.status}

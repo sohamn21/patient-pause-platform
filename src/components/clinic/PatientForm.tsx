@@ -101,7 +101,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
     };
     
     loadPractitioners();
-  }, [userId, toast]);
+  }, [userId]);
   
   const onSubmit = async (formData: PatientFormData) => {
     setError(null);
@@ -114,22 +114,29 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
     }
     
     try {
+      console.log("Submitting patient form with data:", formData);
+      console.log("User ID:", userId);
+      
       let success;
       
       if (patient) {
+        console.log("Updating existing patient:", patient.id);
         success = await updatePatient(patient.id, formData);
       } else {
+        console.log("Creating new patient profile");
         success = await createPatientProfile(userId, formData);
       }
+      
+      console.log("Form submission result:", success);
       
       if (success) {
         toast({
           title: patient ? "Profile Updated" : "Profile Created",
-          description: patient ? "Your information has been updated" : "Your health profile has been created",
+          description: patient ? "Patient information has been updated" : "New patient profile has been created",
         });
         onSuccess(formData);
       } else {
-        setError("Failed to save your information. Please try again.");
+        setError("Failed to save patient information. Please try again.");
       }
     } catch (error) {
       console.error("Error saving patient:", error);

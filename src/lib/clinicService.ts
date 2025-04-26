@@ -475,11 +475,12 @@ export const deletePractitioner = async (id: string) => {
 };
 
 // Get all appointments for a business
-export const getAppointments = async (businessId: string) => {
+export const getAppointments = async (userId: string) => {
   try {
-    console.log('Fetching appointments for business:', businessId);
+    console.log('Fetching appointments for user ID:', userId);
     
-    const { data, error } = await supabase
+    // Check if the user has any appointments as a patient first
+    const { data: patientAppointments, error: patientError } = await supabase
       .from('appointments')
       .select(`
         *,
@@ -494,15 +495,44 @@ export const getAppointments = async (businessId: string) => {
         practitioner:practitioner_id (*),
         service:service_id (*)
       `)
-      .eq('business_id', businessId);
+      .eq('patient_id', userId);
     
-    if (error) {
-      console.error('Error fetching appointments:', error);
-      throw error;
+    if (patientError) {
+      console.error('Error fetching patient appointments:', patientError);
+      throw patientError;
     }
     
-    console.log('Appointments fetched:', data);
-    return data || [];
+    // If we found appointments as a patient, return those
+    if (patientAppointments && patientAppointments.length > 0) {
+      console.log('Found appointments as a patient:', patientAppointments);
+      return patientAppointments;
+    }
+    
+    // If no appointments found as patient, try as a business owner
+    const { data: businessAppointments, error: businessError } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        patient:patient_id (
+          *,
+          profile:id (
+            first_name,
+            last_name,
+            phone_number
+          )
+        ),
+        practitioner:practitioner_id (*),
+        service:service_id (*)
+      `)
+      .eq('business_id', userId);
+    
+    if (businessError) {
+      console.error('Error fetching business appointments:', businessError);
+      throw businessError;
+    }
+    
+    console.log('Appointments fetched:', businessAppointments || []);
+    return businessAppointments || [];
   } catch (error) {
     console.error('Failed to get appointments:', error);
     throw error;

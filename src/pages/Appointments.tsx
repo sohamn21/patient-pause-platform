@@ -7,12 +7,10 @@ import { getAppointments } from '@/lib/clinicService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Copy, Loader2, AlertTriangle } from 'lucide-react';
+import { CalendarCheck, Copy, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
+import { 
   Table,
   TableBody,
   TableCaption,
@@ -20,11 +18,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppointmentQRCode } from '@/components/clinic/AppointmentQRCode';
+import QrCodeScanner from '@/components/QrCodeScanner';
 
 const AppointmentsPage = () => {
   const { user } = useAuth();
@@ -35,6 +32,7 @@ const AppointmentsPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -59,7 +57,7 @@ const AppointmentsPage = () => {
       console.log("Fetching appointments for user ID:", user.id);
       
       // Add a small delay to ensure authentication is fully processed
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const appointmentsData = await getAppointments(user.id);
       console.log("Appointments data received:", appointmentsData);
@@ -71,10 +69,15 @@ const AppointmentsPage = () => {
       setAppointments(appointmentsData);
       
       // If we successfully got appointments, show a confirmation toast
-      if (retryCount > 0) {
+      if (appointmentsData.length > 0) {
         toast({
-          title: "Success",
+          title: "Appointments Loaded",
           description: `Successfully loaded ${appointmentsData.length} appointment(s).`,
+        });
+      } else {
+        toast({
+          title: "No Appointments Found",
+          description: "You don't have any appointments scheduled.",
         });
       }
       
@@ -94,6 +97,13 @@ const AppointmentsPage = () => {
   const handleAppointmentClick = (appointment: Appointment) => {
     console.log("Selected appointment:", appointment);
     setSelectedAppointment(appointment);
+    
+    // Scroll to the QR code section
+    setTimeout(() => {
+      document.getElementById('appointment-qr-section')?.scrollIntoView({ 
+        behavior: 'smooth' 
+      });
+    }, 100);
   };
 
   const handleCopyAppointmentLink = (appointment: Appointment, event: React.MouseEvent) => {
@@ -153,15 +163,23 @@ const AppointmentsPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
           <p className="text-muted-foreground">View and manage your appointments</p>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          variant="outline" 
-          className="flex items-center gap-2"
-          disabled={isLoading}
-        >
-          <Loader2 className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
+            <RefreshCw className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => setShowScanner(!showScanner)}
+            variant="outline"
+          >
+            {showScanner ? "Hide Scanner" : "Scan QR Code"}
+          </Button>
+        </div>
       </div>
 
       {fetchError && (
@@ -180,25 +198,34 @@ const AppointmentsPage = () => {
           </Button>
         </div>
       )}
+      
+      {showScanner && (
+        <div className="mb-6">
+          <QrCodeScanner mode="appointment" />
+        </div>
+      )}
 
       {selectedAppointment && (
-        <AppointmentQRCode 
-          appointment={selectedAppointment}
-          onInvoiceGenerated={() => {
-            // Refresh appointments list after invoice generation
-            fetchAppointments();
-          }}
-        />
+        <div id="appointment-qr-section" className="scroll-mt-8">
+          <AppointmentQRCode 
+            appointment={selectedAppointment}
+            onInvoiceGenerated={() => {
+              // Refresh appointments list after invoice generation
+              fetchAppointments();
+            }}
+          />
+        </div>
       )}
 
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Appointments</CardTitle>
-          <CardDescription>Here's a list of your upcoming appointments. Click on an appointment to view details.</CardDescription>
+          <CardDescription>Here's a list of your appointments. Click on an appointment to view its QR code.</CardDescription>
         </CardHeader>
         <CardContent>
           {appointments.length === 0 ? (
             <div className="flex flex-col justify-center items-center h-32 text-muted-foreground">
+              <CalendarCheck className="h-12 w-12 text-muted-foreground mb-4" />
               <p>No appointments scheduled.</p>
               {!fetchError && (
                 <Button variant="link" onClick={handleRefresh} className="mt-2">

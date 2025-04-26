@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +33,7 @@ const AppointmentsPage = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -40,15 +42,25 @@ const AppointmentsPage = () => {
   const fetchAppointments = async () => {
     if (!user) {
       setIsLoading(false);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to view appointments.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsLoading(true);
+    setFetchError(null);
+    
     try {
+      console.log("Fetching appointments for user ID:", user.id);
       const appointmentsData = await getAppointments(user.id);
+      console.log("Appointments data received:", appointmentsData);
       setAppointments(appointmentsData);
     } catch (error) {
       console.error("Error fetching appointments:", error);
+      setFetchError("Failed to fetch appointments");
       toast({
         title: "Error",
         description: "Failed to fetch appointments. Please try again.",
@@ -74,19 +86,36 @@ const AppointmentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading appointments...
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading appointments...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
-        <p className="text-muted-foreground">View and manage your appointments</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
+          <p className="text-muted-foreground">View and manage your appointments</p>
+        </div>
+        <Button onClick={fetchAppointments} variant="outline" className="flex items-center gap-2">
+          <Loader2 className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+          Refresh
+        </Button>
       </div>
+
+      {fetchError && (
+        <div className="bg-destructive/15 text-destructive p-4 rounded-md flex items-center justify-between">
+          <div className="flex items-center">
+            <p className="font-medium">{fetchError}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchAppointments}>
+            Try Again
+          </Button>
+        </div>
+      )}
 
       {selectedAppointment && (
         <AppointmentQRCode 
@@ -105,11 +134,16 @@ const AppointmentsPage = () => {
         </CardHeader>
         <CardContent>
           {appointments.length === 0 ? (
-            <div className="flex justify-center items-center h-32 text-muted-foreground">
-              No appointments scheduled.
+            <div className="flex flex-col justify-center items-center h-32 text-muted-foreground">
+              <p>No appointments scheduled.</p>
+              {!fetchError && (
+                <Button variant="link" onClick={fetchAppointments} className="mt-2">
+                  Refresh
+                </Button>
+              )}
             </div>
           ) : (
-            <ScrollArea>
+            <ScrollArea className="h-[400px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -126,8 +160,8 @@ const AppointmentsPage = () => {
                     <TableRow key={appointment.id} onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hover:bg-accent">
                       <TableCell className="font-medium">{format(new Date(appointment.date), 'PPP')}</TableCell>
                       <TableCell>{appointment.start_time}</TableCell>
-                      <TableCell>{appointment.service?.name}</TableCell>
-                      <TableCell>{appointment.practitioner?.name}</TableCell>
+                      <TableCell>{appointment.service?.name || 'N/A'}</TableCell>
+                      <TableCell>{appointment.practitioner?.name || 'N/A'}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{appointment.status}</Badge>
                       </TableCell>

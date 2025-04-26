@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,7 +95,7 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
           Appointment QR Code
         </CardTitle>
         <CardDescription>
-          Share this QR code with the patient to let them access their appointment details
+          Share this QR code to allow quick access to the appointment details
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -136,6 +137,7 @@ export const AppointmentQRCode = ({ appointment, onInvoiceGenerated }: Appointme
               <p><span className="font-medium text-foreground">Provider:</span> {appointment.practitioner.name}</p>
             )}
             <p><span className="font-medium text-foreground">Status:</span> {appointment.status}</p>
+            <p><span className="font-medium text-foreground">Scan to:</span> Join appointment or view details</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2 w-full">

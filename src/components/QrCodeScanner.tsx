@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
@@ -36,30 +35,37 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   const handleScanSuccess = (decodedText: string) => {
     if (mode === 'appointment') {
       try {
-        const url = new URL(decodedText);
-        if (url.pathname.includes('book-appointment')) {
-          // Extract businessId and appointmentId from URL parameters
-          const businessId = url.searchParams.get('businessId');
-          const appointmentId = url.searchParams.get('appointmentId');
-          
-          if (businessId && appointmentId) {
-            navigate(`/customer/book-appointment?businessId=${businessId}&appointmentId=${appointmentId}&join=true`);
-            toast({
-              title: "Appointment Found",
-              description: "Redirecting to join appointment...",
-            });
+        if (decodedText.startsWith('http')) {
+          const url = new URL(decodedText);
+          if (url.pathname.includes('book-appointment')) {
+            const businessId = url.searchParams.get('businessId');
+            const appointmentId = url.searchParams.get('appointmentId');
+            
+            if (businessId && appointmentId) {
+              navigate(`/customer/book-appointment?businessId=${businessId}&appointmentId=${appointmentId}&join=true`);
+              toast({
+                title: "Appointment Found",
+                description: "Redirecting to join appointment...",
+              });
+            } else {
+              toast({
+                title: "Invalid QR Code",
+                description: "This QR code doesn't contain valid appointment information",
+                variant: "destructive",
+              });
+            }
           } else {
             toast({
               title: "Invalid QR Code",
-              description: "This QR code doesn't contain valid appointment information",
+              description: "This QR code is not for an appointment",
               variant: "destructive",
             });
           }
         } else {
+          navigate(`/customer/book-appointment?appointmentId=${decodedText}&join=true`);
           toast({
-            title: "Invalid QR Code",
-            description: "This QR code is not for an appointment",
-            variant: "destructive",
+            title: "Appointment ID Found",
+            description: "Attempting to join appointment...",
           });
         }
       } catch (error) {
@@ -71,6 +77,11 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
       }
     } else if (onScanSuccess) {
       onScanSuccess(decodedText);
+    }
+    
+    if (scanner) {
+      scanner.stop().catch(() => {});
+      setIsScanning(false);
     }
   };
 

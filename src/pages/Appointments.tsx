@@ -21,6 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppointmentQRCode } from '@/components/clinic/AppointmentQRCode';
 import QrCodeScanner from '@/components/QrCodeScanner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const AppointmentsPage = () => {
   const { user } = useAuth();
@@ -31,7 +32,9 @@ const AppointmentsPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [showQrScanner, setShowQrScanner] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
 
   useEffect(() => {
     // Only attempt to fetch if we have a user
@@ -140,6 +143,12 @@ const AppointmentsPage = () => {
     });
   };
 
+  const handleShowQRCode = (appointment: Appointment, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent row click event
+    setSelectedAppointment(appointment);
+    setShowQRDialog(true);
+  };
+
   const handleRefresh = () => {
     setRetryCount(prev => prev + 1);
   };
@@ -199,11 +208,11 @@ const AppointmentsPage = () => {
             Refresh
           </Button>
           <Button
-            onClick={() => setShowQRCode(!showQRCode)}
+            onClick={() => setShowQrScanner(!showQrScanner)}
             variant="outline"
           >
             <QrCode className="mr-2 h-4 w-4" />
-            {showQRCode ? "Hide QR Code" : "Generate QR Code"}
+            {showQrScanner ? "Hide Scanner" : "Scan QR Code"}
           </Button>
         </div>
       </div>
@@ -225,20 +234,43 @@ const AppointmentsPage = () => {
         </div>
       )}
       
-      {showQRCode && selectedAppointment && (
-        <div className="mb-6">
-          <AppointmentQRCode 
-            appointment={selectedAppointment}
-            onInvoiceGenerated={fetchAppointments}
-          />
-        </div>
+      {showQrScanner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Scan Appointment QR Code</CardTitle>
+            <CardDescription>Scan a QR code to join or view an appointment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <QrCodeScanner mode="appointment" />
+          </CardContent>
+        </Card>
       )}
+
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Appointment QR Code</DialogTitle>
+          </DialogHeader>
+          {selectedAppointment && (
+            <AppointmentQRCode 
+              appointment={selectedAppointment}
+              onInvoiceGenerated={() => {
+                toast({
+                  title: "Invoice Generated",
+                  description: "The invoice has been generated successfully"
+                });
+                fetchAppointments();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
           <CardTitle>Your Appointments</CardTitle>
           <CardDescription>
-            Click on an appointment to view its QR code and details.
+            Click on an appointment to view its details.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -288,15 +320,24 @@ const AppointmentsPage = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => handleCopyAppointmentLink(appointment, e)}
-                          title="Copy appointment link to clipboard"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Link
-                        </Button>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => handleCopyAppointmentLink(appointment, e)}
+                            title="Copy appointment link to clipboard"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleShowQRCode(appointment, e)}
+                            title="Show QR code"
+                          >
+                            <QrCode className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

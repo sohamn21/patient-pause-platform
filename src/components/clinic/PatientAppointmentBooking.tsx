@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +22,7 @@ import { CalendarIcon, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Input } from '../ui/input';
 
 const appointmentFormSchema = z.object({
   service_id: z.string().min(1, "Please select a service"),
@@ -62,8 +62,10 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isPatient, setIsPatient] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
   
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentFormSchema),
@@ -92,23 +94,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
       console.log("Loading data for business ID:", businessId);
       setIsLoading(true);
       try {
-        if (user) {
-          // Check if user is already a patient
-          const patientExists = await checkPatientExists(user.id);
-          setIsPatient(patientExists);
-          
-          if (!patientExists) {
-            toast({
-              title: "Profile Required",
-              description: "Please complete your patient profile before booking.",
-            });
-            
-            // Instead of immediate redirect, set a flag and let the user decide
-            // We'll show a prompt in the UI
-          }
-        }
-        
-        // Load practitioners and services regardless of patient status
         const [practitionersData, servicesData] = await Promise.all([
           getPractitioners(businessId),
           getServices(businessId)
@@ -138,7 +123,7 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
     };
     
     loadInitialData();
-  }, [businessId, user, toast, navigate, onCancel]);
+  }, [businessId, toast, navigate]);
   
   useEffect(() => {
     // Update selected service when service_id changes
@@ -152,28 +137,26 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   }, [form.watch('service_id'), services]);
   
   const onSubmitAppointment = async (formData: AppointmentFormData) => {
-    if (!user) {
-      toast({
-        title: "Please Sign In",
-        description: "You need to sign in to book an appointment",
-      });
-      // Store booking intent and redirect to sign in
-      navigate('/signin', { state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } });
-      return;
-    }
-    
-    if (!isPatient) {
-      navigate('/customer/profile', { state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } });
-      return;
-    }
-    
     setIsLoading(true);
     try {
-      // Create the appointment
+      // If user is not logged in, validate guest information
+      if (!user && (!guestEmail || !guestName)) {
+        toast({
+          title: "Missing Information",
+          description: "Please provide your name and email to book an appointment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create the appointment with either user ID or guest information
       const appointment = await createAppointment(
         {
           ...formData,
-          patient_id: user.id,
+          patient_id: user?.id,
+          guest_email: !user ? guestEmail : undefined,
+          guest_name: !user ? guestName : undefined,
+          guest_phone: !user ? guestPhone : undefined,
         },
         businessId
       );
@@ -186,8 +169,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
         
         if (onSuccess) {
           onSuccess();
-        } else {
-          navigate('/customer/appointments');
         }
       } else {
         throw new Error("Failed to book appointment");
@@ -236,60 +217,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
     );
   }
   
-  if (!user) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign In Required</CardTitle>
-          <CardDescription>
-            Please sign in to book an appointment
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center space-y-4">
-            <Button 
-              onClick={() => navigate('/signin', { 
-                state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } 
-              })}
-            >
-              Sign In to Continue
-            </Button>
-            <Button variant="outline" onClick={onCancel || (() => navigate('/'))}>
-              Cancel
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (!isPatient) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete Your Profile</CardTitle>
-          <CardDescription>
-            You need to complete your patient profile before booking
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center space-y-4">
-            <Button 
-              onClick={() => navigate('/customer/profile', { 
-                state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } 
-              })}
-            >
-              Complete Profile
-            </Button>
-            <Button variant="outline" onClick={onCancel || (() => navigate('/'))}>
-              Cancel
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
   return (
     <Card>
       <CardHeader>
@@ -301,6 +228,77 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmitAppointment)} className="space-y-6">
+            {!user && (
+              <div className="space-y-4 mb-6 p-4 bg-accent/30 rounded-lg">
+                <h3 className="font-medium">Guest Information</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="guest_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your name"
+                            value={guestName}
+                            onChange={(e) => setGuestName(e.target.value)}
+                            required
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guest_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email"
+                            placeholder="your@email.com"
+                            value={guestEmail}
+                            onChange={(e) => setGuestEmail(e.target.value)}
+                            required
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guest_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="tel"
+                            placeholder="Enter phone number"
+                            value={guestPhone}
+                            onChange={(e) => setGuestPhone(e.target.value)}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  <p>Want to manage your appointments? 
+                    <Button 
+                      variant="link" 
+                      className="px-2 h-auto" 
+                      onClick={() => navigate('/signin')}
+                    >
+                      Sign in
+                    </Button>
+                  </p>
+                </div>
+              </div>
+            )}
+
             <Tabs defaultValue="service" className="w-full">
               <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="service">Service</TabsTrigger>

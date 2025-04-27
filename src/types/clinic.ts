@@ -85,6 +85,7 @@ export type AppointmentFormData = {
   start_time: string;
   end_time?: string;
   notes?: string;
+  business_id?: string; // Add this property to match the usage in updateAppointment
   // Guest fields for non-authenticated users
   guest_name?: string;
   guest_email?: string;

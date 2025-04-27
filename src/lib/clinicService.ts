@@ -732,14 +732,24 @@ export const createAppointment = async (
 export const updateAppointment = async (id: string, formData: AppointmentFormData) => {
   try {
     let end_time = formData.end_time;
-    if (!end_time) {
-      const service = await getServiceById(formData.business_id, formData.service_id);
-      if (service) {
-        const [hours, minutes] = formData.start_time.split(':').map(Number);
-        const startDate = new Date();
-        startDate.setHours(hours, minutes, 0, 0);
-        const endDate = new Date(startDate.getTime() + service.duration * 60000);
-        end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+    
+    // If the business_id is not provided in the formData but a serviceId is,
+    // we need to fetch the service to get the business_id
+    const businessId = formData.business_id; 
+    
+    if (!end_time && formData.service_id) {
+      // If we have a businessId and serviceId, we can calculate the end time
+      if (businessId) {
+        const service = await getServiceById(businessId, formData.service_id);
+        if (service) {
+          const [hours, minutes] = formData.start_time.split(':').map(Number);
+          const startDate = new Date();
+          startDate.setHours(hours, minutes, 0, 0);
+          const endDate = new Date(startDate.getTime() + service.duration * 60000);
+          end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+        }
+      } else {
+        console.warn('Cannot calculate end time: business_id is missing');
       }
     }
     

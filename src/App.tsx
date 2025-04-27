@@ -48,7 +48,6 @@ function App() {
   );
 }
 
-// Separate component to fix the React hooks issue
 function AppContent() {
   return (
     <AuthProvider>
@@ -66,7 +65,6 @@ function AppContent() {
         <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
         <Route path="/contact" element={<ContactPage />} />
         
-        {/* Public booking routes - explicitly accessible to guests without login */}
         <Route 
           path="/booking" 
           element={
@@ -94,10 +92,8 @@ function AppContent() {
           } 
         />
         
-        {/* Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         
-        {/* Business routes */}
         <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
@@ -114,14 +110,12 @@ function AppContent() {
           <Route path="/industry-features" element={<IndustryFeaturesPage />} />
           <Route path="/contact" element={<ContactPage />} />
           
-          {/* Clinic specific routes */}
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/patients/:patientId" element={<PatientDetailsPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/practitioners" element={<PractitionersPage />} />
         </Route>
         
-        {/* Customer routes */}
         <Route path="/customer" element={<ProtectedRoute><CustomerLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/customer/dashboard" replace />} />
           <Route path="dashboard" element={<CustomerDashboard />} />

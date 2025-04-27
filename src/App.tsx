@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -66,6 +67,16 @@ function AppContent() {
         <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
         <Route path="/contact" element={<ContactPage />} />
         
+        {/* Public booking route - accessible to guests without login */}
+        <Route 
+          path="/booking" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <PatientBookingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         
@@ -101,16 +112,37 @@ function AppContent() {
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
           <Route 
-            path="/customer/booking" 
+            path="booking" 
             element={
               <ProtectedRoute allowGuest={true}>
                 <PatientBookingPage />
               </ProtectedRoute>
             } 
           />
-          <Route path="book" element={<PatientBookingPage />} />
-          <Route path="book/:businessId" element={<BookAppointmentPage />} />
-          <Route path="book-appointment" element={<PatientBookingPage />} />  {/* Adding support for the old URL pattern */}
+          <Route 
+            path="book" 
+            element={
+              <ProtectedRoute allowGuest={true}>
+                <PatientBookingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="book/:businessId" 
+            element={
+              <ProtectedRoute allowGuest={true}>
+                <BookAppointmentPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="book-appointment" 
+            element={
+              <ProtectedRoute allowGuest={true}>
+                <PatientBookingPage />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="contact" element={<ContactPage />} />
         </Route>
         

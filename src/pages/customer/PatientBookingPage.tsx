@@ -18,8 +18,6 @@ const PatientBookingPage = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const businessId = searchParams.get('businessId');
-  const appointmentId = searchParams.get('appointmentId');
-  const joinMode = searchParams.get('join') === 'true';
   
   const [isLoading, setIsLoading] = useState(true);
   const [appointmentSuccess, setAppointmentSuccess] = useState(false);
@@ -36,17 +34,20 @@ const PatientBookingPage = () => {
 
         try {
           // Fetch practitioners and services data
-          const [practitionersData, servicesData] = await Promise.all([
-            getPractitioners(businessId),
-            getServices(businessId)
-          ]);
+          console.log("Fetching practitioners and services for business ID:", businessId);
           
-          console.log("Practitioners loaded:", practitionersData);
-          console.log("Services loaded:", servicesData);
+          // Debug: Let's check the API calls directly
+          const practitionersData = await getPractitioners(businessId);
+          console.log("Practitioners data received:", practitionersData);
           
+          const servicesData = await getServices(businessId);
+          console.log("Services data received:", servicesData);
+          
+          // Set state with the retrieved data
           setPractitioners(practitionersData || []);
           setServices(servicesData || []);
           
+          // Check if data was found
           if (!practitionersData?.length || !servicesData?.length) {
             console.log("No practitioners or services found:", {
               practitioners: practitionersData?.length || 0,
@@ -58,6 +59,9 @@ const PatientBookingPage = () => {
               description: "This clinic hasn't fully set up services or practitioners yet.",
               variant: "destructive",
             });
+          } else {
+            console.log("Found practitioners:", practitionersData.length, "and services:", servicesData.length);
+            setHasDataError(false);
           }
         } catch (error) {
           console.error("Error loading clinic data:", error);
@@ -126,6 +130,9 @@ const PatientBookingPage = () => {
           <p className="text-muted-foreground">
             This clinic isn't fully set up yet. Please try again later or contact the clinic directly.
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Debug info: Practitioners: {practitioners.length}, Services: {services.length}
+          </p>
         </div>
         
         <Card>
@@ -175,6 +182,9 @@ const PatientBookingPage = () => {
         <p className="text-muted-foreground">
           Schedule your appointment with your preferred healthcare provider
           {!user && " - No account needed to book"}
+        </p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Found {practitioners.length} practitioners and {services.length} services
         </p>
       </div>
       

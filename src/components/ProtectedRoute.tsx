@@ -18,7 +18,7 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
   }
   
   // Check if this is a booking path
-  const isBookingPath = location.pathname.includes('booking');
+  const isBookingPath = location.pathname.includes('booking') || location.pathname.includes('book');
   
   // If allowGuest is true and we're on a booking path, allow access
   if (allowGuest && isBookingPath) {

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from '@/components/ui/blur-card';
-import { Camera, StopCircle, ScanIcon } from 'lucide-react';
+import { Camera, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,16 +42,16 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
             const businessId = url.searchParams.get('businessId');
             const appointmentId = url.searchParams.get('appointmentId');
             
-            if (businessId && appointmentId) {
-              navigate(`/customer/book-appointment?businessId=${businessId}&appointmentId=${appointmentId}&join=true`);
+            if (businessId) {
+              navigate(`/customer/book-appointment?businessId=${businessId}${appointmentId ? `&appointmentId=${appointmentId}` : ''}&join=true`);
               toast({
-                title: "Appointment Found",
-                description: "Redirecting to join appointment...",
+                title: "Clinic Found",
+                description: "Redirecting to appointment booking...",
               });
             } else {
               toast({
                 title: "Invalid QR Code",
-                description: "This QR code doesn't contain valid appointment information",
+                description: "This QR code doesn't contain valid clinic information",
                 variant: "destructive",
               });
             }
@@ -63,13 +63,15 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
             });
           }
         } else {
-          navigate(`/customer/book-appointment?appointmentId=${decodedText}&join=true`);
+          // Try to interpret as a direct business ID
+          navigate(`/customer/book-appointment?businessId=${decodedText}&join=true`);
           toast({
-            title: "Appointment ID Found",
-            description: "Attempting to join appointment...",
+            title: "Clinic ID Found",
+            description: "Attempting to find clinic...",
           });
         }
       } catch (error) {
+        console.error("Error processing QR code:", error);
         toast({
           title: "Invalid QR Code",
           description: "Unable to process the QR code",
@@ -157,8 +159,8 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
     <BlurCard>
       <BlurCardHeader>
         <BlurCardTitle className="flex items-center">
-          <ScanIcon className="mr-2 h-5 w-5 text-primary" />
-          {mode === 'appointment' ? 'Scan Appointment QR Code' : 'Scan QR Code'}
+          <Camera className="mr-2 h-5 w-5 text-primary" />
+          {mode === 'appointment' ? 'Scan Clinic QR Code' : 'Scan QR Code'}
         </BlurCardTitle>
       </BlurCardHeader>
       <BlurCardContent>
@@ -195,7 +197,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
           </div>
 
           <div className="text-center text-sm text-muted-foreground mt-4">
-            <p>Point your camera at an appointment QR code to join or view the appointment details.</p>
+            <p>Point your camera at a clinic QR code to book an appointment.</p>
           </div>
         </div>
       </BlurCardContent>

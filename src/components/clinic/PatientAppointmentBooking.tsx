@@ -61,6 +61,7 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isPatient, setIsPatient] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   
@@ -77,42 +78,58 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   
   useEffect(() => {
     const loadInitialData = async () => {
-      if (!user || !businessId) return;
+      if (!businessId) {
+        setLoadError("No business ID provided");
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "No clinic information found. Please try scanning the QR code again.",
+          variant: "destructive",
+        });
+        return;
+      }
       
+      console.log("Loading data for business ID:", businessId);
       setIsLoading(true);
       try {
-        // Check if user is already a patient
-        const patientExists = await checkPatientExists(user.id);
-        setIsPatient(patientExists);
-        
-        if (!patientExists) {
-          toast({
-            title: "Profile Required",
-            description: "You need to complete your patient profile before booking an appointment.",
-            variant: "destructive",
-          });
+        if (user) {
+          // Check if user is already a patient
+          const patientExists = await checkPatientExists(user.id);
+          setIsPatient(patientExists);
           
-          if (onCancel) {
-            onCancel();
-          } else {
-            navigate('/customer/profile');
+          if (!patientExists) {
+            toast({
+              title: "Profile Required",
+              description: "Please complete your patient profile before booking.",
+            });
+            
+            // Instead of immediate redirect, set a flag and let the user decide
+            // We'll show a prompt in the UI
           }
-          return;
         }
         
-        // Load practitioners and services
+        // Load practitioners and services regardless of patient status
         const [practitionersData, servicesData] = await Promise.all([
           getPractitioners(businessId),
           getServices(businessId)
         ]);
         
+        if (!practitionersData.length || !servicesData.length) {
+          toast({
+            title: "Clinic Setup Incomplete",
+            description: "This clinic hasn't set up services or practitioners yet",
+            variant: "destructive",
+          });
+        }
+        
         setPractitioners(practitionersData);
         setServices(servicesData);
       } catch (error) {
         console.error("Error loading data:", error);
+        setLoadError("Could not load booking information");
         toast({
           title: "Error",
-          description: "Could not load booking information",
+          description: "Could not load clinic information. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -121,7 +138,7 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
     };
     
     loadInitialData();
-  }, [user, businessId, toast, navigate, onCancel]);
+  }, [businessId, user, toast, navigate, onCancel]);
   
   useEffect(() => {
     // Update selected service when service_id changes
@@ -135,7 +152,20 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   }, [form.watch('service_id'), services]);
   
   const onSubmitAppointment = async (formData: AppointmentFormData) => {
-    if (!user || !businessId) return;
+    if (!user) {
+      toast({
+        title: "Please Sign In",
+        description: "You need to sign in to book an appointment",
+      });
+      // Store booking intent and redirect to sign in
+      navigate('/signin', { state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } });
+      return;
+    }
+    
+    if (!isPatient) {
+      navigate('/customer/profile', { state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } });
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -177,8 +207,86 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+          <p className="text-muted-foreground">Loading clinic information...</p>
+        </div>
       </div>
+    );
+  }
+  
+  if (loadError) {
+    return (
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle>Error Loading Clinic</CardTitle>
+          <CardDescription>
+            We encountered a problem loading the clinic information
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-4">
+            <p className="text-center text-muted-foreground">{loadError}</p>
+            <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
+              Return Home
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Sign In Required</CardTitle>
+          <CardDescription>
+            Please sign in to book an appointment
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-4">
+            <Button 
+              onClick={() => navigate('/signin', { 
+                state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } 
+              })}
+            >
+              Sign In to Continue
+            </Button>
+            <Button variant="outline" onClick={onCancel || (() => navigate('/'))}>
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!isPatient) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Complete Your Profile</CardTitle>
+          <CardDescription>
+            You need to complete your patient profile before booking
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-4">
+            <Button 
+              onClick={() => navigate('/customer/profile', { 
+                state: { redirectTo: `/customer/book-appointment?businessId=${businessId}` } 
+              })}
+            >
+              Complete Profile
+            </Button>
+            <Button variant="outline" onClick={onCancel || (() => navigate('/'))}>
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
   
@@ -217,12 +325,16 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name} ({service.duration} min)
-                              {service.price ? ` - $${service.price}` : ''}
-                            </SelectItem>
-                          ))}
+                          {services.length === 0 ? (
+                            <SelectItem value="no-services" disabled>No services available</SelectItem>
+                          ) : (
+                            services.map((service) => (
+                              <SelectItem key={service.id} value={service.id}>
+                                {service.name} ({service.duration} min)
+                                {service.price ? ` - $${service.price}` : ''}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -264,11 +376,15 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {practitioners.map((practitioner) => (
-                            <SelectItem key={practitioner.id} value={practitioner.id}>
-                              {practitioner.name}
-                            </SelectItem>
-                          ))}
+                          {practitioners.length === 0 ? (
+                            <SelectItem value="no-practitioners" disabled>No practitioners available</SelectItem>
+                          ) : (
+                            practitioners.map((practitioner) => (
+                              <SelectItem key={practitioner.id} value={practitioner.id}>
+                                {practitioner.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -396,7 +512,7 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || services.length === 0 || practitioners.length === 0}>
                 {isLoading ? 'Booking...' : 'Book Appointment'}
               </Button>
             </div>

@@ -36,14 +36,17 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
   const handleScanSuccess = (decodedText: string) => {
     if (mode === 'appointment') {
       try {
+        console.log("QR code scanned:", decodedText);
+        
         if (decodedText.startsWith('http')) {
           const url = new URL(decodedText);
-          if (url.pathname.includes('book-appointment')) {
+          if (url.pathname.includes('book-appointment') || url.pathname.includes('booking')) {
             const businessId = url.searchParams.get('businessId');
             const appointmentId = url.searchParams.get('appointmentId');
             
             if (businessId) {
-              navigate(`/customer/book?businessId=${businessId}${appointmentId ? `&appointmentId=${appointmentId}` : ''}&join=true`);
+              // Use book path with businessId as a parameter for consistent routing
+              navigate(`/customer/book/${businessId}${appointmentId ? `?appointmentId=${appointmentId}` : ''}`);
               toast({
                 title: "Clinic Found",
                 description: "Redirecting to appointment booking...",
@@ -64,10 +67,11 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
           }
         } else {
           // Try to interpret as a direct business ID
-          navigate(`/customer/book?businessId=${decodedText}&join=true`);
+          // Use the consistent URL pattern with the businessId in the path
+          navigate(`/customer/book/${decodedText}`);
           toast({
             title: "Clinic ID Found",
-            description: "Attempting to find clinic...",
+            description: "Redirecting to appointment booking...",
           });
         }
       } catch (error) {

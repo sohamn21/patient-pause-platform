@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { checkPatientExists } from '@/lib/clinicService';
 import { PatientForm } from '@/components/clinic/PatientForm';
@@ -13,15 +13,24 @@ import { Loader2 } from 'lucide-react';
 
 const BookAppointmentPage = () => {
   const { businessId } = useParams();
+  const [searchParams] = useSearchParams();
+  const businessIdFromQuery = searchParams.get('businessId');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Use businessId from path params or query params
+  const finalBusinessId = businessId || businessIdFromQuery;
   
   const [isLoading, setIsLoading] = useState(true);
   const [isPatient, setIsPatient] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'appointment'>('profile');
   
   useEffect(() => {
+    console.log("BookAppointmentPage - businessId from path:", businessId);
+    console.log("BookAppointmentPage - businessId from query:", businessIdFromQuery);
+    console.log("BookAppointmentPage - final businessId:", finalBusinessId);
+    
     const checkPatientStatus = async () => {
       if (!user) {
         setIsLoading(false);
@@ -56,7 +65,7 @@ const BookAppointmentPage = () => {
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [user, toast]);
+  }, [user, toast, businessId, businessIdFromQuery, finalBusinessId]);
   
   const handlePatientFormSuccess = () => {
     setIsPatient(true);
@@ -86,7 +95,7 @@ const BookAppointmentPage = () => {
     );
   }
   
-  if (!businessId) {
+  if (!finalBusinessId) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <h2 className="text-xl font-semibold mb-4">Business Not Found</h2>
@@ -95,20 +104,6 @@ const BookAppointmentPage = () => {
         </p>
         <Button onClick={() => navigate('/customer/dashboard')}>
           Return to Dashboard
-        </Button>
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
-        <p className="text-muted-foreground mb-6">
-          Please sign in to book an appointment.
-        </p>
-        <Button onClick={() => navigate('/signin')}>
-          Sign In
         </Button>
       </div>
     );
@@ -150,7 +145,7 @@ const BookAppointmentPage = () => {
           
           <TabsContent value="appointment">
             <PatientAppointmentBooking 
-              businessId={businessId}
+              businessId={finalBusinessId}
               onSuccess={handleAppointmentSuccess}
               onCancel={() => navigate('/customer/dashboard')}
             />

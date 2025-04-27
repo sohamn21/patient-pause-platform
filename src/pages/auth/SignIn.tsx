@@ -48,6 +48,7 @@ const SignIn = () => {
 
   const handleGuestBooking = () => {
     // Navigate to the booking page or return to the previous page
+    // Make sure we include any search parameters (like businessId)
     console.log("Continuing as guest, navigating to:", returnTo);
     navigate(returnTo);
   };

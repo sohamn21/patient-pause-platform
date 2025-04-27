@@ -85,6 +85,10 @@ export type AppointmentFormData = {
   start_time: string;
   end_time?: string;
   notes?: string;
+  // Add guest fields for non-authenticated users
+  guest_name?: string;
+  guest_email?: string;
+  guest_phone?: string;
 };
 
 export type PatientFormData = {

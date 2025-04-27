@@ -4,16 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
   getPractitioners, 
-  getServices, 
-  createAppointment,
-  checkPatientExists,
-  createPatientProfile 
+  getServices
 } from '@/lib/clinicService';
-import { 
-  PatientFormData, 
-  AppointmentFormData 
-} from '@/types/clinic';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
@@ -85,7 +78,7 @@ const PatientBookingPage = () => {
         <CardContent className="pt-6 flex flex-col items-center">
           <h2 className="text-xl font-semibold mb-2">Appointment Scheduled</h2>
           <p className="text-center text-muted-foreground mb-6">
-            Your appointment has been successfully booked. You'll receive a confirmation shortly.
+            Your appointment has been successfully booked. {user ? "You'll receive a confirmation shortly." : "Please check your email for confirmation details."}
           </p>
           <div className="flex flex-col space-y-2 w-full">
             {user ? (

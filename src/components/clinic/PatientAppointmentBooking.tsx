@@ -30,9 +30,11 @@ const appointmentFormSchema = z.object({
   date: z.date(),
   start_time: z.string().min(1, "Please select a time"),
   notes: z.string().optional(),
+  guest_name: z.string().optional(),
+  guest_email: z.string().email("Please enter a valid email").optional(),
+  guest_phone: z.string().optional(),
 });
 
-// Generate time slots at 30-minute intervals
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 8; hour < 20; hour++) {
@@ -63,9 +65,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestName, setGuestName] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
   
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentFormSchema),
@@ -75,6 +74,9 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
       date: new Date(),
       start_time: '09:00',
       notes: '',
+      guest_name: '',
+      guest_email: '',
+      guest_phone: '',
     },
   });
   
@@ -126,7 +128,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   }, [businessId, toast, navigate]);
   
   useEffect(() => {
-    // Update selected service when service_id changes
     const serviceId = form.watch('service_id');
     if (serviceId) {
       const service = services.find(s => s.id === serviceId);
@@ -139,24 +140,20 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
   const onSubmitAppointment = async (formData: AppointmentFormData) => {
     setIsLoading(true);
     try {
-      // If user is not logged in, validate guest information
-      if (!user && (!guestEmail || !guestName)) {
+      if (!user && (!formData.guest_email || !formData.guest_name)) {
         toast({
           title: "Missing Information",
           description: "Please provide your name and email to book an appointment",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
-      // Create the appointment with either user ID or guest information
       const appointment = await createAppointment(
         {
           ...formData,
           patient_id: user?.id,
-          guest_email: !user ? guestEmail : undefined,
-          guest_name: !user ? guestName : undefined,
-          guest_phone: !user ? guestPhone : undefined,
         },
         businessId
       );
@@ -241,11 +238,11 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
                         <FormControl>
                           <Input 
                             placeholder="Enter your name"
-                            value={guestName}
-                            onChange={(e) => setGuestName(e.target.value)}
-                            required
+                            {...field}
+                            required={!user}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -259,11 +256,11 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
                           <Input 
                             type="email"
                             placeholder="your@email.com"
-                            value={guestEmail}
-                            onChange={(e) => setGuestEmail(e.target.value)}
-                            required
+                            {...field}
+                            required={!user}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -277,10 +274,10 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
                           <Input 
                             type="tel"
                             placeholder="Enter phone number"
-                            value={guestPhone}
-                            onChange={(e) => setGuestPhone(e.target.value)}
+                            {...field}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />

@@ -680,18 +680,27 @@ export const createAppointment = async (formData: AppointmentFormData, businessI
     
     const end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
     
+    // Prepare data for insert - the main appointment data
+    const appointmentData = {
+      business_id: businessId,
+      patient_id: formData.patient_id || null,
+      practitioner_id: formData.practitioner_id,
+      service_id: formData.service_id,
+      date: formData.date.toISOString().split('T')[0],
+      start_time: formData.start_time,
+      end_time: formData.end_time || end_time,
+      notes: formData.notes || null,
+      // Include guest information in the notes if provided
+      guest_info: !formData.patient_id ? {
+        name: formData.guest_name,
+        email: formData.guest_email,
+        phone: formData.guest_phone
+      } : null
+    };
+    
     const { data, error } = await supabase
       .from('appointments')
-      .insert({
-        business_id: businessId,
-        patient_id: formData.patient_id,
-        practitioner_id: formData.practitioner_id,
-        service_id: formData.service_id,
-        date: formData.date.toISOString().split('T')[0],
-        start_time: formData.start_time,
-        end_time: formData.end_time || end_time,
-        notes: formData.notes || null,
-      })
+      .insert(appointmentData)
       .select()
       .single();
     

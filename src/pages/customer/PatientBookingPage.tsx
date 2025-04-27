@@ -26,9 +26,11 @@ const PatientBookingPage = () => {
   
   useEffect(() => {
     if (businessId) {
+      console.log("Business ID received:", businessId);
       setBusinessIdVerified(businessId);
       setIsLoading(false);
     } else {
+      console.log("No business ID in URL parameters");
       toast({
         title: "Missing Information",
         description: "No clinic selected. Please scan a valid QR code.",

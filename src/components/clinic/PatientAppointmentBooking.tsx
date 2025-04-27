@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -100,6 +101,9 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
           getPractitioners(businessId),
           getServices(businessId)
         ]);
+        
+        console.log("Practitioners loaded:", practitionersData);
+        console.log("Services loaded:", servicesData);
         
         if (!practitionersData.length || !servicesData.length) {
           toast({

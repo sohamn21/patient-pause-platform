@@ -22,13 +22,12 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     location.pathname.includes('/booking') || 
     location.pathname.includes('/book') || 
     location.pathname.startsWith('/customer/book') || 
-    location.pathname.includes('/book-appointment') ||
-    location.pathname.startsWith('/booking');
+    location.pathname.includes('/book-appointment');
   
-  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}, route prop allowGuest: ${allowGuest}`);
+  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}`);
   
   // If we're on a booking path and allowGuest is true, allow access regardless of auth status
-  if (isBookingPath && allowGuest) {
+  if (isBookingPath && allowGuest === true) {
     console.log("Guest access allowed for booking page");
     return <>{children}</>;
   }

@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
+import { format } from 'date-fns';
 
 // Get all patients for a business
 export const getPatients = async (businessId: string = '') => {
@@ -662,45 +663,55 @@ export const getAppointment = async (id: string) => {
 };
 
 // Create a new appointment
-export const createAppointment = async (formData: AppointmentFormData, businessId: string) => {
+export const createAppointment = async (
+  appointmentData: AppointmentFormData,
+  businessId: string
+) => {
   try {
-    console.log('Creating appointment with data:', formData);
+    console.log("Creating appointment with data:", appointmentData);
     
-    const service = await getService(formData.service_id);
-    if (!service) {
-      throw new Error('Service not found');
+    // Format the date for the API
+    const formattedDate = format(appointmentData.date, 'yyyy-MM-dd');
+    
+    // Calculate end time based on service duration if not provided
+    let endTime = appointmentData.end_time;
+    if (!endTime && appointmentData.service_id) {
+      // We need to fetch the service to get its duration
+      const service = await getServiceById(businessId, appointmentData.service_id);
+      if (service) {
+        const [hours, minutes] = appointmentData.start_time.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + service.duration * 60000);
+        endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+      }
     }
     
-    const [hours, minutes] = formData.start_time.split(':');
-    const startDate = new Date();
-    startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    
-    const endDate = new Date(startDate);
-    endDate.setMinutes(endDate.getMinutes() + service.duration);
-    
-    const end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
-    
-    // Prepare data for insert - the main appointment data
-    const appointmentData = {
+    // Create base appointment data
+    const appointmentPayload: any = {
       business_id: businessId,
-      patient_id: formData.patient_id || null,
-      practitioner_id: formData.practitioner_id,
-      service_id: formData.service_id,
-      date: formData.date.toISOString().split('T')[0],
-      start_time: formData.start_time,
-      end_time: formData.end_time || end_time,
-      notes: formData.notes || null,
-      // Include guest information in the notes if provided
-      guest_info: !formData.patient_id ? {
-        name: formData.guest_name,
-        email: formData.guest_email,
-        phone: formData.guest_phone
-      } : null
+      patient_id: appointmentData.patient_id || null,
+      practitioner_id: appointmentData.practitioner_id,
+      service_id: appointmentData.service_id,
+      date: formattedDate,
+      start_time: appointmentData.start_time,
+      end_time: endTime,
+      status: 'scheduled',
+      notes: appointmentData.notes || ''
     };
+    
+    // Add guest data if this is a guest booking
+    if (!appointmentData.patient_id && appointmentData.guest_email) {
+      appointmentPayload.guest_name = appointmentData.guest_name;
+      appointmentPayload.guest_email = appointmentData.guest_email;
+      appointmentPayload.guest_phone = appointmentData.guest_phone;
+    }
+    
+    console.log("Sending appointment payload:", appointmentPayload);
     
     const { data, error } = await supabase
       .from('appointments')
-      .insert(appointmentData)
+      .insert(appointmentPayload)
       .select()
       .single();
     
@@ -709,10 +720,10 @@ export const createAppointment = async (formData: AppointmentFormData, businessI
       throw error;
     }
     
-    console.log('Appointment created successfully:', data);
+    console.log('Appointment created:', data);
     return data;
   } catch (error) {
-    console.error('Failed to create appointment:', error);
+    console.error('Error in createAppointment:', error);
     throw error;
   }
 };
@@ -722,15 +733,12 @@ export const updateAppointment = async (id: string, formData: AppointmentFormDat
   try {
     let end_time = formData.end_time;
     if (!end_time) {
-      const service = await getService(formData.service_id);
+      const service = await getServiceById(formData.business_id, formData.service_id);
       if (service) {
-        const [hours, minutes] = formData.start_time.split(':');
+        const [hours, minutes] = formData.start_time.split(':').map(Number);
         const startDate = new Date();
-        startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        
-        const endDate = new Date(startDate);
-        endDate.setMinutes(endDate.getMinutes() + service.duration);
-        
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + service.duration * 60000);
         end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
       }
     }
@@ -860,6 +868,27 @@ export const generatePatientInvoice = async (
     return invoiceData;
   } catch (error) {
     console.error('Failed to generate invoice:', error);
+    throw error;
+  }
+};
+
+// Helper function to fetch a service by ID
+export const getServiceById = async (businessId: string, serviceId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('business_id', businessId)
+      .eq('id', serviceId);
+    
+    if (error) {
+      console.error('Error fetching service:', error);
+      throw error;
+    }
+    
+    return data[0];
+  } catch (error) {
+    console.error('Failed to get service:', error);
     throw error;
   }
 };

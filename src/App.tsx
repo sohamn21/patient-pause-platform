@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -101,6 +100,14 @@ function AppContent() {
           <Route path="profile" element={<CustomerProfile />} />
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
+          <Route 
+            path="/customer/booking" 
+            element={
+              <ProtectedRoute allowGuest={true}>
+                <PatientBookingPage />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="book" element={<PatientBookingPage />} />
           <Route path="book/:businessId" element={<BookAppointmentPage />} />
           <Route path="book-appointment" element={<PatientBookingPage />} />  {/* Adding support for the old URL pattern */}

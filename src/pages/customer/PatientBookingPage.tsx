@@ -44,10 +44,14 @@ const PatientBookingPage = () => {
           console.log("Practitioners loaded:", practitionersData);
           console.log("Services loaded:", servicesData);
           
-          setPractitioners(practitionersData);
-          setServices(servicesData);
+          setPractitioners(practitionersData || []);
+          setServices(servicesData || []);
           
-          if (!practitionersData.length || !servicesData.length) {
+          if (!practitionersData?.length || !servicesData?.length) {
+            console.log("No practitioners or services found:", {
+              practitioners: practitionersData?.length || 0,
+              services: servicesData?.length || 0
+            });
             setHasDataError(true);
             toast({
               title: "Clinic Setup Incomplete",
@@ -170,6 +174,7 @@ const PatientBookingPage = () => {
         <h1 className="text-2xl font-bold tracking-tight">Book an Appointment</h1>
         <p className="text-muted-foreground">
           Schedule your appointment with your preferred healthcare provider
+          {!user && " - No account needed to book"}
         </p>
       </div>
       

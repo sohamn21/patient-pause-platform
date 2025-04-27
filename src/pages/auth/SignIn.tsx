@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,11 @@ const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we came from a booking page
+  const fromBooking = location.search.includes('from=booking');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +30,15 @@ const SignIn = () => {
       // Error is handled in the AuthContext
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGuestBooking = () => {
+    // Navigate back to the booking page
+    if (fromBooking) {
+      navigate(-1); // Go back to previous page
+    } else {
+      navigate('/customer/booking'); // Default booking page
     }
   };
 
@@ -84,6 +98,18 @@ const SignIn = () => {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          
+          {fromBooking && (
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={handleGuestBooking}
+              >
+                Continue as Guest
+              </Button>
+            </div>
+          )}
           
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">

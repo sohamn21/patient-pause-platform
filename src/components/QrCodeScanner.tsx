@@ -43,7 +43,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
             const appointmentId = url.searchParams.get('appointmentId');
             
             if (businessId) {
-              navigate(`/customer/book-appointment?businessId=${businessId}${appointmentId ? `&appointmentId=${appointmentId}` : ''}&join=true`);
+              navigate(`/customer/book?businessId=${businessId}${appointmentId ? `&appointmentId=${appointmentId}` : ''}&join=true`);
               toast({
                 title: "Clinic Found",
                 description: "Redirecting to appointment booking...",
@@ -64,7 +64,7 @@ const QrCodeScanner: React.FC<QrCodeScannerProps> = ({
           }
         } else {
           // Try to interpret as a direct business ID
-          navigate(`/customer/book-appointment?businessId=${decodedText}&join=true`);
+          navigate(`/customer/book?businessId=${decodedText}&join=true`);
           toast({
             title: "Clinic ID Found",
             description: "Attempting to find clinic...",

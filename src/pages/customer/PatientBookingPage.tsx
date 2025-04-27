@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -167,7 +166,7 @@ const PatientBookingPage = () => {
           Please sign in to book an appointment.
         </p>
         <Button onClick={() => navigate('/signin', { 
-          state: { redirectTo: `/customer/book-appointment?businessId=${businessIdVerified}` } 
+          state: { redirectTo: `/customer/book?businessId=${businessIdVerified}` } 
         })}>
           Sign In
         </Button>

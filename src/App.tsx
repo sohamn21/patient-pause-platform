@@ -103,6 +103,7 @@ function AppContent() {
           <Route path="appointments" element={<CustomerAppointments />} />
           <Route path="book" element={<PatientBookingPage />} />
           <Route path="book/:businessId" element={<BookAppointmentPage />} />
+          <Route path="book-appointment" element={<PatientBookingPage />} />  {/* Adding support for the old URL pattern */}
           <Route path="contact" element={<ContactPage />} />
         </Route>
         

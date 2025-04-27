@@ -18,6 +18,10 @@ const SignIn = () => {
 
   // Check if we came from a booking page
   const fromBooking = location.search.includes('from=booking');
+  
+  // Get the return path if any
+  const searchParams = new URLSearchParams(location.search);
+  const returnTo = searchParams.get('returnTo') || '/customer/booking';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +38,9 @@ const SignIn = () => {
   };
 
   const handleGuestBooking = () => {
-    // Navigate back to the booking page
-    if (fromBooking) {
-      navigate(-1); // Go back to previous page
-    } else {
-      navigate('/customer/booking'); // Default booking page
-    }
+    // Navigate to the booking page or return to the previous page
+    console.log("Continuing as guest, navigating to:", returnTo);
+    navigate(returnTo);
   };
 
   return (
@@ -108,6 +109,9 @@ const SignIn = () => {
               >
                 Continue as Guest
               </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                No account needed to book an appointment
+              </p>
             </div>
           )}
           

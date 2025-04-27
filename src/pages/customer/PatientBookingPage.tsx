@@ -25,6 +25,7 @@ const PatientBookingPage = () => {
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [hasDataError, setHasDataError] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
   
   useEffect(() => {
     const loadBusinessData = async () => {
@@ -44,15 +45,17 @@ const PatientBookingPage = () => {
           console.log("Services data received:", servicesData);
           
           // Set state with the retrieved data
-          setPractitioners(practitionersData || []);
-          setServices(servicesData || []);
+          setPractitioners(Array.isArray(practitionersData) ? practitionersData : []);
+          setServices(Array.isArray(servicesData) ? servicesData : []);
           
-          // Check if data was found
-          if (!practitionersData?.length || !servicesData?.length) {
-            console.log("No practitioners or services found:", {
-              practitioners: practitionersData?.length || 0,
-              services: servicesData?.length || 0
-            });
+          // Debug info for troubleshooting
+          const debugMessage = `Found ${Array.isArray(practitionersData) ? practitionersData.length : 0} practitioners and ${Array.isArray(servicesData) ? servicesData.length : 0} services`;
+          setDebugInfo(debugMessage);
+          
+          // Check if data was found - more permissive check now
+          if ((!Array.isArray(practitionersData) || practitionersData.length === 0) && 
+              (!Array.isArray(servicesData) || servicesData.length === 0)) {
+            console.log("No practitioners or services found");
             setHasDataError(true);
             toast({
               title: "Clinic Setup Incomplete",
@@ -60,12 +63,13 @@ const PatientBookingPage = () => {
               variant: "destructive",
             });
           } else {
-            console.log("Found practitioners:", practitionersData.length, "and services:", servicesData.length);
+            console.log("Found at least some practitioners or services");
             setHasDataError(false);
           }
         } catch (error) {
           console.error("Error loading clinic data:", error);
           setHasDataError(true);
+          setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
           toast({
             title: "Data Loading Error",
             description: "Could not load clinic information. Please try again later.",
@@ -76,6 +80,7 @@ const PatientBookingPage = () => {
         }
       } else {
         console.log("No business ID in URL parameters");
+        setDebugInfo("Missing business ID");
         toast({
           title: "Missing Information",
           description: "No clinic selected. Please scan a valid QR code.",
@@ -107,6 +112,7 @@ const PatientBookingPage = () => {
           <p className="text-muted-foreground">
             Invalid clinic information. Please scan a valid QR code or select a clinic.
           </p>
+          <p className="text-xs text-muted-foreground mt-2">{debugInfo}</p>
         </div>
         
         <Card>
@@ -131,7 +137,7 @@ const PatientBookingPage = () => {
             This clinic isn't fully set up yet. Please try again later or contact the clinic directly.
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Debug info: Practitioners: {practitioners.length}, Services: {services.length}
+            Debug info: {debugInfo}
           </p>
         </div>
         
@@ -183,8 +189,8 @@ const PatientBookingPage = () => {
           Schedule your appointment with your preferred healthcare provider
           {!user && " - No account needed to book"}
         </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Found {practitioners.length} practitioners and {services.length} services
+        <p className="text-xs text-muted-foreground mt-2">
+          {debugInfo}
         </p>
       </div>
       

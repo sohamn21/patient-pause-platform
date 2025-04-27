@@ -17,8 +17,14 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     return <div className="min-h-screen flex items-center justify-center">Loading authentication...</div>;
   }
   
-  // Check if this is a booking path
-  const isBookingPath = location.pathname.includes('booking') || location.pathname.includes('book');
+  // Detect booking paths more reliably - look for any variation
+  const isBookingPath = 
+    location.pathname.includes('booking') || 
+    location.pathname.includes('book') || 
+    location.pathname.startsWith('/customer/book') || 
+    location.pathname.startsWith('/booking');
+  
+  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}`);
   
   // If allowGuest is true and we're on a booking path, allow access
   if (allowGuest && isBookingPath) {
@@ -26,10 +32,11 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     return <>{children}</>;
   }
   
-  // If not signed in and guest access is not allowed, redirect to sign-in
+  // If not signed in and guest access is not allowed, redirect to sign-in with return path
   if (!user) {
-    console.log("User not signed in and guest access not allowed, redirecting to signin");
-    return <Navigate to="/signin" replace />;
+    const returnPath = location.pathname;
+    console.log(`User not signed in and guest access not allowed, redirecting to signin with return=${returnPath}`);
+    return <Navigate to={`/signin?from=booking&returnTo=${encodeURIComponent(returnPath)}`} replace />;
   }
 
   // User is authenticated, render the children

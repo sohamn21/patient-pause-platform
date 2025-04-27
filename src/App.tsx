@@ -67,9 +67,18 @@ function AppContent() {
         <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
         <Route path="/contact" element={<ContactPage />} />
         
-        {/* Public booking route - accessible to guests without login */}
+        {/* Public booking routes - explicitly accessible to guests without login */}
         <Route 
           path="/booking" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <PatientBookingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/booking/:businessId" 
           element={
             <ProtectedRoute allowGuest={true}>
               <PatientBookingPage />

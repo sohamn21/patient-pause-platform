@@ -1,12 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  getPractitioners, 
-  getServices, 
   createAppointment,
-  checkPatientExists,
 } from '@/lib/clinicService';
 import { Practitioner, Service, AppointmentFormData } from '@/types/clinic';
 import { useToast } from '@/hooks/use-toast';
@@ -54,19 +50,27 @@ interface PatientAppointmentBookingProps {
   businessId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  practitioners?: Practitioner[];
+  services?: Service[];
 }
 
-const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientAppointmentBookingProps) => {
+const PatientAppointmentBooking = ({ 
+  businessId, 
+  onSuccess, 
+  onCancel,
+  practitioners: initialPractitioners = [],
+  services: initialServices = [] 
+}: PatientAppointmentBookingProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [practitioners, setPractitioners] = useState<Practitioner[]>(initialPractitioners);
+  const [services, setServices] = useState<Service[]>(initialServices);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  
+
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -80,56 +84,6 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
       guest_phone: '',
     },
   });
-  
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (!businessId) {
-        setLoadError("No business ID provided");
-        setIsLoading(false);
-        toast({
-          title: "Error",
-          description: "No clinic information found. Please try scanning the QR code again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      console.log("Loading data for business ID:", businessId);
-      setIsLoading(true);
-      try {
-        const [practitionersData, servicesData] = await Promise.all([
-          getPractitioners(businessId),
-          getServices(businessId)
-        ]);
-        
-        console.log("Practitioners loaded:", practitionersData);
-        console.log("Services loaded:", servicesData);
-        
-        if (!practitionersData.length || !servicesData.length) {
-          toast({
-            title: "Clinic Setup Incomplete",
-            description: "This clinic hasn't set up services or practitioners yet",
-            variant: "destructive",
-          });
-        }
-        
-        setPractitioners(practitionersData);
-        setServices(servicesData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-        setLoadError("Could not load booking information");
-        toast({
-          title: "Error",
-          description: "Could not load clinic information. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadInitialData();
-  }, [businessId, toast, navigate]);
   
   useEffect(() => {
     const serviceId = form.watch('service_id');
@@ -186,7 +140,7 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
     }
   };
   
-  if (isLoading) {
+  if (isLoading && !services.length && !practitioners.length) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center">
@@ -209,6 +163,33 @@ const PatientAppointmentBooking = ({ businessId, onSuccess, onCancel }: PatientA
         <CardContent>
           <div className="flex flex-col items-center space-y-4">
             <p className="text-center text-muted-foreground">{loadError}</p>
+            <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
+              Return Home
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (services.length === 0 || practitioners.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Clinic Not Ready</CardTitle>
+          <CardDescription>
+            This clinic isn't fully set up yet
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-4">
+            <p className="text-center text-muted-foreground">
+              {services.length === 0 && practitioners.length === 0 
+                ? "No services or practitioners available."
+                : services.length === 0 
+                ? "No services have been set up for this clinic." 
+                : "No practitioners are available at this clinic."}
+            </p>
             <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
               Return Home
             </Button>

@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
+import { Practitioner, Service } from '@/types/clinic';
 
 const PatientBookingPage = () => {
   const { user } = useAuth();
@@ -23,21 +24,60 @@ const PatientBookingPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appointmentSuccess, setAppointmentSuccess] = useState(false);
   const [businessIdVerified, setBusinessIdVerified] = useState<string | null>(null);
+  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [hasDataError, setHasDataError] = useState(false);
   
   useEffect(() => {
-    if (businessId) {
-      console.log("Business ID received:", businessId);
-      setBusinessIdVerified(businessId);
-      setIsLoading(false);
-    } else {
-      console.log("No business ID in URL parameters");
-      toast({
-        title: "Missing Information",
-        description: "No clinic selected. Please scan a valid QR code.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
+    const loadBusinessData = async () => {
+      if (businessId) {
+        console.log("Business ID received:", businessId);
+        setBusinessIdVerified(businessId);
+
+        try {
+          // Fetch practitioners and services data
+          const [practitionersData, servicesData] = await Promise.all([
+            getPractitioners(businessId),
+            getServices(businessId)
+          ]);
+          
+          console.log("Practitioners loaded:", practitionersData);
+          console.log("Services loaded:", servicesData);
+          
+          setPractitioners(practitionersData);
+          setServices(servicesData);
+          
+          if (!practitionersData.length || !servicesData.length) {
+            setHasDataError(true);
+            toast({
+              title: "Clinic Setup Incomplete",
+              description: "This clinic hasn't fully set up services or practitioners yet.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error loading clinic data:", error);
+          setHasDataError(true);
+          toast({
+            title: "Data Loading Error",
+            description: "Could not load clinic information. Please try again later.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        console.log("No business ID in URL parameters");
+        toast({
+          title: "Missing Information",
+          description: "No clinic selected. Please scan a valid QR code.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    };
+    
+    loadBusinessData();
   }, [businessId, toast]);
   
   if (isLoading) {
@@ -64,8 +104,31 @@ const PatientBookingPage = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
-              <Button onClick={() => navigate('/customer/dashboard')}>
-                Return to Dashboard
+              <Button onClick={() => navigate('/')}>
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (hasDataError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Clinic Not Ready</h1>
+          <p className="text-muted-foreground">
+            This clinic isn't fully set up yet. Please try again later or contact the clinic directly.
+          </p>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-4">
+              <Button onClick={() => navigate('/')}>
+                Return to Home
               </Button>
             </div>
           </CardContent>
@@ -114,6 +177,8 @@ const PatientBookingPage = () => {
         businessId={businessIdVerified}
         onSuccess={() => setAppointmentSuccess(true)}
         onCancel={() => navigate('/')}
+        practitioners={practitioners}
+        services={services}
       />
     </div>
   );

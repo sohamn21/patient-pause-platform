@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Clock } from 'lucide-react';
 import { BlurCard } from '@/components/ui/blur-card';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
   const { signIn } = useAuth();
@@ -15,6 +16,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
   // Check if we came from a booking page
   const fromBooking = location.search.includes('from=booking');
@@ -31,9 +33,14 @@ const SignIn = () => {
     try {
       setIsLoading(true);
       await signIn(email, password);
+      // If login succeeds, user will be redirected by AuthContext
     } catch (err) {
       console.error('Sign in error:', err);
-      // Error is handled in the AuthContext
+      toast({
+        title: "Sign in failed",
+        description: "Please check your email and password and try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

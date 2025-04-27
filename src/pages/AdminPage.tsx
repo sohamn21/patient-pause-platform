@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/components/ui/blur-card";
 import { useAuth } from "@/context/AuthContext";
@@ -78,20 +79,35 @@ const AdminPage = () => {
       if (waitlistsError) throw waitlistsError;
       setWaitlists(waitlistsData);
 
-      const mockSubscriptions: Subscription[] = usersData
-        .filter(user => user.role === 'business')
-        .map(user => ({
-          id: crypto.randomUUID(),
-          user_id: user.id,
-          business_name: user.business_name || 'Unknown Business',
-          plan: Math.random() > 0.5 ? 'Premium' : 'Basic',
-          status: Math.random() > 0.3 ? 'active' : 'expired',
-          start_date: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-          end_date: new Date(Date.now() + Math.random() * 10000000000).toISOString(),
-          price: Math.random() > 0.5 ? 1999 : 999,
-        }));
+      const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        .from('subscriptions')
+        .select(`
+          id,
+          user_id,
+          active,
+          current_period_end,
+          cancel_at_period_end,
+          plan_id,
+          created_at,
+          profiles!inner(business_name)
+        `)
+        .order('created_at', { ascending: false });
       
-      setSubscriptions(mockSubscriptions);
+      if (subscriptionsError) throw subscriptionsError;
+
+      // Format subscription data from DB
+      const formattedSubscriptions: Subscription[] = subscriptionsData.map((sub: any) => ({
+        id: sub.id,
+        user_id: sub.user_id,
+        business_name: sub.profiles?.business_name || "Unknown Business",
+        plan: sub.plan_id || "Basic",
+        status: sub.active ? "active" : "expired",
+        start_date: sub.created_at,
+        end_date: sub.current_period_end || new Date().toISOString(),
+        price: sub.plan_id === "premium" ? 1999 : sub.plan_id === "enterprise" ? 4999 : 999,
+      }));
+      
+      setSubscriptions(formattedSubscriptions);
     } catch (error) {
       console.error('Error fetching admin data:', error);
       toast({

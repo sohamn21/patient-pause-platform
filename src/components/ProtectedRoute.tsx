@@ -19,10 +19,10 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
   
   // Detect booking paths more comprehensively - look for ANY booking-related path
   const isBookingPath = 
-    location.pathname.includes('booking') || 
-    location.pathname.includes('book') || 
+    location.pathname.includes('/booking') || 
+    location.pathname.includes('/book') || 
     location.pathname.startsWith('/customer/book') || 
-    location.pathname.includes('book-appointment') ||
+    location.pathname.includes('/book-appointment') ||
     location.pathname.startsWith('/booking');
   
   console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}, route prop allowGuest: ${allowGuest}`);

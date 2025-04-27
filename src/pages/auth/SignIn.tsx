@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,8 @@ const SignIn = () => {
   // Get the return path if any
   const searchParams = new URLSearchParams(location.search);
   const returnTo = searchParams.get('returnTo') || '/customer/booking';
+
+  console.log(`SignIn: fromBooking=${fromBooking}, returnTo=${returnTo}`);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

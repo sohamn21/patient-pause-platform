@@ -17,17 +17,17 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     return <div className="min-h-screen flex items-center justify-center">Loading authentication...</div>;
   }
   
-  // Detect booking paths more reliably - look for any variation
+  // Detect booking paths more comprehensively - look for ANY booking-related path
   const isBookingPath = 
     location.pathname.includes('booking') || 
     location.pathname.includes('book') || 
     location.pathname.startsWith('/customer/book') || 
     location.pathname.startsWith('/booking');
   
-  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}`);
+  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}, route prop allowGuest: ${allowGuest}`);
   
-  // If allowGuest is true and we're on a booking path, allow access
-  if (allowGuest && isBookingPath) {
+  // If we're on a booking path and allowGuest is true, allow access regardless of auth status
+  if (isBookingPath && allowGuest) {
     console.log("Guest access allowed for booking page");
     return <>{children}</>;
   }

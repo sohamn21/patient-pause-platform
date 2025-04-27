@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -79,6 +78,15 @@ function AppContent() {
         
         <Route 
           path="/booking/:businessId" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <PatientBookingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/book-appointment" 
           element={
             <ProtectedRoute allowGuest={true}>
               <PatientBookingPage />

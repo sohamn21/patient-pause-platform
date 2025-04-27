@@ -66,7 +66,7 @@ function AppContent() {
         <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
         <Route path="/contact" element={<ContactPage />} />
         
-        {/* Make sure all booking routes have allowGuest={true} */}
+        {/* All booking routes must have allowGuest={true} */}
         <Route 
           path="/booking" 
           element={
@@ -89,7 +89,7 @@ function AppContent() {
           path="/book-appointment" 
           element={
             <ProtectedRoute allowGuest={true}>
-              <PatientBookingPage />
+              <BookAppointmentPage />
             </ProtectedRoute>
           } 
         />
@@ -125,7 +125,7 @@ function AppContent() {
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
           
-          {/* Ensure these customer booking routes correctly have allowGuest={true} */}
+          {/* All customer booking routes must have allowGuest={true} */}
           <Route 
             path="booking" 
             element={
@@ -153,7 +153,7 @@ function AppContent() {
             } 
           />
           
-          {/* This is the key route that's redirecting to login */}
+          {/* This critical route needs allowGuest={true} */}
           <Route 
             path="book-appointment" 
             element={

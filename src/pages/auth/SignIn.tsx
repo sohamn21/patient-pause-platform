@@ -23,7 +23,7 @@ const SignIn = () => {
   
   // Get the return path if any
   const searchParams = new URLSearchParams(location.search);
-  const returnTo = searchParams.get('returnTo') || '/customer/booking';
+  const returnTo = searchParams.get('returnTo') || '/customer/dashboard';
 
   console.log(`SignIn: fromBooking=${fromBooking}, returnTo=${returnTo}`);
 

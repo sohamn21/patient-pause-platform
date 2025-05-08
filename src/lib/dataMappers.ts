@@ -1,5 +1,5 @@
 
-import { Practitioner, Service } from "@/types/clinic";
+import { Practitioner, Service, Patient, Appointment, Profile } from "@/types/clinic";
 
 /**
  * Maps raw practitioner data from API to Practitioner type
@@ -31,7 +31,7 @@ export const mapToPractitioner = (data: any): Practitioner => {
       name: data.name || '',
       specialization: data.specialization || null,
       bio: data.bio || null,
-      availability: data.availability || null,
+      availability: typeof data.availability === 'object' ? data.availability : null,
       created_at: data.created_at || new Date().toISOString(),
       updated_at: data.updated_at || new Date().toISOString(),
     };

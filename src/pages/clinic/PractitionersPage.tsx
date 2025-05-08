@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -223,11 +224,14 @@ const PractitionersPage = () => {
           .filter(([_, value]) => value.isAvailable)
       );
       
-      const formData = {
-        ...data,
+      // Create a new data object with the filtered availability
+      const formData: PractitionerFormData = {
+        name: data.name,
+        specialization: data.specialization,
+        bio: data.bio,
         availability: Object.keys(filteredAvailability).length > 0 
           ? filteredAvailability 
-          : null,
+          : undefined,
       };
       
       if (editingPractitioner) {
@@ -242,7 +246,8 @@ const PractitionersPage = () => {
         }
       } else {
         // Create new practitioner
-        const created = await createPractitioner(formData, user.id);
+        const businessId = user.id;
+        const created = await createPractitioner(formData, businessId);
         if (created) {
           setPractitioners([...practitioners, created]);
           toast({

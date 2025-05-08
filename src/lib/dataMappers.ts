@@ -23,22 +23,37 @@ export const mapToPractitioner = (data: any): Practitioner => {
     };
   }
   
-  // Create the mapped object
-  const mappedPractitioner: Practitioner = {
-    id: data.id || '',
-    business_id: data.business_id || '',
-    name: data.name || '',
-    specialization: data.specialization || null,
-    bio: data.bio || null,
-    availability: data.availability || null,
-    created_at: data.created_at || new Date().toISOString(),
-    updated_at: data.updated_at || new Date().toISOString(),
-  };
-  
-  // Log the mapped result
-  console.log("Mapped practitioner:", mappedPractitioner);
-  
-  return mappedPractitioner;
+  try {
+    // Create the mapped object
+    const mappedPractitioner: Practitioner = {
+      id: data.id || '',
+      business_id: data.business_id || '',
+      name: data.name || '',
+      specialization: data.specialization || null,
+      bio: data.bio || null,
+      availability: data.availability || null,
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: data.updated_at || new Date().toISOString(),
+    };
+    
+    // Log the mapped result
+    console.log("Mapped practitioner:", mappedPractitioner);
+    
+    return mappedPractitioner;
+  } catch (error) {
+    console.error("Error mapping practitioner data:", error);
+    // Return default object on error
+    return {
+      id: data.id || '',
+      business_id: data.business_id || '',
+      name: 'Error Mapping Practitioner',
+      specialization: null,
+      bio: null,
+      availability: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
 };
 
 /**
@@ -63,20 +78,35 @@ export const mapToService = (data: any): Service => {
     };
   }
   
-  // Create the mapped object
-  const mappedService: Service = {
-    id: data.id || '',
-    business_id: data.business_id || '',
-    name: data.name || '',
-    description: data.description || null,
-    duration: typeof data.duration === 'number' ? data.duration : 30,
-    price: typeof data.price === 'number' ? data.price : null,
-    created_at: data.created_at || new Date().toISOString(),
-    updated_at: data.updated_at || new Date().toISOString(),
-  };
-  
-  // Log the mapped result
-  console.log("Mapped service:", mappedService);
-  
-  return mappedService;
+  try {
+    // Create the mapped object
+    const mappedService: Service = {
+      id: data.id || '',
+      business_id: data.business_id || '',
+      name: data.name || '',
+      description: data.description || null,
+      duration: typeof data.duration === 'number' ? data.duration : 30,
+      price: typeof data.price === 'number' ? data.price : null,
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: data.updated_at || new Date().toISOString(),
+    };
+    
+    // Log the mapped result
+    console.log("Mapped service:", mappedService);
+    
+    return mappedService;
+  } catch (error) {
+    console.error("Error mapping service data:", error);
+    // Return default object on error
+    return {
+      id: data.id || '',
+      business_id: data.business_id || '',
+      name: 'Error Mapping Service',
+      description: null,
+      duration: 30,
+      price: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
 };

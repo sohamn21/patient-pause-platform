@@ -4,10 +4,63 @@ import {
   Service, 
   Appointment, 
   Patient,
-  AppointmentFormData 
+  AppointmentFormData,
+  PatientFormData
 } from "@/types/clinic";
 import { v4 as uuidv4 } from 'uuid';
 import { mapToPractitioner, mapToService } from "./dataMappers";
+
+// Interface for Invoice
+interface Invoice {
+  id?: string;
+  patient_id: string;
+  patient_name: string;
+  invoice_date: string;
+  due_date: string | null;
+  items: { description: string; amount: number }[];
+  total_amount: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Check if a patient profile exists for a specific user
+ */
+export const checkPatientExists = async (userId: string): Promise<boolean> => {
+  try {
+    console.log("Checking if patient exists for user ID:", userId);
+    
+    if (!userId) {
+      console.error("No user ID provided to checkPatientExists");
+      return false;
+    }
+    
+    const { data, error } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // PGRST116 means no rows returned (patient doesn't exist)
+        console.log(`Patient with user ID ${userId} not found`);
+        return false;
+      }
+      
+      console.error("Error checking patient existence:", error);
+      throw error;
+    }
+    
+    console.log("Patient exists:", !!data);
+    return !!data;
+  } catch (error) {
+    console.error(`Error in checkPatientExists for user ${userId}:`, error);
+    return false;
+  }
+};
 
 /**
  * Fetch a business by ID from the profiles table
@@ -85,6 +138,91 @@ export const getPractitioners = async (businessId: string) => {
   } catch (error) {
     console.error(`Error in getPractitioners for business ${businessId}:`, error);
     return [];
+  }
+};
+
+/**
+ * Create a new practitioner
+ */
+export const createPractitioner = async (practitionerData: Omit<Practitioner, 'id' | 'created_at' | 'updated_at'>): Promise<Practitioner | null> => {
+  try {
+    console.log("Creating new practitioner with data:", practitionerData);
+    
+    const { data, error } = await supabase
+      .from('practitioners')
+      .insert({
+        ...practitionerData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating practitioner:", error);
+      throw error;
+    }
+    
+    console.log("Practitioner created successfully:", data);
+    return mapToPractitioner(data);
+  } catch (error) {
+    console.error("Failed to create practitioner:", error);
+    return null;
+  }
+};
+
+/**
+ * Update an existing practitioner
+ */
+export const updatePractitioner = async (id: string, practitionerData: Partial<Practitioner>): Promise<Practitioner | null> => {
+  try {
+    console.log("Updating practitioner with ID:", id, "and data:", practitionerData);
+    
+    const { data, error } = await supabase
+      .from('practitioners')
+      .update({
+        ...practitionerData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating practitioner:", error);
+      throw error;
+    }
+    
+    console.log("Practitioner updated successfully:", data);
+    return mapToPractitioner(data);
+  } catch (error) {
+    console.error("Failed to update practitioner:", error);
+    return null;
+  }
+};
+
+/**
+ * Delete a practitioner
+ */
+export const deletePractitioner = async (id: string): Promise<boolean> => {
+  try {
+    console.log("Deleting practitioner with ID:", id);
+    
+    const { error } = await supabase
+      .from('practitioners')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting practitioner:", error);
+      throw error;
+    }
+    
+    console.log("Practitioner deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to delete practitioner:", error);
+    return false;
   }
 };
 

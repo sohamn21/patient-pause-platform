@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 import { format } from 'date-fns';
@@ -226,7 +227,13 @@ export const getPractitioners = async (businessId: string) => {
       throw error;
     }
     
-    console.log('Practitioners fetched:', data);
+    // Add detailed logging to help troubleshoot
+    if (!data || data.length === 0) {
+      console.log('No practitioners found for business ID:', businessId);
+    } else {
+      console.log(`Found ${data.length} practitioners for business ID:`, businessId);
+    }
+    
     return data || [];
   } catch (error) {
     console.error('Failed to get practitioners:', error);
@@ -274,7 +281,13 @@ export const getServices = async (businessId: string) => {
       throw error;
     }
     
-    console.log('Services fetched:', data);
+    // Add detailed logging to help troubleshoot
+    if (!data || data.length === 0) {
+      console.log('No services found for business ID:', businessId);
+    } else {
+      console.log(`Found ${data.length} services for business ID:`, businessId);
+    }
+    
     return data || [];
   } catch (error) {
     console.error('Failed to get services:', error);
@@ -906,6 +919,8 @@ export const getServiceById = async (businessId: string, serviceId: string) => {
 // Add this function to check if a businessId belongs to a clinic
 export const getBusinessById = async (businessId: string) => {
   try {
+    console.log('Fetching business details for ID:', businessId);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -914,8 +929,12 @@ export const getBusinessById = async (businessId: string) => {
     
     if (error) {
       console.error("Error fetching business:", error);
+      console.log("Business not found or database error occurred");
       return null;
     }
+    
+    console.log("Business data retrieved:", data);
+    console.log("Business type:", data?.business_type);
     
     return data;
   } catch (error) {
@@ -923,3 +942,4 @@ export const getBusinessById = async (businessId: string) => {
     throw error;
   }
 };
+

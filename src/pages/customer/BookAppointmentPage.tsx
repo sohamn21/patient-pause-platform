@@ -55,20 +55,29 @@ const BookAppointmentPage = () => {
           return;
         }
         
+        setBusinessExists(true);
+        setBusinessName(business.business_name || 'Healthcare Provider');
+        
         // Fetch practitioners and services for this clinic
         try {
           const practitionersData = await getPractitioners(finalBusinessId);
           const servicesData = await getServices(finalBusinessId);
           
-          console.log("Practitioners data loaded:", practitionersData?.length || 0);
-          console.log("Services data loaded:", servicesData?.length || 0);
+          console.log("Practitioners data loaded:", practitionersData);
+          console.log("Services data loaded:", servicesData);
           
-          setPractitioners(Array.isArray(practitionersData) ? practitionersData : []);
-          setServices(Array.isArray(servicesData) ? servicesData : []);
+          // Always ensure we have arrays, not null or undefined
+          const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
+          const servicesArray = Array.isArray(servicesData) ? servicesData : [];
+          
+          setPractitioners(practitionerArray);
+          setServices(servicesArray);
+          
+          console.log("After setting state - practitioners count:", practitionerArray.length);
+          console.log("After setting state - services count:", servicesArray.length);
           
           // If no practitioners or services, show message but don't block appointment flow
-          if ((!Array.isArray(practitionersData) || practitionersData.length === 0) || 
-              (!Array.isArray(servicesData) || servicesData.length === 0)) {
+          if (practitionerArray.length === 0 || servicesArray.length === 0) {
             console.log("Warning: Limited or no practitioners/services found");
             toast({
               title: "Limited Availability",
@@ -81,10 +90,9 @@ const BookAppointmentPage = () => {
             title: "Data Loading Warning",
             description: "Could not load all clinic information. Some booking options may be limited.",
           });
+          // Even in case of error, don't prevent rendering the booking form
+          // The component will show appropriate messages
         }
-        
-        setBusinessExists(true);
-        setBusinessName(business.business_name || 'Healthcare Provider');
       } catch (error) {
         console.error("Error checking business status:", error);
         toast({
@@ -133,6 +141,9 @@ const BookAppointmentPage = () => {
     );
   }
   
+  // Debug output to check data
+  console.log("Rendering with practitioners:", practitioners.length, "and services:", services.length);
+  
   // Only render booking component if we have at least one practitioner and one service
   const canBook = practitioners.length > 0 && services.length > 0;
   
@@ -157,8 +168,8 @@ const BookAppointmentPage = () => {
                   "No practitioners are available at this clinic." : 
                   "No services have been set up for this clinic."}
               </p>
-              <p className="text-sm mb-4">
-                Please try again later or contact the clinic directly.
+              <p className="text-sm text-muted-foreground mb-4">
+                Found {practitioners.length} practitioners and {services.length} services.
               </p>
               <Button onClick={() => navigate('/')}>
                 Return to Home

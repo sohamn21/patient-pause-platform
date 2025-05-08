@@ -28,7 +28,7 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
   console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}`);
   
   // If we're on a booking path and allowGuest is true, allow access regardless of auth status
-  if (isBookingPath && allowGuest === true) {
+  if (isBookingPath && allowGuest) {
     console.log("Guest access allowed for booking page");
     return <>{children}</>;
   }

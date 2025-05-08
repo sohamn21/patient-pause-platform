@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,7 @@ const SignIn = () => {
     // Navigate to the booking page or return to the previous page
     // Make sure we include any search parameters (like businessId)
     console.log("Continuing as guest, navigating to:", returnTo);
-    navigate(returnTo);
+    navigate(decodeURIComponent(returnTo));
   };
 
   return (
@@ -94,7 +93,7 @@ const SignIn = () => {
               <Input 
                 id="password" 
                 type="password" 
-                placeholder="••••••••" 
+                placeholder="••���•••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

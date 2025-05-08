@@ -145,28 +145,49 @@ const BookAppointmentPage = () => {
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
             
-            // Map to ensure all required fields are included
-            const mappedPractitioners = practitionerArray.map(item => ({
-              id: item.id || '',
-              business_id: item.business_id || '',
-              name: item.name || '',
-              specialization: item.specialization || null,
-              bio: item.bio || null,
-              availability: item.availability || null,
-              created_at: item.created_at || new Date().toISOString(),
-              updated_at: item.updated_at || new Date().toISOString(),
-            } as Practitioner));
+            // Transform each practitioner to ensure it matches the Practitioner type
+            const mappedPractitioners = practitionerArray.map(item => {
+              // Initialize with required fields that must exist
+              const practitioner: Practitioner = {
+                id: item.id || '',
+                business_id: item.business_id || '',
+                name: item.name || '',
+                specialization: null,
+                bio: null,
+                availability: null,
+                created_at: item.created_at || new Date().toISOString(),
+                updated_at: item.updated_at || new Date().toISOString(),
+              };
+              
+              // Add optional fields if they exist in the response
+              if ('specialization' in item) practitioner.specialization = item.specialization || null;
+              if ('bio' in item) practitioner.bio = item.bio || null;
+              if ('availability' in item) practitioner.availability = item.availability || null;
+              
+              return practitioner;
+            });
             
-            const mappedServices = servicesArray.map(item => ({
-              id: item.id || '',
-              business_id: item.business_id || '',
-              name: item.name || '',
-              description: item.description || null,
-              duration: typeof item.duration === 'number' ? item.duration : 30,
-              price: typeof item.price === 'number' ? item.price : null,
-              created_at: item.created_at || new Date().toISOString(),
-              updated_at: item.updated_at || new Date().toISOString(),
-            } as Service));
+            // Transform each service to ensure it matches the Service type
+            const mappedServices = servicesArray.map(item => {
+              // Initialize with required fields that must exist
+              const service: Service = {
+                id: item.id || '',
+                business_id: item.business_id || '',
+                name: item.name || '',
+                description: null,
+                duration: 30,
+                price: null,
+                created_at: item.created_at || new Date().toISOString(),
+                updated_at: item.updated_at || new Date().toISOString(),
+              };
+              
+              // Add optional fields if they exist in the response
+              if ('description' in item) service.description = item.description || null;
+              if ('duration' in item) service.duration = typeof item.duration === 'number' ? item.duration : 30;
+              if ('price' in item) service.price = typeof item.price === 'number' ? item.price : null;
+              
+              return service;
+            });
             
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);

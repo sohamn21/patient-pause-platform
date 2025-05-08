@@ -12,7 +12,27 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog';
+import { 
+  Clock, 
+  DollarSign, 
+  PlusCircle, 
+  Edit, 
+  Trash,
+  Timer 
+} from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { 
   Form,
   FormControl,
@@ -22,28 +42,8 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { 
-  PlusCircle, 
-  Edit, 
-  Trash, 
-  Clock, 
-  DollarSign, 
-  Save, 
-  X 
-} from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
 
 const serviceFormSchema = z.object({
   name: z.string().min(1, "Service name is required"),
@@ -58,11 +58,11 @@ const ServicesPage = () => {
   
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddingService, setIsAddingService] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
-
+  
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
@@ -81,19 +81,34 @@ const ServicesPage = () => {
       try {
         const servicesData = await getServices(user.id);
         
-        // Map data to ensure it conforms to the Service type
-        const mappedServices = Array.isArray(servicesData) 
-          ? servicesData.map(item => ({
-              id: item.id || '',
-              business_id: item.business_id || '',
-              name: item.name || '',
-              description: item.description || null,
-              duration: typeof item.duration === 'number' ? item.duration : 30,
-              price: typeof item.price === 'number' ? item.price : null,
-              created_at: item.created_at || new Date().toISOString(),
-              updated_at: item.updated_at || new Date().toISOString(),
-            } as Service))
-          : [];
+        // Ensure we're working with an array
+        if (!Array.isArray(servicesData)) {
+          console.warn("Services data is not an array:", servicesData);
+          setServices([]);
+          return;
+        }
+        
+        // Transform each item to ensure it matches the Service type
+        const mappedServices = servicesData.map(item => {
+          // Initialize with required fields that must exist
+          const service: Service = {
+            id: item.id || '',
+            business_id: item.business_id || '',
+            name: item.name || '',
+            description: null,
+            duration: 30,
+            price: null,
+            created_at: item.created_at || new Date().toISOString(),
+            updated_at: item.updated_at || new Date().toISOString(),
+          };
+          
+          // Add optional fields if they exist in the response
+          if ('description' in item) service.description = item.description || null;
+          if ('duration' in item) service.duration = typeof item.duration === 'number' ? item.duration : 30;
+          if ('price' in item) service.price = typeof item.price === 'number' ? item.price : null;
+          
+          return service;
+        });
         
         setServices(mappedServices);
       } catch (error) {
@@ -132,12 +147,12 @@ const ServicesPage = () => {
   
   const handleAddService = () => {
     setEditingService(null);
-    setIsAddingService(true);
+    setIsDialogOpen(true);
   };
   
   const handleEditService = (service: Service) => {
     setEditingService(service);
-    setIsAddingService(true);
+    setIsDialogOpen(true);
   };
   
   const confirmDeleteService = (service: Service) => {
@@ -187,7 +202,7 @@ const ServicesPage = () => {
         }
       }
       
-      setIsAddingService(false);
+      setIsDialogOpen(false);
       setEditingService(null);
       form.reset();
     } catch (error) {
@@ -215,7 +230,7 @@ const ServicesPage = () => {
         </Button>
       </div>
       
-      {isAddingService && (
+      {isDialogOpen && (
         <Card>
           <CardHeader>
             <CardTitle>{editingService ? 'Edit Service' : 'Add New Service'}</CardTitle>
@@ -316,7 +331,7 @@ const ServicesPage = () => {
                     type="button" 
                     variant="outline"
                     onClick={() => {
-                      setIsAddingService(false);
+                      setIsDialogOpen(false);
                       setEditingService(null);
                     }}
                   >

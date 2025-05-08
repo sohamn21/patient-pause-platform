@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -93,19 +94,34 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       try {
         const practitionersData = await getPractitioners(userId);
         
-        // Map to ensure all required fields are present
-        const mappedPractitioners = Array.isArray(practitionersData) 
-          ? practitionersData.map(item => ({
-              id: item.id || '',
-              business_id: item.business_id || '',
-              name: item.name || '',
-              specialization: item.specialization || null,
-              bio: item.bio || null,
-              availability: item.availability || null,
-              created_at: item.created_at || new Date().toISOString(),
-              updated_at: item.updated_at || new Date().toISOString(),
-            } as Practitioner))
-          : [];
+        // Ensure we're working with an array
+        if (!Array.isArray(practitionersData)) {
+          console.warn("Practitioners data is not an array:", practitionersData);
+          setPractitioners([]);
+          return;
+        }
+        
+        // Transform each item to ensure it matches the Practitioner type
+        const mappedPractitioners = practitionersData.map(item => {
+          // Initialize with required fields that must exist
+          const practitioner: Practitioner = {
+            id: item.id || '',
+            business_id: item.business_id || '',
+            name: item.name || '',
+            specialization: null,
+            bio: null,
+            availability: null,
+            created_at: item.created_at || new Date().toISOString(),
+            updated_at: item.updated_at || new Date().toISOString(),
+          };
+          
+          // Add optional fields if they exist in the response
+          if ('specialization' in item) practitioner.specialization = item.specialization || null;
+          if ('bio' in item) practitioner.bio = item.bio || null;
+          if ('availability' in item) practitioner.availability = item.availability || null;
+          
+          return practitioner;
+        });
           
         setPractitioners(mappedPractitioners);
       } catch (error) {

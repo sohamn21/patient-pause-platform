@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -247,7 +248,11 @@ const PractitionersPage = () => {
         // Update existing practitioner
         const updated = await updatePractitioner(editingPractitioner.id, formData);
         if (updated) {
-          setPractitioners(practitioners.map(p => p.id === editingPractitioner.id ? updated : p));
+          // Create a new array with the updated practitioner
+          const updatedPractitioners = practitioners.map(p => 
+            p.id === editingPractitioner.id ? updated : p
+          );
+          setPractitioners(updatedPractitioners);
           toast({
             title: "Practitioner Updated",
             description: `${updated.name}'s information has been updated.`,

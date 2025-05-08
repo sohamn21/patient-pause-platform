@@ -218,10 +218,20 @@ const PractitionersPage = () => {
     
     try {
       // Filter out days where isAvailable is false
-      const filteredAvailability = Object.fromEntries(
-        Object.entries(data.availability || {})
-          .filter(([_, value]) => value.isAvailable)
-      );
+      const filteredAvailability: Record<string, { isAvailable: boolean; start: string; end: string }> = {};
+      
+      // Only include days that are marked as available
+      if (data.availability) {
+        Object.entries(data.availability).forEach(([day, value]) => {
+          if (value && value.isAvailable) {
+            filteredAvailability[day] = {
+              isAvailable: true,
+              start: value.start || "09:00",
+              end: value.end || "17:00"
+            };
+          }
+        });
+      }
       
       // Create a new data object with the filtered availability
       const formData: PractitionerFormData = {

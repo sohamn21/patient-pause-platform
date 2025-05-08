@@ -77,10 +77,36 @@ const PractitionerForm = ({ practitioner, onSubmit, onCancel }: PractitionerForm
       }, {} as Record<string, { isAvailable: boolean; start: string; end: string }>);
       
       // Merge with existing practitioner availability if any
-      const availability = {
-        ...defaultAvailability,
-        ...(practitioner.availability || {})
-      };
+      let availability: Record<string, { isAvailable: boolean; start: string; end: string }> = { ...defaultAvailability };
+      
+      // If practitioner has availability as a string (JSON), parse it
+      if (practitioner.availability && typeof practitioner.availability === 'string') {
+        try {
+          const parsedAvailability = JSON.parse(practitioner.availability);
+          // Merge the parsed availability with defaults
+          Object.keys(parsedAvailability).forEach(day => {
+            if (defaultAvailability[day]) {
+              availability[day] = {
+                ...defaultAvailability[day],
+                ...parsedAvailability[day]
+              };
+            }
+          });
+        } catch (error) {
+          console.error("Error parsing practitioner availability:", error);
+        }
+      } else if (practitioner.availability && typeof practitioner.availability === 'object') {
+        // If it's already an object, merge with defaults
+        const availabilityObj = practitioner.availability as unknown as Record<string, { isAvailable: boolean; start: string; end: string }>;
+        Object.keys(availabilityObj).forEach(day => {
+          if (defaultAvailability[day]) {
+            availability[day] = {
+              ...defaultAvailability[day],
+              ...(availabilityObj[day] || {})
+            };
+          }
+        });
+      }
       
       form.reset({
         name: practitioner.name,

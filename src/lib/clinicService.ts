@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 import { format } from 'date-fns';
@@ -217,7 +216,8 @@ export const getPractitioners = async (businessId: string) => {
   try {
     console.log('Fetching practitioners for business:', businessId);
     
-    const { data, error } = await supabase
+    // First, try to get practitioners with the exact businessId
+    let { data, error } = await supabase
       .from('practitioners')
       .select('*')
       .eq('business_id', businessId);
@@ -226,12 +226,35 @@ export const getPractitioners = async (businessId: string) => {
       console.error('Error fetching practitioners:', error);
       throw error;
     }
-    
-    // Add detailed logging to help troubleshoot
+
+    // Check if we got any practitioners
     if (!data || data.length === 0) {
-      console.log('No practitioners found for business ID:', businessId);
+      console.log(`No practitioners found for business ID: ${businessId}`);
+      console.log('Checking database directly for all practitioners to debug:');
+      
+      // Let's check ALL practitioners to see if there's a mismatch
+      const { data: allPractitioners, error: allError } = await supabase
+        .from('practitioners')
+        .select('id, name, business_id');
+      
+      if (!allError && allPractitioners && allPractitioners.length > 0) {
+        console.log('All practitioners in database:', allPractitioners);
+        
+        // Check if any practitioners have a similar business_id that might be misformatted
+        const possibleMatches = allPractitioners.filter(p => 
+          p.business_id && typeof p.business_id === 'string' && 
+          p.business_id.toLowerCase().includes(businessId.toLowerCase().substring(0, 8))
+        );
+        
+        if (possibleMatches.length > 0) {
+          console.log('Possible practitioner matches with similar business_id:', possibleMatches);
+        }
+      } else {
+        console.log('No practitioners found in database at all');
+      }
     } else {
       console.log(`Found ${data.length} practitioners for business ID:`, businessId);
+      console.log('First practitioner details:', data[0]);
     }
     
     return data || [];
@@ -271,7 +294,8 @@ export const getServices = async (businessId: string) => {
   try {
     console.log('Fetching services for business:', businessId);
     
-    const { data, error } = await supabase
+    // First, try to get services with the exact businessId
+    let { data, error } = await supabase
       .from('services')
       .select('*')
       .eq('business_id', businessId);
@@ -280,12 +304,35 @@ export const getServices = async (businessId: string) => {
       console.error('Error fetching services:', error);
       throw error;
     }
-    
-    // Add detailed logging to help troubleshoot
+
+    // Check if we got any services
     if (!data || data.length === 0) {
-      console.log('No services found for business ID:', businessId);
+      console.log(`No services found for business ID: ${businessId}`);
+      console.log('Checking database directly for all services to debug:');
+      
+      // Let's check ALL services to see if there's a mismatch
+      const { data: allServices, error: allError } = await supabase
+        .from('services')
+        .select('id, name, business_id');
+      
+      if (!allError && allServices && allServices.length > 0) {
+        console.log('All services in database:', allServices);
+        
+        // Check if any services have a similar business_id that might be misformatted
+        const possibleMatches = allServices.filter(s => 
+          s.business_id && typeof s.business_id === 'string' && 
+          s.business_id.toLowerCase().includes(businessId.toLowerCase().substring(0, 8))
+        );
+        
+        if (possibleMatches.length > 0) {
+          console.log('Possible service matches with similar business_id:', possibleMatches);
+        }
+      } else {
+        console.log('No services found in database at all');
+      }
     } else {
       console.log(`Found ${data.length} services for business ID:`, businessId);
+      console.log('First service details:', data[0]);
     }
     
     return data || [];
@@ -942,4 +989,3 @@ export const getBusinessById = async (businessId: string) => {
     throw error;
   }
 };
-

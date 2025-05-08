@@ -74,6 +74,7 @@ const BookAppointmentPage = () => {
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [useDefaultData, setUseDefaultData] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
@@ -83,6 +84,7 @@ const BookAppointmentPage = () => {
     const checkBusinessStatus = async () => {
       if (!finalBusinessId) {
         setIsLoading(false);
+        setDataError("No business ID provided");
         return;
       }
       
@@ -118,9 +120,9 @@ const BookAppointmentPage = () => {
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
           const servicesArray = Array.isArray(servicesData) ? servicesData : [];
           
-          // If no practitioners or services are found, use the default data
+          // Only use default data if both practitioners and services are empty
           if (practitionerArray.length === 0 && servicesArray.length === 0) {
-            console.log("No practitioners or services found, using default data");
+            console.log("Warning: No practitioners or services found, using default data");
             setUseDefaultData(true);
             
             // Assign the business ID to the default data
@@ -139,26 +141,26 @@ const BookAppointmentPage = () => {
             
             toast({
               title: "Using Demo Data",
-              description: "This clinic is using demo data for booking. Your appointment will still be recorded.",
+              description: "This clinic is using demo data for booking. Please set up practitioners and services in the admin panel.",
             });
           } else {
+            console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
             setPractitioners(practitionerArray);
             setServices(servicesArray);
+            setUseDefaultData(false);
             
             // If only one of practitioners or services is missing, show warning
             if (practitionerArray.length === 0 || servicesArray.length === 0) {
-              console.log("Warning: Limited practitioners or services found");
+              console.log("Warning: Limited or no practitioners/services found");
               toast({
-                title: "Limited Availability",
-                description: "This clinic may have limited booking options available.",
+                title: "Limited Booking Options",
+                description: "This clinic has limited booking options available.",
               });
             }
           }
-          
-          console.log("After setting state - practitioners count:", practitioners.length);
-          console.log("After setting state - services count:", services.length);
         } catch (error) {
           console.error("Error loading practitioners or services:", error);
+          setDataError(`Error loading clinic data: ${error instanceof Error ? error.message : 'Unknown error'}`);
           
           // Use default data if there was an error fetching real data
           console.log("Error loading clinic data, using default data");
@@ -185,6 +187,7 @@ const BookAppointmentPage = () => {
         }
       } catch (error) {
         console.error("Error checking business status:", error);
+        setDataError(`Error checking business: ${error instanceof Error ? error.message : 'Unknown error'}`);
         toast({
           title: "Error",
           description: "Could not verify clinic information. Please try again.",
@@ -224,6 +227,9 @@ const BookAppointmentPage = () => {
         <p className="text-muted-foreground mb-6">
           The selected healthcare provider does not exist or is not available for booking.
         </p>
+        {dataError && (
+          <p className="text-sm text-destructive mb-4">{dataError}</p>
+        )}
         <Button onClick={() => navigate('/')}>
           Return to Home
         </Button>
@@ -243,6 +249,9 @@ const BookAppointmentPage = () => {
           Schedule your appointment with {businessName}
           {useDefaultData && " (Demo Mode)"}
         </p>
+        {dataError && (
+          <p className="text-xs text-destructive mt-1">{dataError}</p>
+        )}
       </div>
       
       <Card className="shadow-sm">

@@ -86,7 +86,7 @@ const PatientBookingPage = () => {
           // Fetch practitioners and services data
           console.log("Fetching practitioners and services for business ID:", businessId);
           
-          // Debug: Let's check the API calls directly
+          // Make API calls to fetch practitioners and services
           const practitionersData = await getPractitioners(businessId);
           console.log("Practitioners data received:", practitionersData);
           
@@ -98,10 +98,10 @@ const PatientBookingPage = () => {
           const servicesArray = Array.isArray(servicesData) ? servicesData : [];
           
           // Debug info for troubleshooting
-          const debugMessage = `Found ${practitionerArray.length} practitioners and ${servicesArray.length} services`;
+          const debugMessage = `Found ${practitionerArray.length} practitioners and ${servicesArray.length} services for business ID: ${businessId}`;
           setDebugInfo(debugMessage);
           
-          // If no practitioners or services are found, use the default data
+          // Only use default data if both practitioners and services are empty
           if (practitionerArray.length === 0 && servicesArray.length === 0) {
             console.log("No practitioners or services found, using default data");
             setUseDefaultData(true);
@@ -122,13 +122,15 @@ const PatientBookingPage = () => {
             
             toast({
               title: "Using Demo Data",
-              description: "This clinic is using demo data for booking. Your appointment will still be recorded.",
+              description: "This clinic has not set up practitioners or services. Using demo data for booking.",
             });
           } else {
             // Use the actual data from the database
+            console.log(`Using real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
             setPractitioners(practitionerArray);
             setServices(servicesArray);
             setHasDataError(false);
+            setUseDefaultData(false);
             
             // If only one of practitioners or services is missing, show warning
             if (practitionerArray.length === 0 || servicesArray.length === 0) {

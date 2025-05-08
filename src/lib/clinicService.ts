@@ -101,7 +101,7 @@ export const getPractitioners = async (businessId: string) => {
       return [];
     }
     
-    // Log the query we're about to make for debugging
+    // Add more detailed debug logging
     console.log(`Executing query: SELECT * FROM practitioners WHERE business_id = '${businessId}'`);
     
     const { data, error } = await supabase
@@ -115,33 +115,49 @@ export const getPractitioners = async (businessId: string) => {
     }
     
     console.log(`Retrieved ${data?.length || 0} practitioners for business ID: ${businessId}`);
-    console.log("Raw practitioners data:", data);
     
-    // If no practitioners found, check if any exist at all (debugging)
+    // Debug raw data
+    console.log("Raw practitioners data:", JSON.stringify(data));
+    
+    // If no practitioners found, check if table exists and try to seed data
     if (!data || data.length === 0) {
       console.log("No practitioners found for business ID:", businessId);
-      console.log("Checking database directly for all practitioners to debug:");
       
-      const { data: allPractitioners, error: allError } = await supabase
-        .from('practitioners')
-        .select('*')
-        .limit(10);
-      
-      if (allError) {
-        console.error("Error fetching all practitioners:", allError);
-      } else if (allPractitioners?.length) {
-        console.log("Found practitioners in database but none for this business ID:", allPractitioners);
-      } else {
-        console.log("No practitioners found in database at all. Consider seeding some data.");
+      // In development, try to seed a sample practitioner
+      if (import.meta.env.DEV) {
+        try {
+          console.log("Development environment detected. Creating a sample practitioner...");
+          await createPractitioner({
+            name: 'Dr. Sample Doctor',
+            specialization: 'General Medicine',
+            bio: 'This is a sample practitioner created automatically.'
+          }, businessId);
+          
+          // Try fetching again after seeding
+          const { data: newData, error: newError } = await supabase
+            .from('practitioners')
+            .select('*')
+            .eq('business_id', businessId);
+            
+          if (!newError && newData && newData.length > 0) {
+            console.log("Successfully created and fetched sample practitioner");
+            return newData.map(item => mapToPractitioner(item));
+          }
+        } catch (seedError) {
+          console.error("Failed to create sample practitioner:", seedError);
+        }
       }
     }
     
     // Map the data to ensure correct format and handle any inconsistencies
     const mappedData = Array.isArray(data) 
-      ? data.map(item => mapToPractitioner(item))
+      ? data.map(item => {
+          const mapped = mapToPractitioner(item);
+          console.log("Mapped practitioner:", mapped);
+          return mapped;
+        })
       : [];
       
-    console.log("Returning mapped practitioners:", mappedData);
     return mappedData;
   } catch (error) {
     console.error(`Error in getPractitioners for business ${businessId}:`, error);
@@ -267,7 +283,7 @@ export const getServices = async (businessId: string) => {
       return [];
     }
     
-    // Log the query we're about to make for debugging
+    // Add more detailed debug logging
     console.log(`Executing query: SELECT * FROM services WHERE business_id = '${businessId}'`);
     
     const { data, error } = await supabase
@@ -281,33 +297,50 @@ export const getServices = async (businessId: string) => {
     }
     
     console.log(`Retrieved ${data?.length || 0} services for business ID: ${businessId}`);
-    console.log("Raw services data:", data);
     
-    // If no services found, check if any exist at all (debugging)
+    // Debug raw data
+    console.log("Raw services data:", JSON.stringify(data));
+    
+    // If no services found, check if table exists and try to seed data
     if (!data || data.length === 0) {
       console.log("No services found for business ID:", businessId);
-      console.log("Checking database directly for all services to debug:");
       
-      const { data: allServices, error: allError } = await supabase
-        .from('services')
-        .select('*')
-        .limit(10);
-      
-      if (allError) {
-        console.error("Error fetching all services:", allError);
-      } else if (allServices?.length) {
-        console.log("Found services in database but none for this business ID:", allServices);
-      } else {
-        console.log("No services found in database at all. Consider seeding some data.");
+      // In development, try to seed a sample service
+      if (import.meta.env.DEV) {
+        try {
+          console.log("Development environment detected. Creating a sample service...");
+          await createService({
+            name: 'General Consultation',
+            description: 'This is a sample service created automatically.',
+            duration: 30,
+            price: 100
+          }, businessId);
+          
+          // Try fetching again after seeding
+          const { data: newData, error: newError } = await supabase
+            .from('services')
+            .select('*')
+            .eq('business_id', businessId);
+            
+          if (!newError && newData && newData.length > 0) {
+            console.log("Successfully created and fetched sample service");
+            return newData.map(item => mapToService(item));
+          }
+        } catch (seedError) {
+          console.error("Failed to create sample service:", seedError);
+        }
       }
     }
     
     // Map the data to ensure correct format and handle any inconsistencies
     const mappedData = Array.isArray(data) 
-      ? data.map(item => mapToService(item))
+      ? data.map(item => {
+          const mapped = mapToService(item);
+          console.log("Mapped service:", mapped);
+          return mapped;
+        })
       : [];
       
-    console.log("Returning mapped services:", mappedData);
     return mappedData;
   } catch (error) {
     console.error(`Error in getServices for business ${businessId}:`, error);

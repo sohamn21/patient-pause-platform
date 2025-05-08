@@ -35,6 +35,7 @@ export const mapToPractitioner = (data: any): Practitioner => {
     }
   }
 
+  // Return the mapped practitioner object with all fields properly handled
   return {
     id: data.id || '',
     business_id: data.business_id || '',
@@ -66,6 +67,7 @@ export const mapToService = (data: any): Service => {
     };
   }
 
+  // Return the mapped service object with all fields properly handled
   return {
     id: data.id || '',
     business_id: data.business_id || '',
@@ -93,4 +95,38 @@ export const validateMappedData = (data: any, type: 'practitioner' | 'service'):
   }
   
   return true;
+};
+
+/**
+ * Converts availability object to JSON string for storage
+ */
+export const stringifyAvailability = (availability: any): string | null => {
+  if (!availability) return null;
+  
+  try {
+    return typeof availability === 'string' 
+      ? availability 
+      : JSON.stringify(availability);
+  } catch (e) {
+    console.error("Error stringifying availability:", e);
+    return null;
+  }
+};
+
+/**
+ * Parses availability string from database to object
+ */
+export const parseAvailability = (availability: any): Record<string, any> | null => {
+  if (!availability) return null;
+  
+  if (typeof availability === 'string') {
+    try {
+      return JSON.parse(availability);
+    } catch (e) {
+      console.error("Error parsing availability:", e);
+      return null;
+    }
+  }
+  
+  return availability;
 };

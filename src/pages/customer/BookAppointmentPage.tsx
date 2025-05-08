@@ -1,14 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { getBusinessById, getPractitioners, getServices } from '@/lib/clinicService';
+import { getBusinessById, getPractitioners, getServices, createPractitioner, createService } from '@/lib/clinicService';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Practitioner, Service } from '@/types/clinic';
-import { mapToPractitioner, mapToService, validateMappedData } from '@/lib/dataMappers';
+import { mapToPractitioner, mapToService } from '@/lib/dataMappers';
 
 // Default practitioners and services to use when none are found
 const defaultPractitioners: Practitioner[] = [
@@ -76,6 +77,89 @@ const BookAppointmentPage = () => {
   const [useDefaultData, setUseDefaultData] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
+  const [isSeeding, setIsSeeding] = useState(false);
+  
+  // Function to seed data for development purposes
+  const seedDemoData = async (businessId: string) => {
+    if (!businessId) return;
+    
+    setIsSeeding(true);
+    try {
+      console.log("Seeding demo data for business ID:", businessId);
+      
+      // Create sample practitioners
+      const pract1 = await createPractitioner({
+        name: 'Dr. Jane Smith',
+        specialization: 'General Practitioner',
+        bio: 'Experienced doctor with over 10 years of practice.',
+        availability: {
+          "Monday": { isAvailable: true, start: "09:00", end: "17:00" },
+          "Wednesday": { isAvailable: true, start: "09:00", end: "17:00" },
+          "Friday": { isAvailable: true, start: "09:00", end: "17:00" },
+        }
+      }, businessId);
+      
+      const pract2 = await createPractitioner({
+        name: 'Dr. John Doe',
+        specialization: 'Family Medicine',
+        bio: 'Specializes in family healthcare and preventive medicine.',
+        availability: {
+          "Tuesday": { isAvailable: true, start: "10:00", end: "18:00" },
+          "Thursday": { isAvailable: true, start: "10:00", end: "18:00" },
+        }
+      }, businessId);
+      
+      // Create sample services
+      const service1 = await createService({
+        name: 'General Consultation',
+        description: 'Standard medical consultation for general health concerns.',
+        duration: 30,
+        price: 75
+      }, businessId);
+      
+      const service2 = await createService({
+        name: 'Extended Consultation',
+        description: 'Comprehensive medical consultation for complex issues.',
+        duration: 60,
+        price: 125
+      }, businessId);
+      
+      // Update state with seeded data
+      const seededPractitioners = [pract1, pract2].filter(Boolean) as Practitioner[];
+      const seededServices = [service1, service2].filter(Boolean) as Service[];
+      
+      if (seededPractitioners.length > 0) {
+        setPractitioners(seededPractitioners);
+        console.log("Seeded practitioners:", seededPractitioners);
+      }
+      
+      if (seededServices.length > 0) {
+        setServices(seededServices);
+        console.log("Seeded services:", seededServices);
+      }
+      
+      if (seededPractitioners.length > 0 && seededServices.length > 0) {
+        setUseDefaultData(false);
+        setDebugInfo(`Created ${seededPractitioners.length} practitioners and ${seededServices.length} services for business ID: ${businessId}`);
+        
+        // Show success toast
+        toast({
+          title: "Demo Data Created",
+          description: "Sample practitioners and services have been created for this clinic.",
+        });
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Failed to seed demo data:", error);
+      setDataError(`Failed to create demo data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    } finally {
+      setIsSeeding(false);
+    }
+  };
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
@@ -152,50 +236,18 @@ const BookAppointmentPage = () => {
               description: "This clinic is using demo data for booking. Please set up practitioners and services in the admin panel.",
             });
             
-            // Try creating some sample data in the database
-            try {
-              console.log("Attempting to seed sample data for businessId:", finalBusinessId);
-              const { createPractitioner, createService } = await import('@/lib/clinicService');
-              
-              // Only seed data if we're in development mode
-              if (import.meta.env.DEV) {
-                // Create a sample practitioner
-                await createPractitioner({
-                  name: 'Dr. Sample Doctor',
-                  specialization: 'General Medicine',
-                  bio: 'This is a sample practitioner created automatically.',
-                  availability: null
-                }, finalBusinessId);
-                
-                // Create a sample service
-                await createService({
-                  name: 'General Consultation',
-                  description: 'This is a sample service created automatically.',
-                  duration: 30,
-                  price: 100
-                }, finalBusinessId);
-                
-                console.log("Sample data created successfully");
-              }
-            } catch (seedError) {
-              console.error("Failed to seed sample data:", seedError);
+            // Try creating some sample data in the database, but only in development mode
+            if (import.meta.env.DEV) {
+              seedDemoData(finalBusinessId);
             }
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
-            
-            // Validate mapped data
-            const validPractitioners = practitionerArray.filter(p => validateMappedData(p, 'practitioner'));
-            const validServices = servicesArray.filter(s => validateMappedData(s, 'service'));
-            
-            console.log("Valid practitioners:", validPractitioners);
-            console.log("Valid services:", validServices);
-            
-            setPractitioners(validPractitioners);
-            setServices(validServices);
+            setPractitioners(practitionerArray);
+            setServices(servicesArray);
             setUseDefaultData(false);
             
             // If only one of practitioners or services is missing, show warning
-            if (validPractitioners.length === 0 || validServices.length === 0) {
+            if (practitionerArray.length === 0 || servicesArray.length === 0) {
               console.log("Warning: Limited practitioners or services found");
               toast({
                 title: "Limited Booking Options",
@@ -262,6 +314,17 @@ const BookAppointmentPage = () => {
     navigate('/customer/appointments');
   };
   
+  const handleSeedDemoData = async () => {
+    if (!finalBusinessId) return;
+    
+    const success = await seedDemoData(finalBusinessId);
+    
+    if (success) {
+      // Refresh the page to reload data
+      window.location.reload();
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -299,7 +362,6 @@ const BookAppointmentPage = () => {
   // Debug output to check data
   console.log("About to render with practitioners:", practitioners.length, "and services:", services.length);
   
-  // With our default data implementation, we should now always have something to show
   return (
     <div className="space-y-6">
       <div>
@@ -318,6 +380,35 @@ const BookAppointmentPage = () => {
           </div>
         )}
       </div>
+      
+      {/* Debug & Development Tools - Only visible in development */}
+      {import.meta.env.DEV && useDefaultData && (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="text-yellow-800">Development Tools</CardTitle>
+            <CardDescription className="text-yellow-700">
+              These options are only available in development mode
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              onClick={handleSeedDemoData} 
+              disabled={isSeeding}
+              className="bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200"
+            >
+              {isSeeding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Demo Data...
+                </>
+              ) : (
+                'Create Real Demo Data in Database'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       
       <Card className="shadow-sm">
         <CardHeader>

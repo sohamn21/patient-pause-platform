@@ -86,6 +86,22 @@ const PatientAppointmentBooking = ({
     },
   });
   
+  // Debug logs to check what's being passed in
+  useEffect(() => {
+    console.log("InitialPractitioners received:", initialPractitioners);
+    console.log("InitialServices received:", initialServices);
+    
+    if (initialPractitioners && initialPractitioners.length > 0) {
+      console.log("Setting practitioners state with:", initialPractitioners);
+      setPractitioners(initialPractitioners);
+    }
+    
+    if (initialServices && initialServices.length > 0) {
+      console.log("Setting services state with:", initialServices);
+      setServices(initialServices);
+    }
+  }, [initialPractitioners, initialServices]);
+  
   useEffect(() => {
     const serviceId = form.watch('service_id');
     if (serviceId) {
@@ -186,6 +202,10 @@ const PatientAppointmentBooking = ({
     );
   }
   
+  // Debug check to see what data we have
+  console.log("Rendering with practitioners:", practitioners);
+  console.log("Rendering with services:", services);
+  
   if (loadError) {
     return (
       <Card className="border-destructive/50">
@@ -201,7 +221,7 @@ const PatientAppointmentBooking = ({
     );
   }
   
-  if (services.length === 0 || practitioners.length === 0) {
+  if ((services.length === 0 || practitioners.length === 0) && !initialPractitioners.length && !initialServices.length) {
     return (
       <Card>
         <CardContent className="pt-6">

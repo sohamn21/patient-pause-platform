@@ -150,13 +150,18 @@ export const createPractitioner = async (practitionerData: PractitionerFormData,
   try {
     console.log("Creating new practitioner with data:", practitionerData);
     
+    // Convert availability object to string if it exists
+    const availabilityString = practitionerData.availability 
+      ? JSON.stringify(practitionerData.availability) 
+      : null;
+    
     const { data, error } = await supabase
       .from('practitioners')
       .insert({
         name: practitionerData.name,
         specialization: practitionerData.specialization || null,
         bio: practitionerData.bio || null,
-        availability: practitionerData.availability || null,
+        availability: availabilityString,
         business_id: businessId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -191,7 +196,13 @@ export const updatePractitioner = async (id: string, practitionerData: Partial<P
     if (practitionerData.name !== undefined) updateData.name = practitionerData.name;
     if (practitionerData.specialization !== undefined) updateData.specialization = practitionerData.specialization;
     if (practitionerData.bio !== undefined) updateData.bio = practitionerData.bio;
-    if (practitionerData.availability !== undefined) updateData.availability = practitionerData.availability;
+    
+    // Convert availability object to string if it exists
+    if (practitionerData.availability !== undefined) {
+      updateData.availability = practitionerData.availability 
+        ? JSON.stringify(practitionerData.availability) 
+        : null;
+    }
     
     const { data, error } = await supabase
       .from('practitioners')

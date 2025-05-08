@@ -153,8 +153,6 @@ const BookAppointmentPage = () => {
             });
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
-            console.log("Practitioners before mapping:", practitionerArray);
-            console.log("Services before mapping:", servicesArray);
             
             // Transform each practitioner using the mapper utility
             const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
@@ -222,6 +220,12 @@ const BookAppointmentPage = () => {
     checkBusinessStatus();
   }, [toast, businessId, businessIdFromQuery, finalBusinessId]);
   
+  // Debug logs to check state before rendering
+  useEffect(() => {
+    console.log("Current practitioners state:", practitioners);
+    console.log("Current services state:", services);
+  }, [practitioners, services]);
+  
   const handleAppointmentSuccess = () => {
     toast({
       title: "Appointment Booked",
@@ -265,7 +269,7 @@ const BookAppointmentPage = () => {
   }
   
   // Debug output to check data
-  console.log("Rendering with practitioners:", practitioners.length, "and services:", services.length);
+  console.log("About to render with practitioners:", practitioners.length, "and services:", services.length);
   
   // With our default data implementation, we should now always have something to show
   return (
@@ -298,7 +302,7 @@ const BookAppointmentPage = () => {
         
         <CardContent className="pt-6">
           <PatientAppointmentBooking 
-            businessId={finalBusinessId}
+            businessId={finalBusinessId || ''}
             onSuccess={handleAppointmentSuccess}
             onCancel={() => navigate('/')}
             practitioners={practitioners}

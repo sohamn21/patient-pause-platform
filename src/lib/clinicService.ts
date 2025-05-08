@@ -5,13 +5,15 @@ import {
   Appointment, 
   Patient,
   AppointmentFormData,
-  PatientFormData
+  PatientFormData,
+  ServiceFormData,
+  PractitionerFormData
 } from "@/types/clinic";
 import { v4 as uuidv4 } from 'uuid';
 import { mapToPractitioner, mapToService } from "./dataMappers";
 
 // Interface for Invoice
-interface Invoice {
+export interface Invoice {
   id?: string;
   patient_id: string;
   patient_name: string;
@@ -144,14 +146,18 @@ export const getPractitioners = async (businessId: string) => {
 /**
  * Create a new practitioner
  */
-export const createPractitioner = async (practitionerData: Omit<Practitioner, 'id' | 'created_at' | 'updated_at'>): Promise<Practitioner | null> => {
+export const createPractitioner = async (practitionerData: PractitionerFormData, businessId: string): Promise<Practitioner | null> => {
   try {
     console.log("Creating new practitioner with data:", practitionerData);
     
     const { data, error } = await supabase
       .from('practitioners')
       .insert({
-        ...practitionerData,
+        name: practitionerData.name,
+        specialization: practitionerData.specialization || null,
+        bio: practitionerData.bio || null,
+        availability: practitionerData.availability || null,
+        business_id: businessId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -174,16 +180,22 @@ export const createPractitioner = async (practitionerData: Omit<Practitioner, 'i
 /**
  * Update an existing practitioner
  */
-export const updatePractitioner = async (id: string, practitionerData: Partial<Practitioner>): Promise<Practitioner | null> => {
+export const updatePractitioner = async (id: string, practitionerData: Partial<PractitionerFormData>): Promise<Practitioner | null> => {
   try {
     console.log("Updating practitioner with ID:", id, "and data:", practitionerData);
     
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (practitionerData.name !== undefined) updateData.name = practitionerData.name;
+    if (practitionerData.specialization !== undefined) updateData.specialization = practitionerData.specialization;
+    if (practitionerData.bio !== undefined) updateData.bio = practitionerData.bio;
+    if (practitionerData.availability !== undefined) updateData.availability = practitionerData.availability;
+    
     const { data, error } = await supabase
       .from('practitioners')
-      .update({
-        ...practitionerData,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -961,5 +973,100 @@ export const getServiceById = async (businessId: string, serviceId: string) => {
   } catch (error) {
     console.error('Failed to get service:', error);
     throw error;
+  }
+};
+
+/**
+ * Create a new service
+ */
+export const createService = async (serviceData: ServiceFormData, businessId: string): Promise<Service | null> => {
+  try {
+    console.log("Creating new service with data:", serviceData);
+    
+    const { data, error } = await supabase
+      .from('services')
+      .insert({
+        name: serviceData.name,
+        description: serviceData.description || null,
+        duration: serviceData.duration,
+        price: serviceData.price || null,
+        business_id: businessId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating service:", error);
+      throw error;
+    }
+    
+    console.log("Service created successfully:", data);
+    return mapToService(data);
+  } catch (error) {
+    console.error("Failed to create service:", error);
+    return null;
+  }
+};
+
+/**
+ * Update an existing service
+ */
+export const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service | null> => {
+  try {
+    console.log("Updating service with ID:", id, "and data:", serviceData);
+    
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (serviceData.name !== undefined) updateData.name = serviceData.name;
+    if (serviceData.description !== undefined) updateData.description = serviceData.description;
+    if (serviceData.duration !== undefined) updateData.duration = serviceData.duration;
+    if (serviceData.price !== undefined) updateData.price = serviceData.price;
+    
+    const { data, error } = await supabase
+      .from('services')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating service:", error);
+      throw error;
+    }
+    
+    console.log("Service updated successfully:", data);
+    return mapToService(data);
+  } catch (error) {
+    console.error("Failed to update service:", error);
+    return null;
+  }
+};
+
+/**
+ * Delete a service
+ */
+export const deleteService = async (id: string): Promise<boolean> => {
+  try {
+    console.log("Deleting service with ID:", id);
+    
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting service:", error);
+      throw error;
+    }
+    
+    console.log("Service deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to delete service:", error);
+    return false;
   }
 };

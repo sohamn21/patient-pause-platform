@@ -1,3 +1,4 @@
+
 export interface Practitioner {
   id: string;
   business_id: string;
@@ -82,4 +83,33 @@ export interface PatientFormData {
   emergency_contact?: string | null;
   preferred_practitioner_id?: string | null;
   notes?: string | null;
+}
+
+export interface ServiceFormData {
+  name: string;
+  description?: string;
+  duration: number;
+  price?: number;
+}
+
+export interface PractitionerFormData {
+  name: string;
+  specialization?: string;
+  bio?: string;
+  availability?: Record<string, { isAvailable: boolean; start: string; end: string }>;
+  business_id?: string;
+}
+
+export interface Invoice {
+  id?: string;
+  patient_id: string;
+  patient_name: string;
+  invoice_date: string;
+  due_date: string | null;
+  items: { description: string; amount: number }[];
+  total_amount: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }

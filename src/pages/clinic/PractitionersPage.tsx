@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -118,13 +117,38 @@ const PractitionersPage = () => {
       if (!user) return;
       
       setIsLoading(true);
-      const data = await getPractitioners(user.id);
-      setPractitioners(data);
-      setIsLoading(false);
+      try {
+        const practitionersData = await getPractitioners(user.id);
+        
+        // Map data to ensure it conforms to the Practitioner type
+        const mappedPractitioners = Array.isArray(practitionersData) 
+          ? practitionersData.map(item => ({
+              id: item.id || '',
+              business_id: item.business_id || '',
+              name: item.name || '',
+              specialization: item.specialization || null,
+              bio: item.bio || null,
+              availability: item.availability || null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+            })) as Practitioner[]
+          : [];
+        
+        setPractitioners(mappedPractitioners);
+      } catch (error) {
+        console.error("Error fetching practitioners:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load practitioners",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     fetchPractitioners();
-  }, [user]);
+  }, [user, toast]);
   
   useEffect(() => {
     // Set form values when editing

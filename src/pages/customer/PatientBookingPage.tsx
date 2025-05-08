@@ -124,15 +124,39 @@ const PatientBookingPage = () => {
               description: "This clinic has not set up practitioners or services. Using demo data for booking.",
             });
           } else {
-            // Use the actual data from the database
+            // Use the actual data from the database, but ensure it matches our Practitioner/Service types
             console.log(`Using real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
-            setPractitioners(practitionerArray);
-            setServices(servicesArray);
+            
+            // Map to ensure all required fields are included
+            const mappedPractitioners = practitionerArray.map(item => ({
+              id: item.id || '',
+              business_id: item.business_id || '',
+              name: item.name || '',
+              specialization: item.specialization || null,
+              bio: item.bio || null,
+              availability: item.availability || null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+            })) as Practitioner[];
+            
+            const mappedServices = servicesArray.map(item => ({
+              id: item.id || '',
+              business_id: item.business_id || '',
+              name: item.name || '',
+              description: item.description || null,
+              duration: typeof item.duration === 'number' ? item.duration : 30,
+              price: typeof item.price === 'number' ? item.price : null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+            })) as Service[];
+            
+            setPractitioners(mappedPractitioners);
+            setServices(mappedServices);
             setHasDataError(false);
             setUseDefaultData(false);
             
             // If only one of practitioners or services is missing, show warning
-            if (practitionerArray.length === 0 || servicesArray.length === 0) {
+            if (mappedPractitioners.length === 0 || mappedServices.length === 0) {
               console.log("Warning: Limited practitioners or services found");
               toast({
                 title: "Limited Availability",

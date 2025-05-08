@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -92,8 +91,23 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
       if (!userId) return;
       
       try {
-        const data = await getPractitioners(userId);
-        setPractitioners(data);
+        const practitionersData = await getPractitioners(userId);
+        
+        // Map to ensure all required fields are present
+        const mappedPractitioners = Array.isArray(practitionersData) 
+          ? practitionersData.map(item => ({
+              id: item.id || '',
+              business_id: item.business_id || '',
+              name: item.name || '',
+              specialization: item.specialization || null,
+              bio: item.bio || null,
+              availability: item.availability || null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+            })) as Practitioner[]
+          : [];
+          
+        setPractitioners(mappedPractitioners);
       } catch (error) {
         console.error("Error loading practitioners:", error);
         // Don't show an error toast here - non-critical failure
@@ -323,7 +337,6 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* Fix: Use 'none' instead of empty string for no preference */}
                     <SelectItem value="none">No preference</SelectItem>
                     {practitioners.map((practitioner) => (
                       <SelectItem key={practitioner.id} value={practitioner.id}>

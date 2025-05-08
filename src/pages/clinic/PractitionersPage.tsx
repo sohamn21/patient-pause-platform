@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -131,7 +132,7 @@ const PractitionersPage = () => {
               availability: item.availability || null,
               created_at: item.created_at || new Date().toISOString(),
               updated_at: item.updated_at || new Date().toISOString(),
-            })) as Practitioner[]
+            } as Practitioner))
           : [];
         
         setPractitioners(mappedPractitioners);

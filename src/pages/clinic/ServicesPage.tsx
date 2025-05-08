@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getServices, createService, updateService, deleteService } from '@/lib/clinicService';
@@ -79,13 +78,38 @@ const ServicesPage = () => {
       if (!user) return;
       
       setIsLoading(true);
-      const data = await getServices(user.id);
-      setServices(data);
-      setIsLoading(false);
+      try {
+        const servicesData = await getServices(user.id);
+        
+        // Map data to ensure it conforms to the Service type
+        const mappedServices = Array.isArray(servicesData) 
+          ? servicesData.map(item => ({
+              id: item.id || '',
+              business_id: item.business_id || '',
+              name: item.name || '',
+              description: item.description || null,
+              duration: typeof item.duration === 'number' ? item.duration : 30,
+              price: typeof item.price === 'number' ? item.price : null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+            } as Service))
+          : [];
+        
+        setServices(mappedServices);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load services",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     fetchServices();
-  }, [user]);
+  }, [user, toast]);
   
   useEffect(() => {
     // Reset form when editing service changes

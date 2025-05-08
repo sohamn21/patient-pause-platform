@@ -155,7 +155,7 @@ const BookAppointmentPage = () => {
               availability: item.availability || null,
               created_at: item.created_at || new Date().toISOString(),
               updated_at: item.updated_at || new Date().toISOString(),
-            })) as Practitioner[];
+            } as Practitioner));
             
             const mappedServices = servicesArray.map(item => ({
               id: item.id || '',
@@ -166,7 +166,7 @@ const BookAppointmentPage = () => {
               price: typeof item.price === 'number' ? item.price : null,
               created_at: item.created_at || new Date().toISOString(),
               updated_at: item.updated_at || new Date().toISOString(),
-            })) as Service[];
+            } as Service));
             
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);

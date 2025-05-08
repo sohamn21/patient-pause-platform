@@ -104,7 +104,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
               availability: item.availability || null,
               created_at: item.created_at || new Date().toISOString(),
               updated_at: item.updated_at || new Date().toISOString(),
-            })) as Practitioner[]
+            } as Practitioner))
           : [];
           
         setPractitioners(mappedPractitioners);

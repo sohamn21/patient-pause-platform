@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { getBusinessById } from '@/lib/clinicService';
+import { getBusinessById, getPractitioners, getServices } from '@/lib/clinicService';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Practitioner, Service } from '@/types/clinic';
 
 const BookAppointmentPage = () => {
   const { businessId } = useParams();
@@ -23,6 +24,8 @@ const BookAppointmentPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [businessExists, setBusinessExists] = useState(false);
   const [businessName, setBusinessName] = useState('');
+  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
@@ -50,6 +53,34 @@ const BookAppointmentPage = () => {
             variant: "destructive",
           });
           return;
+        }
+        
+        // Fetch practitioners and services for this clinic
+        try {
+          const practitionersData = await getPractitioners(finalBusinessId);
+          const servicesData = await getServices(finalBusinessId);
+          
+          console.log("Practitioners data loaded:", practitionersData?.length || 0);
+          console.log("Services data loaded:", servicesData?.length || 0);
+          
+          setPractitioners(Array.isArray(practitionersData) ? practitionersData : []);
+          setServices(Array.isArray(servicesData) ? servicesData : []);
+          
+          // If no practitioners or services, show message but don't block appointment flow
+          if ((!Array.isArray(practitionersData) || practitionersData.length === 0) || 
+              (!Array.isArray(servicesData) || servicesData.length === 0)) {
+            console.log("Warning: Limited or no practitioners/services found");
+            toast({
+              title: "Limited Availability",
+              description: "This clinic may have limited booking options available.",
+            });
+          }
+        } catch (error) {
+          console.error("Error loading practitioners or services:", error);
+          toast({
+            title: "Data Loading Warning",
+            description: "Could not load all clinic information. Some booking options may be limited.",
+          });
         }
         
         setBusinessExists(true);
@@ -102,6 +133,9 @@ const BookAppointmentPage = () => {
     );
   }
   
+  // Only render booking component if we have at least one practitioner and one service
+  const canBook = practitioners.length > 0 && services.length > 0;
+  
   return (
     <div className="space-y-6">
       <div>
@@ -111,22 +145,47 @@ const BookAppointmentPage = () => {
         </p>
       </div>
       
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Appointment Details</CardTitle>
-          <CardDescription>
-            Enter your information and select your preferred time
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="pt-6">
-          <PatientAppointmentBooking 
-            businessId={finalBusinessId}
-            onSuccess={handleAppointmentSuccess}
-            onCancel={() => navigate('/')}
-          />
-        </CardContent>
-      </Card>
+      {!canBook ? (
+        <Card className="shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center p-6 text-center">
+              <h3 className="text-lg font-medium mb-2">Booking Not Available</h3>
+              <p className="text-muted-foreground mb-4">
+                {practitioners.length === 0 && services.length === 0 ? 
+                  "This clinic hasn't set up any practitioners or services yet." :
+                  practitioners.length === 0 ? 
+                  "No practitioners are available at this clinic." : 
+                  "No services have been set up for this clinic."}
+              </p>
+              <p className="text-sm mb-4">
+                Please try again later or contact the clinic directly.
+              </p>
+              <Button onClick={() => navigate('/')}>
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Appointment Details</CardTitle>
+            <CardDescription>
+              Enter your information and select your preferred time
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="pt-6">
+            <PatientAppointmentBooking 
+              businessId={finalBusinessId}
+              onSuccess={handleAppointmentSuccess}
+              onCancel={() => navigate('/')}
+              practitioners={practitioners}
+              services={services}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

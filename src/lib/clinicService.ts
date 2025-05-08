@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
 import { format } from 'date-fns';
@@ -232,22 +233,24 @@ export const getPractitioners = async (businessId: string) => {
       console.log(`No practitioners found for business ID: ${businessId}`);
       console.log('Checking database directly for all practitioners to debug:');
       
-      // Let's check ALL practitioners to see if there's a mismatch
+      // Let's check ALL practitioners to see if there might be some misconfiguration
       const { data: allPractitioners, error: allError } = await supabase
         .from('practitioners')
-        .select('id, name, business_id');
+        .select('id, name, business_id, created_at');
       
       if (!allError && allPractitioners && allPractitioners.length > 0) {
         console.log('All practitioners in database:', allPractitioners);
         
-        // Check if any practitioners have a similar business_id that might be misformatted
+        // Try case-insensitive check if any practitioners might have bizId with different casing
         const possibleMatches = allPractitioners.filter(p => 
           p.business_id && typeof p.business_id === 'string' && 
-          p.business_id.toLowerCase().includes(businessId.toLowerCase().substring(0, 8))
+          (p.business_id.toLowerCase() === businessId.toLowerCase() || p.business_id.includes(businessId))
         );
         
         if (possibleMatches.length > 0) {
-          console.log('Possible practitioner matches with similar business_id:', possibleMatches);
+          console.log('Found practitioners with similar business_id:', possibleMatches);
+          // Use these practitioners instead since they might be the right ones
+          return possibleMatches;
         }
       } else {
         console.log('No practitioners found in database at all');
@@ -310,22 +313,24 @@ export const getServices = async (businessId: string) => {
       console.log(`No services found for business ID: ${businessId}`);
       console.log('Checking database directly for all services to debug:');
       
-      // Let's check ALL services to see if there's a mismatch
+      // Let's check ALL services to see if there might be some misconfiguration
       const { data: allServices, error: allError } = await supabase
         .from('services')
-        .select('id, name, business_id');
+        .select('id, name, business_id, created_at');
       
       if (!allError && allServices && allServices.length > 0) {
         console.log('All services in database:', allServices);
         
-        // Check if any services have a similar business_id that might be misformatted
+        // Try case-insensitive check if any services might have bizId with different casing
         const possibleMatches = allServices.filter(s => 
           s.business_id && typeof s.business_id === 'string' && 
-          s.business_id.toLowerCase().includes(businessId.toLowerCase().substring(0, 8))
+          (s.business_id.toLowerCase() === businessId.toLowerCase() || s.business_id.includes(businessId))
         );
         
         if (possibleMatches.length > 0) {
-          console.log('Possible service matches with similar business_id:', possibleMatches);
+          console.log('Found services with similar business_id:', possibleMatches);
+          // Use these services instead since they might be the right ones
+          return possibleMatches;
         }
       } else {
         console.log('No services found in database at all');

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -11,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
 import { Practitioner, Service } from '@/types/clinic';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 // Default practitioners and services to use when none are found
 const defaultPractitioners: Practitioner[] = [
@@ -260,13 +259,16 @@ const PatientBookingPage = () => {
           {!user && " - No account needed to book"}
           {useDefaultData && " (Demo Mode)"}
         </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          {debugInfo}
-        </p>
+        {debugInfo && (
+          <div className="text-xs text-muted-foreground mt-2 flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            <span>{debugInfo}</span>
+          </div>
+        )}
       </div>
       
       <PatientAppointmentBooking 
-        businessId={businessIdVerified}
+        businessId={businessIdVerified || ''}
         onSuccess={() => setAppointmentSuccess(true)}
         onCancel={() => navigate('/')}
         practitioners={practitioners}

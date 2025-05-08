@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Practitioner, Service } from '@/types/clinic';
-import { mapToPractitioner, mapToService } from '@/lib/dataMappers';
+import { mapToPractitioner, mapToService, validateMappedData } from '@/lib/dataMappers';
 
 // Default practitioners and services to use when none are found
 const defaultPractitioners: Practitioner[] = [
@@ -118,8 +118,8 @@ const BookAppointmentPage = () => {
           const practitionersData = await getPractitioners(finalBusinessId);
           const servicesData = await getServices(finalBusinessId);
           
-          console.log("Raw practitioners data loaded:", practitionersData);
-          console.log("Raw services data loaded:", servicesData);
+          console.log("Practitioners data loaded:", practitionersData);
+          console.log("Services data loaded:", servicesData);
           
           // Always ensure we have arrays, not null or undefined
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
@@ -151,23 +151,51 @@ const BookAppointmentPage = () => {
               title: "Using Demo Data",
               description: "This clinic is using demo data for booking. Please set up practitioners and services in the admin panel.",
             });
+            
+            // Try creating some sample data in the database
+            try {
+              console.log("Attempting to seed sample data for businessId:", finalBusinessId);
+              const { createPractitioner, createService } = await import('@/lib/clinicService');
+              
+              // Only seed data if we're in development mode
+              if (import.meta.env.DEV) {
+                // Create a sample practitioner
+                await createPractitioner({
+                  name: 'Dr. Sample Doctor',
+                  specialization: 'General Medicine',
+                  bio: 'This is a sample practitioner created automatically.',
+                  availability: null
+                }, finalBusinessId);
+                
+                // Create a sample service
+                await createService({
+                  name: 'General Consultation',
+                  description: 'This is a sample service created automatically.',
+                  duration: 30,
+                  price: 100
+                }, finalBusinessId);
+                
+                console.log("Sample data created successfully");
+              }
+            } catch (seedError) {
+              console.error("Failed to seed sample data:", seedError);
+            }
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
             
-            // Transform each practitioner using the mapper utility
-            const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
-            console.log("Practitioners after mapping:", mappedPractitioners);
+            // Validate mapped data
+            const validPractitioners = practitionerArray.filter(p => validateMappedData(p, 'practitioner'));
+            const validServices = servicesArray.filter(s => validateMappedData(s, 'service'));
             
-            // Transform each service using the mapper utility
-            const mappedServices = servicesArray.map(item => mapToService(item));
-            console.log("Services after mapping:", mappedServices);
+            console.log("Valid practitioners:", validPractitioners);
+            console.log("Valid services:", validServices);
             
-            setPractitioners(mappedPractitioners);
-            setServices(mappedServices);
+            setPractitioners(validPractitioners);
+            setServices(validServices);
             setUseDefaultData(false);
             
             // If only one of practitioners or services is missing, show warning
-            if (mappedPractitioners.length === 0 || mappedServices.length === 0) {
+            if (validPractitioners.length === 0 || validServices.length === 0) {
               console.log("Warning: Limited practitioners or services found");
               toast({
                 title: "Limited Booking Options",

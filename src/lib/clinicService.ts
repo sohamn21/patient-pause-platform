@@ -132,11 +132,17 @@ export const getPractitioners = async (businessId: string) => {
       } else if (allPractitioners?.length) {
         console.log("Found practitioners in database but none for this business ID:", allPractitioners);
       } else {
-        console.log("No practitioners found in database at all");
+        console.log("No practitioners found in database at all. Consider seeding some data.");
       }
     }
     
-    return data || [];
+    // Map the data to ensure correct format and handle any inconsistencies
+    const mappedData = Array.isArray(data) 
+      ? data.map(item => mapToPractitioner(item))
+      : [];
+      
+    console.log("Returning mapped practitioners:", mappedData);
+    return mappedData;
   } catch (error) {
     console.error(`Error in getPractitioners for business ${businessId}:`, error);
     return [];
@@ -292,11 +298,17 @@ export const getServices = async (businessId: string) => {
       } else if (allServices?.length) {
         console.log("Found services in database but none for this business ID:", allServices);
       } else {
-        console.log("No services found in database at all");
+        console.log("No services found in database at all. Consider seeding some data.");
       }
     }
     
-    return data || [];
+    // Map the data to ensure correct format and handle any inconsistencies
+    const mappedData = Array.isArray(data) 
+      ? data.map(item => mapToService(item))
+      : [];
+      
+    console.log("Returning mapped services:", mappedData);
+    return mappedData;
   } catch (error) {
     console.error(`Error in getServices for business ${businessId}:`, error);
     return [];
@@ -994,12 +1006,17 @@ export const createService = async (serviceData: ServiceFormData, businessId: st
   try {
     console.log("Creating new service with data:", serviceData);
     
+    if (!businessId) {
+      console.error("No business ID provided to createService");
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('services')
       .insert({
         name: serviceData.name,
         description: serviceData.description || null,
-        duration: serviceData.duration,
+        duration: serviceData.duration || 30,
         price: serviceData.price || null,
         business_id: businessId,
         created_at: new Date().toISOString(),

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -7,7 +6,7 @@ import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBoo
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Practitioner, Service } from '@/types/clinic';
 import { mapToPractitioner, mapToService } from '@/lib/dataMappers';
 
@@ -76,6 +75,7 @@ const BookAppointmentPage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [useDefaultData, setUseDefaultData] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
@@ -86,6 +86,7 @@ const BookAppointmentPage = () => {
       if (!finalBusinessId) {
         setIsLoading(false);
         setDataError("No business ID provided");
+        setDebugInfo("Missing business ID parameter");
         return;
       }
       
@@ -98,6 +99,7 @@ const BookAppointmentPage = () => {
           console.log("Business does not exist or is not a clinic");
           setBusinessExists(false);
           setIsLoading(false);
+          setDebugInfo(`Business ID ${finalBusinessId} is not a clinic or doesn't exist`);
           toast({
             title: "Invalid Clinic",
             description: "The selected business is not a healthcare provider.",
@@ -123,10 +125,13 @@ const BookAppointmentPage = () => {
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
           const servicesArray = Array.isArray(servicesData) ? servicesData : [];
           
+          setDebugInfo(`Found ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
+          
           // Only use default data if both practitioners and services are empty
           if (practitionerArray.length === 0 && servicesArray.length === 0) {
             console.log("Warning: No practitioners or services found, using default data");
             setUseDefaultData(true);
+            setDebugInfo(`No data found in database. Using default data. Business ID: ${finalBusinessId}`);
             
             // Assign the business ID to the default data
             const defaultPractitionersWithBusinessId = defaultPractitioners.map(practitioner => ({
@@ -175,6 +180,7 @@ const BookAppointmentPage = () => {
         } catch (error) {
           console.error("Error loading practitioners or services:", error);
           setDataError(`Error loading clinic data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setDebugInfo(`API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
           
           // Use default data if there was an error fetching real data
           console.log("Error loading clinic data, using default data");
@@ -202,6 +208,7 @@ const BookAppointmentPage = () => {
       } catch (error) {
         console.error("Error checking business status:", error);
         setDataError(`Error checking business: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setDebugInfo(`Business Check Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         toast({
           title: "Error",
           description: "Could not verify clinic information. Please try again.",
@@ -244,6 +251,12 @@ const BookAppointmentPage = () => {
         {dataError && (
           <p className="text-sm text-destructive mb-4">{dataError}</p>
         )}
+        {debugInfo && (
+          <div className="text-xs text-muted-foreground mb-4 flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            <span>{debugInfo}</span>
+          </div>
+        )}
         <Button onClick={() => navigate('/')}>
           Return to Home
         </Button>
@@ -265,6 +278,12 @@ const BookAppointmentPage = () => {
         </p>
         {dataError && (
           <p className="text-xs text-destructive mt-1">{dataError}</p>
+        )}
+        {debugInfo && (
+          <div className="text-xs text-muted-foreground mt-1 flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            <span>{debugInfo}</span>
+          </div>
         )}
       </div>
       

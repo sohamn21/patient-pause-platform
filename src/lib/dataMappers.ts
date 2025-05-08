@@ -5,6 +5,9 @@ import { Practitioner, Service } from "@/types/clinic";
  * Maps raw practitioner data from API to Practitioner type
  */
 export const mapToPractitioner = (data: any): Practitioner => {
+  // First, log the raw data for debugging
+  console.log("Raw practitioner data to map:", data);
+  
   // Check if the data is null or undefined before trying to access properties
   if (!data) {
     console.error("Received null or undefined practitioner data");
@@ -20,9 +23,8 @@ export const mapToPractitioner = (data: any): Practitioner => {
     };
   }
   
-  console.log("Mapping practitioner data:", data);
-  
-  return {
+  // Create the mapped object
+  const mappedPractitioner: Practitioner = {
     id: data.id || '',
     business_id: data.business_id || '',
     name: data.name || '',
@@ -32,12 +34,20 @@ export const mapToPractitioner = (data: any): Practitioner => {
     created_at: data.created_at || new Date().toISOString(),
     updated_at: data.updated_at || new Date().toISOString(),
   };
+  
+  // Log the mapped result
+  console.log("Mapped practitioner:", mappedPractitioner);
+  
+  return mappedPractitioner;
 };
 
 /**
  * Maps raw service data from API to Service type
  */
 export const mapToService = (data: any): Service => {
+  // First, log the raw data for debugging
+  console.log("Raw service data to map:", data);
+  
   // Check if the data is null or undefined before trying to access properties
   if (!data) {
     console.error("Received null or undefined service data");
@@ -53,9 +63,8 @@ export const mapToService = (data: any): Service => {
     };
   }
   
-  console.log("Mapping service data:", data);
-  
-  return {
+  // Create the mapped object
+  const mappedService: Service = {
     id: data.id || '',
     business_id: data.business_id || '',
     name: data.name || '',
@@ -65,4 +74,9 @@ export const mapToService = (data: any): Service => {
     created_at: data.created_at || new Date().toISOString(),
     updated_at: data.updated_at || new Date().toISOString(),
   };
+  
+  // Log the mapped result
+  console.log("Mapped service:", mappedService);
+  
+  return mappedService;
 };

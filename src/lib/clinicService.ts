@@ -1,7 +1,146 @@
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  Practitioner, 
+  Service, 
+  Appointment, 
+  Patient,
+  AppointmentFormData 
+} from "@/types/clinic";
+import { v4 as uuidv4 } from 'uuid';
+import { mapToPractitioner, mapToService } from "./dataMappers";
 
-import { supabase } from '@/integrations/supabase/client';
-import { Patient, PatientFormData, Practitioner, Service, AppointmentFormData, Appointment, ServiceFormData, PractitionerFormData, Invoice } from '@/types/clinic';
-import { format } from 'date-fns';
+/**
+ * Fetch a business by ID from the profiles table
+ */
+export const getBusinessById = async (businessId: string) => {
+  try {
+    console.log("Fetching business details for ID:", businessId);
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', businessId)
+      .single();
+    
+    if (error) throw error;
+    
+    console.log("Business data retrieved:", data);
+    console.log("Business type:", data?.business_type);
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching business:", error);
+    return null;
+  }
+};
+
+/**
+ * Get all practitioners for a specific business
+ */
+export const getPractitioners = async (businessId: string) => {
+  try {
+    console.log("Fetching practitioners for business:", businessId);
+    
+    if (!businessId) {
+      console.error("No business ID provided to getPractitioners");
+      return [];
+    }
+    
+    // Log the query we're about to make for debugging
+    console.log(`Executing query: SELECT * FROM practitioners WHERE business_id = '${businessId}'`);
+    
+    const { data, error } = await supabase
+      .from('practitioners')
+      .select('*')
+      .eq('business_id', businessId);
+    
+    if (error) {
+      console.error("Error fetching practitioners:", error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} practitioners for business ID: ${businessId}`);
+    console.log("Raw practitioners data:", data);
+    
+    // If no practitioners found, check if any exist at all (debugging)
+    if (!data || data.length === 0) {
+      console.log("No practitioners found for business ID:", businessId);
+      console.log("Checking database directly for all practitioners to debug:");
+      
+      const { data: allPractitioners, error: allError } = await supabase
+        .from('practitioners')
+        .select('*')
+        .limit(10);
+      
+      if (allError) {
+        console.error("Error fetching all practitioners:", allError);
+      } else if (allPractitioners?.length) {
+        console.log("Found practitioners in database but none for this business ID:", allPractitioners);
+      } else {
+        console.log("No practitioners found in database at all");
+      }
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error(`Error in getPractitioners for business ${businessId}:`, error);
+    return [];
+  }
+};
+
+/**
+ * Get all services for a specific business
+ */
+export const getServices = async (businessId: string) => {
+  try {
+    console.log("Fetching services for business:", businessId);
+    
+    if (!businessId) {
+      console.error("No business ID provided to getServices");
+      return [];
+    }
+    
+    // Log the query we're about to make for debugging
+    console.log(`Executing query: SELECT * FROM services WHERE business_id = '${businessId}'`);
+    
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('business_id', businessId);
+    
+    if (error) {
+      console.error("Error fetching services:", error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} services for business ID: ${businessId}`);
+    console.log("Raw services data:", data);
+    
+    // If no services found, check if any exist at all (debugging)
+    if (!data || data.length === 0) {
+      console.log("No services found for business ID:", businessId);
+      console.log("Checking database directly for all services to debug:");
+      
+      const { data: allServices, error: allError } = await supabase
+        .from('services')
+        .select('*')
+        .limit(10);
+      
+      if (allError) {
+        console.error("Error fetching all services:", allError);
+      } else if (allServices?.length) {
+        console.log("Found services in database but none for this business ID:", allServices);
+      } else {
+        console.log("No services found in database at all");
+      }
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error(`Error in getServices for business ${businessId}:`, error);
+    return [];
+  }
+};
 
 // Get all patients for a business
 export const getPatients = async (businessId: string = '') => {
@@ -212,333 +351,6 @@ export const updatePatient = async (patientId: string, formData: PatientFormData
   }
 };
 
-// Get all practitioners for a business
-export const getPractitioners = async (businessId: string) => {
-  try {
-    console.log('Fetching practitioners for business:', businessId);
-    
-    // First, try to get practitioners with the exact businessId
-    let { data, error } = await supabase
-      .from('practitioners')
-      .select('*')
-      .eq('business_id', businessId);
-    
-    if (error) {
-      console.error('Error fetching practitioners:', error);
-      throw error;
-    }
-
-    // Check if we got any practitioners
-    if (!data || data.length === 0) {
-      console.log(`No practitioners found for business ID: ${businessId}`);
-      console.log('Checking database directly for all practitioners to debug:');
-      
-      // Let's check ALL practitioners to see if there might be some misconfiguration
-      const { data: allPractitioners, error: allError } = await supabase
-        .from('practitioners')
-        .select('id, name, business_id, created_at');
-      
-      if (!allError && allPractitioners && allPractitioners.length > 0) {
-        console.log('All practitioners in database:', allPractitioners);
-        
-        // Try case-insensitive check if any practitioners might have bizId with different casing
-        const possibleMatches = allPractitioners.filter(p => 
-          p.business_id && typeof p.business_id === 'string' && 
-          (p.business_id.toLowerCase() === businessId.toLowerCase() || p.business_id.includes(businessId))
-        );
-        
-        if (possibleMatches.length > 0) {
-          console.log('Found practitioners with similar business_id:', possibleMatches);
-          // Use these practitioners instead since they might be the right ones
-          return possibleMatches;
-        }
-      } else {
-        console.log('No practitioners found in database at all');
-      }
-    } else {
-      console.log(`Found ${data.length} practitioners for business ID:`, businessId);
-      console.log('First practitioner details:', data[0]);
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Failed to get practitioners:', error);
-    return [];
-  }
-};
-
-// Check if a patient record exists
-export const checkPatientExists = async (userId: string) => {
-  try {
-    console.log('Checking if patient exists for user ID:', userId);
-    
-    // Fixed approach: Use count instead of single to avoid content negotiation issues
-    const { count, error } = await supabase
-      .from('patients')
-      .select('*', { count: 'exact', head: true })
-      .eq('id', userId);
-    
-    if (error) {
-      console.error('Error checking patient existence:', error);
-      throw error;
-    }
-    
-    const exists = count ? count > 0 : false;
-    console.log('Patient exists:', exists);
-    return exists;
-  } catch (error) {
-    console.error('Failed to check patient existence:', error);
-    return false;
-  }
-};
-
-// Get all services for a business
-export const getServices = async (businessId: string) => {
-  try {
-    console.log('Fetching services for business:', businessId);
-    
-    // First, try to get services with the exact businessId
-    let { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .eq('business_id', businessId);
-    
-    if (error) {
-      console.error('Error fetching services:', error);
-      throw error;
-    }
-
-    // Check if we got any services
-    if (!data || data.length === 0) {
-      console.log(`No services found for business ID: ${businessId}`);
-      console.log('Checking database directly for all services to debug:');
-      
-      // Let's check ALL services to see if there might be some misconfiguration
-      const { data: allServices, error: allError } = await supabase
-        .from('services')
-        .select('id, name, business_id, created_at');
-      
-      if (!allError && allServices && allServices.length > 0) {
-        console.log('All services in database:', allServices);
-        
-        // Try case-insensitive check if any services might have bizId with different casing
-        const possibleMatches = allServices.filter(s => 
-          s.business_id && typeof s.business_id === 'string' && 
-          (s.business_id.toLowerCase() === businessId.toLowerCase() || s.business_id.includes(businessId))
-        );
-        
-        if (possibleMatches.length > 0) {
-          console.log('Found services with similar business_id:', possibleMatches);
-          // Use these services instead since they might be the right ones
-          return possibleMatches;
-        }
-      } else {
-        console.log('No services found in database at all');
-      }
-    } else {
-      console.log(`Found ${data.length} services for business ID:`, businessId);
-      console.log('First service details:', data[0]);
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Failed to get services:', error);
-    return [];
-  }
-};
-
-// Get a specific service
-export const getService = async (id: string) => {
-  try {
-    console.log('Fetching service details for ID:', id);
-    
-    const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching service:', error);
-      throw error;
-    }
-    
-    console.log('Service fetched:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to get service details:', error);
-    throw error;
-  }
-};
-
-// Create a new service
-export const createService = async (formData: ServiceFormData, businessId: string) => {
-  try {
-    console.log('Creating service with data:', formData);
-    
-    const { data, error } = await supabase
-      .from('services')
-      .insert({
-        business_id: businessId,
-        name: formData.name,
-        description: formData.description || null,
-        duration: formData.duration,
-        price: formData.price || null,
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating service:', error);
-      throw error;
-    }
-    
-    console.log('Service created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create service:', error);
-    throw error;
-  }
-};
-
-// Update an existing service
-export const updateService = async (id: string, formData: ServiceFormData) => {
-  try {
-    console.log('Updating service with ID:', id, 'and data:', formData);
-    
-    const { data, error } = await supabase
-      .from('services')
-      .update({
-        name: formData.name,
-        description: formData.description || null,
-        duration: formData.duration,
-        price: formData.price || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating service:', error);
-      throw error;
-    }
-    
-    console.log('Service updated successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to update service:', error);
-    throw error;
-  }
-};
-
-// Delete a service
-export const deleteService = async (id: string) => {
-  try {
-    console.log('Deleting service with ID:', id);
-    
-    const { error } = await supabase
-      .from('services')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting service:', error);
-      throw error;
-    }
-    
-    console.log('Service deleted successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to delete service:', error);
-    return false;
-  }
-};
-
-// Create a new practitioner
-export const createPractitioner = async (formData: PractitionerFormData, businessId: string) => {
-  try {
-    console.log('Creating practitioner with data:', formData);
-    
-    const { data, error } = await supabase
-      .from('practitioners')
-      .insert({
-        business_id: businessId,
-        name: formData.name,
-        specialization: formData.specialization || null,
-        bio: formData.bio || null,
-        availability: formData.availability || null,
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating practitioner:', error);
-      throw error;
-    }
-    
-    console.log('Practitioner created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create practitioner:', error);
-    throw error;
-  }
-};
-
-// Update an existing practitioner
-export const updatePractitioner = async (id: string, formData: PractitionerFormData) => {
-  try {
-    console.log('Updating practitioner with ID:', id, 'and data:', formData);
-    
-    const { data, error } = await supabase
-      .from('practitioners')
-      .update({
-        name: formData.name,
-        specialization: formData.specialization || null,
-        bio: formData.bio || null,
-        availability: formData.availability || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating practitioner:', error);
-      throw error;
-    }
-    
-    console.log('Practitioner updated successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to update practitioner:', error);
-    throw error;
-  }
-};
-
-// Delete a practitioner
-export const deletePractitioner = async (id: string) => {
-  try {
-    console.log('Deleting practitioner with ID:', id);
-    
-    const { error } = await supabase
-      .from('practitioners')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting practitioner:', error);
-      throw error;
-    }
-    
-    console.log('Practitioner deleted successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to delete practitioner:', error);
-    return false;
-  }
-};
-
 // Get all appointments for a user (either as patient or business owner)
 export const getAppointments = async (userId: string) => {
   try {
@@ -729,66 +541,112 @@ export const getAppointment = async (id: string) => {
 
 // Create a new appointment
 export const createAppointment = async (
-  appointmentData: AppointmentFormData,
+  appointmentData: AppointmentFormData, 
   businessId: string
 ) => {
   try {
     console.log("Creating appointment with data:", appointmentData);
+    console.log("For business ID:", businessId);
     
-    // Format the date for the API
-    const formattedDate = format(appointmentData.date, 'yyyy-MM-dd');
+    if (!businessId) {
+      console.error("No business ID provided to createAppointment");
+      return null;
+    }
     
-    // Calculate end time based on service duration if not provided
-    let endTime = appointmentData.end_time;
+    // Calculate end time based on service duration
+    let endTime: string | undefined = appointmentData.end_time;
+    
     if (!endTime && appointmentData.service_id) {
-      // We need to fetch the service to get its duration
-      const service = await getServiceById(businessId, appointmentData.service_id);
-      if (service) {
-        const [hours, minutes] = appointmentData.start_time.split(':').map(Number);
-        const startDate = new Date();
-        startDate.setHours(hours, minutes, 0, 0);
-        const endDate = new Date(startDate.getTime() + service.duration * 60000);
-        endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+      try {
+        // Get service to find duration
+        const { data: serviceData } = await supabase
+          .from('services')
+          .select('*')
+          .eq('id', appointmentData.service_id)
+          .single();
+          
+        if (serviceData) {
+          const service = mapToService(serviceData);
+          const [hours, minutes] = appointmentData.start_time.split(':').map(Number);
+          const startDate = new Date();
+          startDate.setHours(hours, minutes, 0);
+          
+          // Add duration in minutes
+          const endDate = new Date(startDate.getTime() + (service.duration * 60 * 1000));
+          endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+          console.log(`Calculated end time: ${endTime} based on service duration: ${service.duration} min`);
+        }
+      } catch (err) {
+        console.error("Error calculating end time:", err);
       }
     }
     
-    // Create base appointment data
-    const appointmentPayload: any = {
-      business_id: businessId,
-      patient_id: appointmentData.patient_id || null,
-      practitioner_id: appointmentData.practitioner_id,
-      service_id: appointmentData.service_id,
-      date: formattedDate,
-      start_time: appointmentData.start_time,
-      end_time: endTime,
-      status: 'scheduled',
-      notes: appointmentData.notes || ''
-    };
+    // For guest bookings (non-authenticated users)
+    let patientId = appointmentData.patient_id;
     
-    // Add guest data if this is a guest booking
-    if (!appointmentData.patient_id && appointmentData.guest_email) {
-      appointmentPayload.guest_name = appointmentData.guest_name;
-      appointmentPayload.guest_email = appointmentData.guest_email;
-      appointmentPayload.guest_phone = appointmentData.guest_phone;
+    if (!patientId && appointmentData.guest_email) {
+      console.log("Guest booking detected, creating temporary patient record");
+      
+      // Create a guest patient record
+      const guestPatientId = uuidv4();
+      const { error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          id: guestPatientId,
+          profile: {
+            first_name: appointmentData.guest_name?.split(' ')[0] || 'Guest',
+            last_name: appointmentData.guest_name?.split(' ').slice(1).join(' ') || 'User',
+            phone_number: appointmentData.guest_phone || null,
+            email: appointmentData.guest_email
+          }
+        });
+      
+      if (patientError) {
+        console.error("Error creating guest patient:", patientError);
+        throw patientError;
+      }
+      
+      patientId = guestPatientId;
+      console.log("Created guest patient with ID:", patientId);
     }
     
-    console.log("Sending appointment payload:", appointmentPayload);
+    if (!patientId) {
+      console.error("No patient ID available for booking");
+      throw new Error("Patient ID is required");
+    }
+    
+    // Insert the appointment
+    const appointmentId = uuidv4();
+    const appointment = {
+      id: appointmentId,
+      business_id: businessId,
+      patient_id: patientId,
+      practitioner_id: appointmentData.practitioner_id,
+      service_id: appointmentData.service_id,
+      date: appointmentData.date instanceof Date ? appointmentData.date.toISOString().split('T')[0] : appointmentData.date,
+      start_time: appointmentData.start_time,
+      end_time: endTime || appointmentData.start_time, // Fallback to start time if end time couldn't be calculated
+      status: 'scheduled',
+      notes: appointmentData.notes || null,
+    };
+    
+    console.log("Inserting appointment:", appointment);
     
     const { data, error } = await supabase
       .from('appointments')
-      .insert(appointmentPayload)
+      .insert(appointment)
       .select()
       .single();
     
     if (error) {
-      console.error('Error creating appointment:', error);
+      console.error("Error creating appointment:", error);
       throw error;
     }
     
-    console.log('Appointment created:', data);
+    console.log("Appointment created successfully:", data);
     return data;
   } catch (error) {
-    console.error('Error in createAppointment:', error);
+    console.error("Failed to create appointment:", error);
     throw error;
   }
 };
@@ -809,7 +667,7 @@ export const updateAppointment = async (id: string, formData: AppointmentFormDat
         if (service) {
           const [hours, minutes] = formData.start_time.split(':').map(Number);
           const startDate = new Date();
-          startDate.setHours(hours, minutes, 0, 0);
+          startDate.setHours(hours, minutes, 0);
           const endDate = new Date(startDate.getTime() + service.duration * 60000);
           end_time = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
         }
@@ -964,33 +822,6 @@ export const getServiceById = async (businessId: string, serviceId: string) => {
     return data[0];
   } catch (error) {
     console.error('Failed to get service:', error);
-    throw error;
-  }
-};
-
-// Add this function to check if a businessId belongs to a clinic
-export const getBusinessById = async (businessId: string) => {
-  try {
-    console.log('Fetching business details for ID:', businessId);
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', businessId)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching business:", error);
-      console.log("Business not found or database error occurred");
-      return null;
-    }
-    
-    console.log("Business data retrieved:", data);
-    console.log("Business type:", data?.business_type);
-    
-    return data;
-  } catch (error) {
-    console.error("Error in getBusinessById:", error);
     throw error;
   }
 };

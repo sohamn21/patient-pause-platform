@@ -111,6 +111,8 @@ const BookAppointmentPage = () => {
         
         // Fetch practitioners and services for this clinic
         try {
+          console.log(`Attempting to fetch practitioners and services for business ID: ${finalBusinessId}`);
+          
           const practitionersData = await getPractitioners(finalBusinessId);
           const servicesData = await getServices(finalBusinessId);
           

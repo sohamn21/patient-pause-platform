@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -88,10 +89,10 @@ const PatientBookingPage = () => {
           
           // Make API calls to fetch practitioners and services
           const practitionersData = await getPractitioners(businessId);
-          console.log("Practitioners data received:", practitionersData);
+          console.log("Raw practitioners data received:", practitionersData);
           
           const servicesData = await getServices(businessId);
-          console.log("Services data received:", servicesData);
+          console.log("Raw services data received:", servicesData);
           
           // Ensure we have arrays, not null or undefined
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
@@ -127,12 +128,16 @@ const PatientBookingPage = () => {
           } else {
             // Use the actual data from the database, but ensure it matches our Practitioner/Service types
             console.log(`Using real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
+            console.log("Practitioners before mapping:", practitionerArray);
+            console.log("Services before mapping:", servicesArray);
             
             // Transform each practitioner using the mapper utility
             const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
+            console.log("Practitioners after mapping:", mappedPractitioners);
             
             // Transform each service using the mapper utility
             const mappedServices = servicesArray.map(item => mapToService(item));
+            console.log("Services after mapping:", mappedServices);
             
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);

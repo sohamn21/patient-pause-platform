@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -113,8 +114,8 @@ const BookAppointmentPage = () => {
           const practitionersData = await getPractitioners(finalBusinessId);
           const servicesData = await getServices(finalBusinessId);
           
-          console.log("Practitioners data loaded:", practitionersData);
-          console.log("Services data loaded:", servicesData);
+          console.log("Raw practitioners data loaded:", practitionersData);
+          console.log("Raw services data loaded:", servicesData);
           
           // Always ensure we have arrays, not null or undefined
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
@@ -145,12 +146,16 @@ const BookAppointmentPage = () => {
             });
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
+            console.log("Practitioners before mapping:", practitionerArray);
+            console.log("Services before mapping:", servicesArray);
             
             // Transform each practitioner using the mapper utility
             const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
+            console.log("Practitioners after mapping:", mappedPractitioners);
             
             // Transform each service using the mapper utility
             const mappedServices = servicesArray.map(item => mapToService(item));
+            console.log("Services after mapping:", mappedServices);
             
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);

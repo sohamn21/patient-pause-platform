@@ -94,6 +94,15 @@ function AppContent() {
           } 
         />
         
+        <Route 
+          path="/book-appointment/:businessId" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <BookAppointmentPage />
+            </ProtectedRoute>
+          } 
+        />
+        
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         
         <Route path="" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -124,47 +133,44 @@ function AppContent() {
           <Route path="profile" element={<CustomerProfile />} />
           <Route path="waitlists" element={<CustomerWaitlists />} />
           <Route path="appointments" element={<CustomerAppointments />} />
-          
-          {/* All customer booking routes must have allowGuest={true} */}
-          <Route 
-            path="booking" 
-            element={
-              <ProtectedRoute allowGuest={true}>
-                <PatientBookingPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="book" 
-            element={
-              <ProtectedRoute allowGuest={true}>
-                <PatientBookingPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="book/:businessId" 
-            element={
-              <ProtectedRoute allowGuest={true}>
-                <BookAppointmentPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* This critical route needs allowGuest={true} */}
-          <Route 
-            path="book-appointment" 
-            element={
-              <ProtectedRoute allowGuest={true}>
-                <BookAppointmentPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route path="contact" element={<ContactPage />} />
         </Route>
+        
+        {/* Move these routes outside the protected CustomerLayout and ensure they all have allowGuest={true} */}
+        <Route 
+          path="/customer/booking" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <PatientBookingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/customer/book" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <PatientBookingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/customer/book/:businessId" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <BookAppointmentPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/customer/book-appointment" 
+          element={
+            <ProtectedRoute allowGuest={true}>
+              <BookAppointmentPage />
+            </ProtectedRoute>
+          } 
+        />
         
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

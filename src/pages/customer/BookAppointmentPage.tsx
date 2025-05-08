@@ -95,8 +95,8 @@ const BookAppointmentPage = () => {
         <p className="text-muted-foreground mb-6">
           The selected healthcare provider does not exist or is not available for booking.
         </p>
-        <Button onClick={() => navigate('/customer/dashboard')}>
-          Return to Dashboard
+        <Button onClick={() => navigate('/')}>
+          Return to Home
         </Button>
       </div>
     );
@@ -123,7 +123,7 @@ const BookAppointmentPage = () => {
           <PatientAppointmentBooking 
             businessId={finalBusinessId}
             onSuccess={handleAppointmentSuccess}
-            onCancel={() => navigate('/customer/dashboard')}
+            onCancel={() => navigate('/')}
           />
         </CardContent>
       </Card>

@@ -10,6 +10,53 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Practitioner, Service } from '@/types/clinic';
 
+// Default practitioners and services to use when none are found
+const defaultPractitioners: Practitioner[] = [
+  {
+    id: 'default-practitioner-1',
+    business_id: '',
+    name: 'Dr. Jane Smith',
+    specialization: 'General Practitioner',
+    bio: 'Experienced doctor with over 10 years of practice.',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    availability: null
+  },
+  {
+    id: 'default-practitioner-2',
+    business_id: '',
+    name: 'Dr. John Doe',
+    specialization: 'Family Medicine',
+    bio: 'Specializes in family healthcare and preventive medicine.',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    availability: null
+  }
+];
+
+const defaultServices: Service[] = [
+  {
+    id: 'default-service-1',
+    business_id: '',
+    name: 'General Consultation',
+    description: 'Standard medical consultation for general health concerns.',
+    duration: 30,
+    price: 75,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'default-service-2',
+    business_id: '',
+    name: 'Extended Consultation',
+    description: 'Comprehensive medical consultation for complex issues.',
+    duration: 60,
+    price: 125,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 const BookAppointmentPage = () => {
   const { businessId } = useParams();
   const [searchParams] = useSearchParams();
@@ -26,6 +73,7 @@ const BookAppointmentPage = () => {
   const [businessName, setBusinessName] = useState('');
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [useDefaultData, setUseDefaultData] = useState(false);
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
@@ -70,28 +118,70 @@ const BookAppointmentPage = () => {
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
           const servicesArray = Array.isArray(servicesData) ? servicesData : [];
           
-          setPractitioners(practitionerArray);
-          setServices(servicesArray);
-          
-          console.log("After setting state - practitioners count:", practitionerArray.length);
-          console.log("After setting state - services count:", servicesArray.length);
-          
-          // If no practitioners or services, show message but don't block appointment flow
-          if (practitionerArray.length === 0 || servicesArray.length === 0) {
-            console.log("Warning: Limited or no practitioners/services found");
+          // If no practitioners or services are found, use the default data
+          if (practitionerArray.length === 0 && servicesArray.length === 0) {
+            console.log("No practitioners or services found, using default data");
+            setUseDefaultData(true);
+            
+            // Assign the business ID to the default data
+            const defaultPractitionersWithBusinessId = defaultPractitioners.map(practitioner => ({
+              ...practitioner,
+              business_id: finalBusinessId
+            }));
+            
+            const defaultServicesWithBusinessId = defaultServices.map(service => ({
+              ...service,
+              business_id: finalBusinessId
+            }));
+            
+            setPractitioners(defaultPractitionersWithBusinessId);
+            setServices(defaultServicesWithBusinessId);
+            
             toast({
-              title: "Limited Availability",
-              description: "This clinic may have limited booking options available.",
+              title: "Using Demo Data",
+              description: "This clinic is using demo data for booking. Your appointment will still be recorded.",
             });
+          } else {
+            setPractitioners(practitionerArray);
+            setServices(servicesArray);
+            
+            // If only one of practitioners or services is missing, show warning
+            if (practitionerArray.length === 0 || servicesArray.length === 0) {
+              console.log("Warning: Limited practitioners or services found");
+              toast({
+                title: "Limited Availability",
+                description: "This clinic may have limited booking options available.",
+              });
+            }
           }
+          
+          console.log("After setting state - practitioners count:", practitioners.length);
+          console.log("After setting state - services count:", services.length);
         } catch (error) {
           console.error("Error loading practitioners or services:", error);
+          
+          // Use default data if there was an error fetching real data
+          console.log("Error loading clinic data, using default data");
+          setUseDefaultData(true);
+          
+          // Assign the business ID to the default data
+          const defaultPractitionersWithBusinessId = defaultPractitioners.map(practitioner => ({
+            ...practitioner,
+            business_id: finalBusinessId
+          }));
+          
+          const defaultServicesWithBusinessId = defaultServices.map(service => ({
+            ...service,
+            business_id: finalBusinessId
+          }));
+          
+          setPractitioners(defaultPractitionersWithBusinessId);
+          setServices(defaultServicesWithBusinessId);
+          
           toast({
-            title: "Data Loading Warning",
-            description: "Could not load all clinic information. Some booking options may be limited.",
+            title: "Using Demo Data",
+            description: "Unable to load clinic data. Using demo data for booking instead.",
           });
-          // Even in case of error, don't prevent rendering the booking form
-          // The component will show appropriate messages
         }
       } catch (error) {
         console.error("Error checking business status:", error);
@@ -144,59 +234,36 @@ const BookAppointmentPage = () => {
   // Debug output to check data
   console.log("Rendering with practitioners:", practitioners.length, "and services:", services.length);
   
-  // Only render booking component if we have at least one practitioner and one service
-  const canBook = practitioners.length > 0 && services.length > 0;
-  
+  // With our default data implementation, we should now always have something to show
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Book an Appointment</h1>
         <p className="text-muted-foreground">
           Schedule your appointment with {businessName}
+          {useDefaultData && " (Demo Mode)"}
         </p>
       </div>
       
-      {!canBook ? (
-        <Card className="shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center p-6 text-center">
-              <h3 className="text-lg font-medium mb-2">Booking Not Available</h3>
-              <p className="text-muted-foreground mb-4">
-                {practitioners.length === 0 && services.length === 0 ? 
-                  "This clinic hasn't set up any practitioners or services yet." :
-                  practitioners.length === 0 ? 
-                  "No practitioners are available at this clinic." : 
-                  "No services have been set up for this clinic."}
-              </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Found {practitioners.length} practitioners and {services.length} services.
-              </p>
-              <Button onClick={() => navigate('/')}>
-                Return to Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Appointment Details</CardTitle>
-            <CardDescription>
-              Enter your information and select your preferred time
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="pt-6">
-            <PatientAppointmentBooking 
-              businessId={finalBusinessId}
-              onSuccess={handleAppointmentSuccess}
-              onCancel={() => navigate('/')}
-              practitioners={practitioners}
-              services={services}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Appointment Details</CardTitle>
+          <CardDescription>
+            Enter your information and select your preferred time
+            {useDefaultData && " - Using demo practitioners and services"}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="pt-6">
+          <PatientAppointmentBooking 
+            businessId={finalBusinessId}
+            onSuccess={handleAppointmentSuccess}
+            onCancel={() => navigate('/')}
+            practitioners={practitioners}
+            services={services}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };

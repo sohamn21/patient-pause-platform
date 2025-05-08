@@ -28,7 +28,9 @@ import {
   PlusCircle, 
   Edit, 
   Trash,
-  Timer 
+  Timer,
+  X,
+  Save
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -90,22 +92,17 @@ const ServicesPage = () => {
         
         // Transform each item to ensure it matches the Service type
         const mappedServices = servicesData.map(item => {
-          // Initialize with required fields that must exist
+          // Initialize with all required fields that must exist
           const service: Service = {
             id: item.id || '',
             business_id: item.business_id || '',
             name: item.name || '',
-            description: null,
-            duration: 30,
-            price: null,
+            description: item.description as string | null || null,
+            duration: typeof item.duration === 'number' ? item.duration : 30,
+            price: typeof item.price === 'number' ? item.price : null,
             created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
+            updated_at: item.updated_at as string || new Date().toISOString(),
           };
-          
-          // Add optional fields if they exist in the response
-          if ('description' in item) service.description = item.description || null;
-          if ('duration' in item) service.duration = typeof item.duration === 'number' ? item.duration : 30;
-          if ('price' in item) service.price = typeof item.price === 'number' ? item.price : null;
           
           return service;
         });

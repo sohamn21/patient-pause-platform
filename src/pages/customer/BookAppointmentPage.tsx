@@ -147,44 +147,34 @@ const BookAppointmentPage = () => {
             
             // Transform each practitioner to ensure it matches the Practitioner type
             const mappedPractitioners = practitionerArray.map(item => {
-              // Initialize with required fields that must exist
+              // Create a properly typed practitioner object with all required fields
               const practitioner: Practitioner = {
                 id: item.id || '',
                 business_id: item.business_id || '',
                 name: item.name || '',
-                specialization: null,
-                bio: null,
-                availability: null,
+                specialization: item.specialization as string | null || null,
+                bio: item.bio as string | null || null,
+                availability: item.availability as any || null,
                 created_at: item.created_at || new Date().toISOString(),
-                updated_at: item.updated_at || new Date().toISOString(),
+                updated_at: item.updated_at as string || new Date().toISOString(),
               };
-              
-              // Add optional fields if they exist in the response
-              if ('specialization' in item) practitioner.specialization = item.specialization || null;
-              if ('bio' in item) practitioner.bio = item.bio || null;
-              if ('availability' in item) practitioner.availability = item.availability || null;
               
               return practitioner;
             });
             
             // Transform each service to ensure it matches the Service type
             const mappedServices = servicesArray.map(item => {
-              // Initialize with required fields that must exist
+              // Initialize with all required fields that must exist
               const service: Service = {
                 id: item.id || '',
                 business_id: item.business_id || '',
                 name: item.name || '',
-                description: null,
-                duration: 30,
-                price: null,
+                description: item.description as string | null || null,
+                duration: typeof item.duration === 'number' ? item.duration : 30,
+                price: typeof item.price === 'number' ? item.price : null,
                 created_at: item.created_at || new Date().toISOString(),
-                updated_at: item.updated_at || new Date().toISOString(),
+                updated_at: item.updated_at as string || new Date().toISOString(),
               };
-              
-              // Add optional fields if they exist in the response
-              if ('description' in item) service.description = item.description || null;
-              if ('duration' in item) service.duration = typeof item.duration === 'number' ? item.duration : 30;
-              if ('price' in item) service.price = typeof item.price === 'number' ? item.price : null;
               
               return service;
             });

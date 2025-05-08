@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -152,11 +153,11 @@ const BookAppointmentPage = () => {
                 id: item.id || '',
                 business_id: item.business_id || '',
                 name: item.name || '',
-                specialization: item.specialization as string | null || null,
-                bio: item.bio as string | null || null,
-                availability: item.availability as any || null,
+                specialization: typeof item.specialization === 'string' ? item.specialization : null,
+                bio: typeof item.bio === 'string' ? item.bio : null,
+                availability: item.availability || null,
                 created_at: item.created_at || new Date().toISOString(),
-                updated_at: item.updated_at as string || new Date().toISOString(),
+                updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
               };
               
               return practitioner;
@@ -169,11 +170,11 @@ const BookAppointmentPage = () => {
                 id: item.id || '',
                 business_id: item.business_id || '',
                 name: item.name || '',
-                description: item.description as string | null || null,
+                description: typeof item.description === 'string' ? item.description : null,
                 duration: typeof item.duration === 'number' ? item.duration : 30,
                 price: typeof item.price === 'number' ? item.price : null,
                 created_at: item.created_at || new Date().toISOString(),
-                updated_at: item.updated_at as string || new Date().toISOString(),
+                updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
               };
               
               return service;

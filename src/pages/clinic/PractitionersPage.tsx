@@ -134,11 +134,11 @@ const PractitionersPage = () => {
             id: item.id || '',
             business_id: item.business_id || '',
             name: item.name || '',
-            specialization: item.specialization as string | null || null,
-            bio: item.bio as string | null || null,
-            availability: item.availability as any || null,
+            specialization: typeof item.specialization === 'string' ? item.specialization : null,
+            bio: typeof item.bio === 'string' ? item.bio : null,
+            availability: item.availability || null,
             created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at as string || new Date().toISOString(),
+            updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
           };
           
           return practitioner;

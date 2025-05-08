@@ -97,11 +97,11 @@ const ServicesPage = () => {
             id: item.id || '',
             business_id: item.business_id || '',
             name: item.name || '',
-            description: item.description as string | null || null,
+            description: typeof item.description === 'string' ? item.description : null,
             duration: typeof item.duration === 'number' ? item.duration : 30,
             price: typeof item.price === 'number' ? item.price : null,
             created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at as string || new Date().toISOString(),
+            updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
           };
           
           return service;

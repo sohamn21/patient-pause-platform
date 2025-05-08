@@ -40,6 +40,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { mapToPractitioner } from '@/lib/dataMappers';
 import { 
   Form,
   FormControl,
@@ -127,22 +128,8 @@ const PractitionersPage = () => {
           return;
         }
         
-        // Transform each item to ensure it matches the Practitioner type
-        const mappedPractitioners = practitionersData.map(item => {
-          // Create a properly typed practitioner object with all required fields
-          const practitioner: Practitioner = {
-            id: item.id || '',
-            business_id: item.business_id || '',
-            name: item.name || '',
-            specialization: typeof item.specialization === 'string' ? item.specialization : null,
-            bio: typeof item.bio === 'string' ? item.bio : null,
-            availability: item.availability || null,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
-          };
-          
-          return practitioner;
-        });
+        // Transform each item using the mapper utility
+        const mappedPractitioners = practitionersData.map(item => mapToPractitioner(item));
         
         setPractitioners(mappedPractitioners);
       } catch (error) {

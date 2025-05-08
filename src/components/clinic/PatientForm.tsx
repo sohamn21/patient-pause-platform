@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient, PatientFormData, Practitioner } from '@/types/clinic';
@@ -9,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
+import { mapToPractitioner } from '@/lib/dataMappers';
 
 import { 
   Form,
@@ -102,21 +102,7 @@ export const PatientForm = ({ patient, userId, onSuccess, onCancel }: PatientFor
         }
         
         // Transform each item to ensure it matches the Practitioner type
-        const mappedPractitioners = practitionersData.map(item => {
-          // Create a properly typed practitioner object with all required fields
-          const practitioner: Practitioner = {
-            id: item.id || '',
-            business_id: item.business_id || '',
-            name: item.name || '',
-            specialization: typeof item.specialization === 'string' ? item.specialization : null,
-            bio: typeof item.bio === 'string' ? item.bio : null,
-            availability: item.availability || null,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
-          };
-          
-          return practitioner;
-        });
+        const mappedPractitioners = practitionersData.map(item => mapToPractitioner(item));
           
         setPractitioners(mappedPractitioners);
       } catch (error) {

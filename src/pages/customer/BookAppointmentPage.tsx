@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Practitioner, Service } from '@/types/clinic';
+import { mapToPractitioner, mapToService } from '@/lib/dataMappers';
 
 // Default practitioners and services to use when none are found
 const defaultPractitioners: Practitioner[] = [
@@ -146,39 +146,11 @@ const BookAppointmentPage = () => {
           } else {
             console.log(`Found real data: ${practitionerArray.length} practitioners and ${servicesArray.length} services`);
             
-            // Transform each practitioner to ensure it matches the Practitioner type
-            const mappedPractitioners = practitionerArray.map(item => {
-              // Create a properly typed practitioner object with all required fields
-              const practitioner: Practitioner = {
-                id: item.id || '',
-                business_id: item.business_id || '',
-                name: item.name || '',
-                specialization: typeof item.specialization === 'string' ? item.specialization : null,
-                bio: typeof item.bio === 'string' ? item.bio : null,
-                availability: item.availability || null,
-                created_at: item.created_at || new Date().toISOString(),
-                updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
-              };
-              
-              return practitioner;
-            });
+            // Transform each practitioner using the mapper utility
+            const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
             
-            // Transform each service to ensure it matches the Service type
-            const mappedServices = servicesArray.map(item => {
-              // Initialize with all required fields that must exist
-              const service: Service = {
-                id: item.id || '',
-                business_id: item.business_id || '',
-                name: item.name || '',
-                description: typeof item.description === 'string' ? item.description : null,
-                duration: typeof item.duration === 'number' ? item.duration : 30,
-                price: typeof item.price === 'number' ? item.price : null,
-                created_at: item.created_at || new Date().toISOString(),
-                updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
-              };
-              
-              return service;
-            });
+            // Transform each service using the mapper utility
+            const mappedServices = servicesArray.map(item => mapToService(item));
             
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);

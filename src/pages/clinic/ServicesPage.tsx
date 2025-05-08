@@ -35,6 +35,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { mapToService } from '@/lib/dataMappers';
 import { 
   Form,
   FormControl,
@@ -90,22 +91,8 @@ const ServicesPage = () => {
           return;
         }
         
-        // Transform each item to ensure it matches the Service type
-        const mappedServices = servicesData.map(item => {
-          // Initialize with all required fields that must exist
-          const service: Service = {
-            id: item.id || '',
-            business_id: item.business_id || '',
-            name: item.name || '',
-            description: typeof item.description === 'string' ? item.description : null,
-            duration: typeof item.duration === 'number' ? item.duration : 30,
-            price: typeof item.price === 'number' ? item.price : null,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: typeof item.updated_at === 'string' ? item.updated_at : new Date().toISOString(),
-          };
-          
-          return service;
-        });
+        // Transform each item using the mapper utility
+        const mappedServices = servicesData.map(item => mapToService(item));
         
         setServices(mappedServices);
       } catch (error) {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { checkPatientExists } from '@/lib/clinicService';
+import { checkPatientExists, getBusinessById } from '@/lib/clinicService';
 import { PatientForm } from '@/components/clinic/PatientForm';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,33 +25,55 @@ const BookAppointmentPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPatient, setIsPatient] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'appointment'>('profile');
+  const [businessExists, setBusinessExists] = useState(false);
   
   useEffect(() => {
     console.log("BookAppointmentPage - businessId from path:", businessId);
     console.log("BookAppointmentPage - businessId from query:", businessIdFromQuery);
     console.log("BookAppointmentPage - final businessId:", finalBusinessId);
     
-    const checkPatientStatus = async () => {
-      if (!user) {
+    const checkBusinessAndPatientStatus = async () => {
+      if (!finalBusinessId) {
         setIsLoading(false);
         return;
       }
       
       try {
-        console.log("Checking patient status for user:", user.id);
-        const patientExists = await checkPatientExists(user.id);
-        console.log("Patient exists:", patientExists);
+        // First check if the business exists and is a clinic
+        const business = await getBusinessById(finalBusinessId);
+        console.log("Business data:", business);
         
-        setIsPatient(patientExists);
+        if (!business || business?.business_type !== 'clinic') {
+          console.log("Business does not exist or is not a clinic");
+          setBusinessExists(false);
+          setIsLoading(false);
+          toast({
+            title: "Invalid Clinic",
+            description: "The selected business is not a healthcare provider.",
+            variant: "destructive",
+          });
+          return;
+        }
         
-        if (patientExists) {
-          setActiveTab('appointment');
+        setBusinessExists(true);
+        
+        // Then check patient status if user is logged in
+        if (user) {
+          console.log("Checking patient status for user:", user.id);
+          const patientExists = await checkPatientExists(user.id);
+          console.log("Patient exists:", patientExists);
+          
+          setIsPatient(patientExists);
+          
+          if (patientExists) {
+            setActiveTab('appointment');
+          }
         }
       } catch (error) {
-        console.error("Error checking patient status:", error);
+        console.error("Error checking business or patient status:", error);
         toast({
           title: "Error",
-          description: "Could not check patient status. Please try again.",
+          description: "Could not verify clinic information. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -61,7 +83,7 @@ const BookAppointmentPage = () => {
     
     // Small delay to ensure auth is fully loaded
     const timer = setTimeout(() => {
-      checkPatientStatus();
+      checkBusinessAndPatientStatus();
     }, 500);
     
     return () => clearTimeout(timer);
@@ -95,12 +117,12 @@ const BookAppointmentPage = () => {
     );
   }
   
-  if (!finalBusinessId) {
+  if (!finalBusinessId || !businessExists) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h2 className="text-xl font-semibold mb-4">Business Not Found</h2>
+        <h2 className="text-xl font-semibold mb-4">Healthcare Provider Not Found</h2>
         <p className="text-muted-foreground mb-6">
-          Please select a business to book an appointment with.
+          The selected healthcare provider does not exist or is not available for booking.
         </p>
         <Button onClick={() => navigate('/customer/dashboard')}>
           Return to Dashboard

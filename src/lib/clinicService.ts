@@ -902,3 +902,24 @@ export const getServiceById = async (businessId: string, serviceId: string) => {
     throw error;
   }
 };
+
+// Add this function to check if a businessId belongs to a clinic
+export const getBusinessById = async (businessId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', businessId)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching business:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in getBusinessById:", error);
+    throw error;
+  }
+};

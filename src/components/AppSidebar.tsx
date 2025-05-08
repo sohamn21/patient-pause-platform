@@ -61,15 +61,23 @@ export function AppSidebar() {
     }
   };
   
-  // Common menu items for all business types
-  const commonMenuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Waitlist', path: '/waitlist', icon: Clock },
-    { name: 'Appointments', path: '/appointments', icon: Calendar },
-  ];
+  // Common menu items filtered by business type
+  const getCommonMenuItems = () => {
+    const items = [
+      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      { name: 'Waitlist', path: '/waitlist', icon: Clock },
+    ];
+
+    // Only show Appointments for clinics and salons
+    if (businessType !== 'restaurant') {
+      items.push({ name: 'Appointments', path: '/appointments', icon: Calendar });
+    }
+    
+    return items;
+  };
   
   // Combine common menu with business type specific menu
-  const menuItems = [...commonMenuItems, ...getBusinessTypeMenu()];
+  const menuItems = [...getCommonMenuItems(), ...getBusinessTypeMenu()];
   
   // Additional menu items
   const secondaryMenuItems = [

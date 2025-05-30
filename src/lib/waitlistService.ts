@@ -86,13 +86,13 @@ export const addToWaitlist = async (entryData: CreateWaitlistEntryData) => {
     ? positionData[0].position + 1 
     : 1;
   
-  // Add the entry with the next position
+  // Add the entry with the next position - explicitly cast to any to handle flexible schema
   const { data, error } = await supabase
     .from('waitlist_entries')
     .insert({ 
       ...entryData, 
       position: nextPosition 
-    })
+    } as any)
     .select()
     .single();
   
@@ -123,7 +123,7 @@ export const addGuestToWaitlist = async (waitlistId: string, guestData: {
     ? positionData[0].position + 1 
     : 1;
   
-  // Create the entry data
+  // Create the entry data - explicitly cast to any to handle flexible schema
   const entryData = {
     waitlist_id: waitlistId,
     position: nextPosition,
@@ -132,12 +132,13 @@ export const addGuestToWaitlist = async (waitlistId: string, guestData: {
     guest_email: guestData.email,
     guest_party_size: guestData.party_size || 1,
     notes: guestData.notes || 'Guest entry',
-    status: 'waiting' as const
+    status: 'waiting' as const,
+    user_id: null // Explicitly set to null for guest entries
   };
   
   const { data, error } = await supabase
     .from('waitlist_entries')
-    .insert(entryData)
+    .insert(entryData as any)
     .select()
     .single();
   

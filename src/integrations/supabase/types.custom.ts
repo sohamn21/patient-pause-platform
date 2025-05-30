@@ -27,13 +27,17 @@ export interface Waitlist {
 export interface WaitlistEntry {
   id: string;
   waitlist_id: string;
-  user_id: string;
+  user_id: string | null; // Now nullable for guest entries
   position: number;
   notes: string | null;
   status: 'waiting' | 'notified' | 'seated' | 'cancelled';
   estimated_wait_time: number | null;
   created_at: string;
   updated_at: string;
+  guest_name?: string | null; // New guest fields
+  guest_phone?: string | null;
+  guest_email?: string | null;
+  guest_party_size?: number | null;
 }
 
 export interface Notification {

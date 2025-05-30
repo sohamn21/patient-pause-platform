@@ -411,34 +411,46 @@ export type Database = {
         Row: {
           created_at: string | null
           estimated_wait_time: number | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_party_size: number | null
+          guest_phone: string | null
           id: string
           notes: string | null
           position: number
           status: string
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           waitlist_id: string
         }
         Insert: {
           created_at?: string | null
           estimated_wait_time?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_party_size?: number | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           position: number
           status?: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           waitlist_id: string
         }
         Update: {
           created_at?: string | null
           estimated_wait_time?: number | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_party_size?: number | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           position?: number
           status?: string
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           waitlist_id?: string
         }
         Relationships: [

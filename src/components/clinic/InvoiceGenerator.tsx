@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { generatePatientInvoice } from '@/lib/clinicService';
-import { Invoice } from '@/types/clinic';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceGeneratorProps {
   patientId: string;
-  onInvoiceGenerated?: (invoice: Invoice) => void;
+  onInvoiceGenerated?: (invoice: any) => void;
 }
 
 export function InvoiceGenerator({ patientId, onInvoiceGenerated }: InvoiceGeneratorProps) {
@@ -65,37 +64,66 @@ export function InvoiceGenerator({ patientId, onInvoiceGenerated }: InvoiceGener
           description: "Please add at least one valid item with a description and amount.",
           variant: "destructive"
         });
-        setIsGenerating(false);
         return;
       }
       
-      // Make sure all items have required fields
-      const preparedItems = validItems.map(item => ({
-        description: item.description,
-        amount: item.amount
-      }));
+      // Get patient details
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select(`
+          id,
+          profile:id (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('id', patientId)
+        .single();
       
-      const invoice = await generatePatientInvoice(
-        patientId,
-        preparedItems,
-        invoiceDate,
-        dueDate
-      );
+      if (patientError) {
+        throw new Error('Failed to fetch patient details');
+      }
+      
+      const patientName = `${patientData.profile?.first_name || ''} ${patientData.profile?.last_name || ''}`.trim() || 'Unknown Patient';
+      const totalAmount = calculateTotal();
+      
+      // Create invoice in database
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          patient_id: patientId,
+          patient_name: patientName,
+          invoice_date: invoiceDate.toISOString().split('T')[0],
+          due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+          items: validItems,
+          total_amount: totalAmount,
+          status: 'unpaid'
+        })
+        .select()
+        .single();
+      
+      if (invoiceError) {
+        throw new Error('Failed to create invoice');
+      }
       
       toast({
         title: "Invoice Generated",
-        description: `Invoice #${invoice.id} created successfully.`
+        description: `Invoice created successfully for ${patientName}.`
       });
       
       if (onInvoiceGenerated) {
         onInvoiceGenerated(invoice);
       }
       
+      // Reset form
+      setItems([{ description: '', amount: 0 }]);
+      setDueDate(undefined);
+      
     } catch (error) {
       console.error('Failed to generate invoice:', error);
       toast({
         title: "Error",
-        description: "Failed to generate invoice. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate invoice. Please try again.",
         variant: "destructive"
       });
     } finally {

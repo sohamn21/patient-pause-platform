@@ -12,21 +12,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { mapToPractitioner, mapToService } from "./dataMappers";
 
-// Interface for Invoice
-export interface Invoice {
-  id?: string;
-  patient_id: string;
-  patient_name: string;
-  invoice_date: string;
-  due_date: string | null;
-  items: { description: string; amount: number }[];
-  total_amount: number;
-  status: string;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 /**
  * Check if a patient profile exists for a specific user
  */
@@ -959,55 +944,6 @@ export const deleteAppointment = async (id: string) => {
   } catch (error) {
     console.error('Failed to delete appointment:', error);
     return false;
-  }
-};
-
-// Generate an invoice for a patient
-export const generatePatientInvoice = async (
-  patientId: string, 
-  items: { description: string; amount: number }[], 
-  invoiceDate: Date,
-  dueDate?: Date | null
-): Promise<Invoice> => {
-  try {
-    console.log('Generating invoice for patient:', patientId);
-    
-    // Get patient details to include in the invoice
-    const patient = await getPatient(patientId);
-    if (!patient) {
-      throw new Error('Patient not found');
-    }
-    
-    const patientName = `${patient.profile?.first_name || ''} ${patient.profile?.last_name || ''}`.trim();
-    
-    // Calculate total amount
-    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-    
-    // Create invoice object
-    const invoiceData: Invoice = {
-      patient_id: patientId,
-      patient_name: patientName,
-      invoice_date: invoiceDate.toISOString().split('T')[0],
-      due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
-      items: items,
-      total_amount: totalAmount,
-      status: 'unpaid',
-      notes: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    // In a real application, you would save this to a database
-    // For now, we'll just return the invoice object
-    console.log('Invoice generated:', invoiceData);
-    
-    // Simulating database insertion with a fake ID
-    invoiceData.id = `inv_${Date.now()}`;
-    
-    return invoiceData;
-  } catch (error) {
-    console.error('Failed to generate invoice:', error);
-    throw error;
   }
 };
 

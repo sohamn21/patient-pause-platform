@@ -83,6 +83,48 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          items: Json
+          notes: string | null
+          patient_id: string
+          patient_name: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date: string
+          items: Json
+          notes?: string | null
+          patient_id: string
+          patient_name: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          items?: Json
+          notes?: string | null
+          patient_id?: string
+          patient_name?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null

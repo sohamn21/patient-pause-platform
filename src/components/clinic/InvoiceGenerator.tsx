@@ -87,32 +87,53 @@ export function InvoiceGenerator({ patientId, onInvoiceGenerated }: InvoiceGener
       const patientName = `${patientData.profile?.first_name || ''} ${patientData.profile?.last_name || ''}`.trim() || 'Unknown Patient';
       const totalAmount = calculateTotal();
       
-      // Create invoice in database
-      const { data: invoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert({
-          patient_id: patientId,
-          patient_name: patientName,
-          invoice_date: invoiceDate.toISOString().split('T')[0],
-          due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
-          items: validItems,
-          total_amount: totalAmount,
-          status: 'unpaid'
-        })
-        .select()
-        .single();
-      
-      if (invoiceError) {
-        throw new Error('Failed to create invoice');
-      }
-      
-      toast({
-        title: "Invoice Generated",
-        description: `Invoice created successfully for ${patientName}.`
+      // Create invoice in database using direct SQL query to handle the new table
+      const { data: invoice, error: invoiceError } = await supabase.rpc('create_invoice', {
+        p_patient_id: patientId,
+        p_patient_name: patientName,
+        p_invoice_date: invoiceDate.toISOString().split('T')[0],
+        p_due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+        p_items: JSON.stringify(validItems),
+        p_total_amount: totalAmount
       });
       
-      if (onInvoiceGenerated) {
-        onInvoiceGenerated(invoice);
+      if (invoiceError) {
+        // Fallback to direct table insert if RPC doesn't exist yet
+        const { data: directInsert, error: directError } = await supabase
+          .from('invoices' as any)
+          .insert({
+            patient_id: patientId,
+            patient_name: patientName,
+            invoice_date: invoiceDate.toISOString().split('T')[0],
+            due_date: dueDate ? dueDate.toISOString().split('T')[0] : null,
+            items: validItems,
+            total_amount: totalAmount,
+            status: 'unpaid'
+          })
+          .select()
+          .single();
+        
+        if (directError) {
+          throw new Error('Failed to create invoice');
+        }
+        
+        toast({
+          title: "Invoice Generated",
+          description: `Invoice created successfully for ${patientName}.`
+        });
+        
+        if (onInvoiceGenerated) {
+          onInvoiceGenerated(directInsert);
+        }
+      } else {
+        toast({
+          title: "Invoice Generated",
+          description: `Invoice created successfully for ${patientName}.`
+        });
+        
+        if (onInvoiceGenerated) {
+          onInvoiceGenerated(invoice);
+        }
       }
       
       // Reset form

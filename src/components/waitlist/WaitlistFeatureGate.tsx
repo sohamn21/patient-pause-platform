@@ -1,20 +1,23 @@
 
 import React from "react";
-import { SubscriptionStatus } from "@/lib/subscriptionService";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { LimitIndicator } from "@/components/subscription/LimitIndicator";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { isWithinLimits } from "@/lib/subscriptionFeatures";
 
 interface WaitlistFeatureGateProps {
-  subscription: SubscriptionStatus | null;
   waitlistCount: number;
   children: React.ReactNode;
 }
 
 export const WaitlistFeatureGate = ({ 
-  subscription, 
   waitlistCount,
   children 
 }: WaitlistFeatureGateProps) => {
+  const { subscription } = useSubscription();
+  
+  const canCreateWaitlist = isWithinLimits('maxWaitlists', waitlistCount, subscription?.plan);
+
   return (
     <>
       <LimitIndicator 
@@ -24,21 +27,12 @@ export const WaitlistFeatureGate = ({
         entityName="Waitlist"
       />
       
-      {/* If we're at the limit, block the content with the gate */}
-      {!subscription?.active && waitlistCount >= 1 ? (
-        <FeatureGate feature="maxWaitlists" plan={subscription?.plan}>
-          {children}
-        </FeatureGate>
-      ) : waitlistCount >= 3 && subscription?.plan?.id === 'basic' ? (
-        <FeatureGate feature="maxWaitlists" plan={subscription?.plan}>
-          {children}
-        </FeatureGate>
-      ) : waitlistCount >= 10 && subscription?.plan?.id === 'professional' ? (
-        <FeatureGate feature="maxWaitlists" plan={subscription?.plan}>
-          {children}
-        </FeatureGate>
-      ) : (
+      {canCreateWaitlist ? (
         children
+      ) : (
+        <FeatureGate feature="maxWaitlists" plan={subscription?.plan}>
+          {children}
+        </FeatureGate>
       )}
     </>
   );

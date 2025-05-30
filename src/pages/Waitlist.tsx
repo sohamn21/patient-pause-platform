@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,8 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { createWaitlist, getBusinessWaitlists, updateWaitlist, deleteWaitlist } from '@/lib/waitlistService';
-import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionService';
 import { WaitlistFeatureGate } from '@/components/waitlist/WaitlistFeatureGate';
+import { useSubscription } from '@/context/SubscriptionContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const WaitlistPage = () => {
@@ -41,8 +40,7 @@ const WaitlistPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const { subscription } = useSubscription();
   const [businessId, setBusinessId] = useState<string | null>(null);
   
   useEffect(() => {
@@ -80,20 +78,6 @@ const WaitlistPage = () => {
     };
     
     getUser();
-    
-    const fetchSubscription = async () => {
-      try {
-        setSubscriptionLoading(true);
-        const data = await getCurrentSubscription();
-        setSubscription(data);
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-      } finally {
-        setSubscriptionLoading(false);
-      }
-    };
-    
-    fetchSubscription();
   }, [toast]);
   
   const handleCreateWaitlist = async () => {

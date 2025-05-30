@@ -2,20 +2,20 @@
 import React from "react";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { LimitIndicator } from "@/components/subscription/LimitIndicator";
-import { useSubscription } from "@/context/SubscriptionContext";
 import { isWithinLimits } from "@/lib/subscriptionFeatures";
+import { SubscriptionStatus } from "@/lib/subscriptionService";
 
 interface WaitlistFeatureGateProps {
   waitlistCount: number;
   children: React.ReactNode;
+  subscription?: SubscriptionStatus | null;
 }
 
 export const WaitlistFeatureGate = ({ 
   waitlistCount,
-  children 
+  children,
+  subscription
 }: WaitlistFeatureGateProps) => {
-  const { subscription } = useSubscription();
-  
   const canCreateWaitlist = isWithinLimits('maxWaitlists', waitlistCount, subscription?.plan);
 
   return (

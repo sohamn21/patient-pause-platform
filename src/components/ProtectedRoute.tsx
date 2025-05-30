@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     return <div className="min-h-screen flex items-center justify-center">Loading authentication...</div>;
   }
   
-  // Detect booking paths comprehensively
+  // Detect booking paths and waitlist joining paths comprehensively
   const isBookingPath = 
     location.pathname.includes('/booking') || 
     location.pathname.includes('/book') || 
@@ -25,11 +25,15 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     location.pathname === '/customer/book-appointment' ||
     location.pathname.includes('/book-appointment');
   
-  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, allowGuest: ${allowGuest}`);
+  const isWaitlistPath = 
+    location.pathname.includes('/join-waitlist') ||
+    location.pathname.includes('/waitlist/join');
   
-  // If we're on a booking path and allowGuest is true, allow access regardless of auth status
-  if (isBookingPath && allowGuest) {
-    console.log("Guest access allowed for booking page");
+  console.log(`Path: ${location.pathname}, isBookingPath: ${isBookingPath}, isWaitlistPath: ${isWaitlistPath}, allowGuest: ${allowGuest}`);
+  
+  // If we're on a booking path or waitlist joining path and allowGuest is true, allow access regardless of auth status
+  if ((isBookingPath || isWaitlistPath) && allowGuest) {
+    console.log("Guest access allowed for booking/waitlist page");
     return <>{children}</>;
   }
   

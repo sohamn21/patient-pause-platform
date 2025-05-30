@@ -14,10 +14,14 @@ type CreateWaitlistData = {
 
 type CreateWaitlistEntryData = {
   waitlist_id: string;
-  user_id: string;
+  user_id?: string; // Make user_id optional for guest entries
   notes?: string;
   status?: 'waiting' | 'notified' | 'seated' | 'cancelled';
   estimated_wait_time?: number;
+  guest_name?: string; // Add guest information fields
+  guest_phone?: string;
+  guest_email?: string;
+  guest_party_size?: number;
 };
 
 // Waitlist management functions for business owners
@@ -96,6 +100,51 @@ export const addToWaitlist = async (entryData: CreateWaitlistEntryData) => {
   return data;
 };
 
+// New function specifically for guest entries
+export const addGuestToWaitlist = async (waitlistId: string, guestData: {
+  name: string;
+  phone?: string;
+  email?: string;
+  party_size?: number;
+  notes?: string;
+}) => {
+  // Get the current highest position
+  const { data: positionData, error: positionError } = await supabase
+    .from('waitlist_entries')
+    .select('position')
+    .eq('waitlist_id', waitlistId)
+    .order('position', { ascending: false })
+    .limit(1);
+  
+  if (positionError) throw positionError;
+  
+  // Determine the next position
+  const nextPosition = positionData && positionData.length > 0 
+    ? positionData[0].position + 1 
+    : 1;
+  
+  // Create the entry data
+  const entryData = {
+    waitlist_id: waitlistId,
+    position: nextPosition,
+    guest_name: guestData.name,
+    guest_phone: guestData.phone,
+    guest_email: guestData.email,
+    guest_party_size: guestData.party_size || 1,
+    notes: guestData.notes || 'Guest entry',
+    status: 'waiting' as const
+  };
+  
+  const { data, error } = await supabase
+    .from('waitlist_entries')
+    .insert(entryData)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
 export const updateWaitlistEntry = async (id: string, entryData: Partial<WaitlistEntry>) => {
   const { data, error } = await supabase
     .from('waitlist_entries')
@@ -133,6 +182,10 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes,
       created_at,
       updated_at,
+      guest_name,
+      guest_phone,
+      guest_email,
+      guest_party_size,
       profiles(
         username,
         first_name,
@@ -157,6 +210,10 @@ export const getWaitlistEntries = async (waitlistId: string): Promise<WaitlistEn
       notes: entry.notes,
       created_at: entry.created_at,
       updated_at: entry.updated_at,
+      guest_name: entry.guest_name,
+      guest_phone: entry.guest_phone,
+      guest_email: entry.guest_email,
+      guest_party_size: entry.guest_party_size,
       profiles: entry.profiles ? {
         username: entry.profiles.username || null,
         first_name: entry.profiles.first_name || null,

@@ -2,12 +2,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GlowButton } from "@/components/ui/glow-button";
 import { BlurCard, BlurCardContent, BlurCardHeader, BlurCardTitle } from "@/components/ui/blur-card";
-import { addToWaitlist } from "@/lib/waitlistService";
-import { useAuth } from "@/context/AuthContext";
+import { GuestWaitlistForm } from "@/components/waitlist/GuestWaitlistForm";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ClipboardCheck, ArrowLeft, QrCode } from "lucide-react";
+import { Loader2, ArrowLeft, QrCode } from "lucide-react";
 import QrCodeScanner from "@/components/QrCodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,9 +14,8 @@ const JoinWaitlist = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [waitlistName, setWaitlistName] = useState<string>("");
   const [businessName, setBusinessName] = useState<string>("");
-  const [isJoining, setIsJoining] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const { user } = useAuth();
+  const [showGuestForm, setShowGuestForm] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -45,6 +42,7 @@ const JoinWaitlist = () => {
           if (data) {
             setWaitlistName(data.name);
             setBusinessName(data.profiles?.business_name || "Unknown Business");
+            setShowGuestForm(true); // Show the guest form directly
           } else {
             toast({
               title: "Error",
@@ -70,53 +68,6 @@ const JoinWaitlist = () => {
     }
   }, [waitlistId, toast]);
 
-  const handleJoinWaitlist = async () => {
-    if (!user) {
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to join the waitlist",
-      });
-      navigate("/signin?redirect=" + encodeURIComponent(window.location.pathname));
-      return;
-    }
-
-    if (!waitlistId) {
-      toast({
-        title: "Invalid Waitlist",
-        description: "Could not find waitlist information",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsJoining(true);
-      const entryData = {
-        waitlist_id: waitlistId,
-        user_id: user.id,
-        notes: "Joined via QR code",
-      };
-      
-      await addToWaitlist(entryData);
-      
-      toast({
-        title: "Success!",
-        description: "You've been added to the waitlist",
-      });
-      
-      navigate("/customer/waitlists");
-    } catch (error) {
-      console.error("Error joining waitlist:", error);
-      toast({
-        title: "Failed to Join",
-        description: "Could not join the waitlist. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsJoining(false);
-    }
-  };
-
   const handleScanSuccess = (decodedText: string) => {
     try {
       const url = new URL(decodedText);
@@ -137,6 +88,18 @@ const JoinWaitlist = () => {
     setShowScanner(false);
   };
 
+  const handleJoinSuccess = () => {
+    toast({
+      title: "Success!",
+      description: "You've been added to the waitlist. You'll be notified when your table is ready.",
+    });
+    navigate('/');
+  };
+
+  const handleCancel = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="w-full max-w-md">
@@ -155,12 +118,10 @@ const JoinWaitlist = () => {
               Back
             </Button>
           </div>
-        ) : waitlistId ? (
+        ) : waitlistId && showGuestForm ? (
           <BlurCard>
             <BlurCardHeader>
-              <BlurCardTitle>
-                {isLoading ? "Loading..." : `Join ${waitlistName}`}
-              </BlurCardTitle>
+              <BlurCardTitle>Join Waitlist</BlurCardTitle>
             </BlurCardHeader>
             <BlurCardContent>
               {isLoading ? (
@@ -168,42 +129,13 @@ const JoinWaitlist = () => {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <p className="text-center text-xl font-semibold">{businessName}</p>
-                    <p className="text-center text-muted-foreground">
-                      You're about to join the waitlist for {waitlistName}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <GlowButton 
-                      className="w-full" 
-                      onClick={handleJoinWaitlist}
-                      disabled={isJoining}
-                    >
-                      {isJoining ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Joining...
-                        </>
-                      ) : (
-                        <>
-                          <ClipboardCheck className="mr-2 h-4 w-4" />
-                          Join Waitlist
-                        </>
-                      )}
-                    </GlowButton>
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      onClick={() => navigate(-1)}
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Go Back
-                    </Button>
-                  </div>
-                </div>
+                <GuestWaitlistForm
+                  waitlistId={waitlistId}
+                  waitlistName={waitlistName}
+                  businessName={businessName}
+                  onSuccess={handleJoinSuccess}
+                  onCancel={handleCancel}
+                />
               )}
             </BlurCardContent>
           </BlurCard>

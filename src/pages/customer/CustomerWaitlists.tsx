@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BlurCard } from "@/components/ui/blur-card";
 import { Button } from '@/components/ui/button';
@@ -7,43 +6,47 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Clock, Calendar, Store, User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
-import { getAvailableWaitlists, getUserWaitlistEntries, addToWaitlist } from '@/lib/waitlistService';
+import { getAvailableWaitlists, getUserWaitlistEntries } from '@/lib/waitlistService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerWaitlists = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [availableWaitlists, setAvailableWaitlists] = useState<any[]>([]);
   const [activeWaitlists, setActiveWaitlists] = useState<any[]>([]);
   const [pastWaitlists, setPastWaitlists] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isJoining, setIsJoining] = useState(false);
   
   useEffect(() => {
-    if (!user) return;
-    
     const fetchWaitlists = async () => {
       setIsLoading(true);
       try {
-        // Fetch available waitlists
+        // Always fetch available waitlists for discovery
         const waitlistsData = await getAvailableWaitlists();
         setAvailableWaitlists(waitlistsData || []);
         
-        // Fetch user's waitlist entries
-        const userEntriesData = await getUserWaitlistEntries(user.id);
-        
-        // Split entries into active and past
-        const active = userEntriesData.filter(entry => 
-          entry.status === 'waiting' || entry.status === 'notified'
-        );
-        
-        const past = userEntriesData.filter(entry => 
-          entry.status === 'seated' || entry.status === 'cancelled'
-        );
-        
-        setActiveWaitlists(active);
-        setPastWaitlists(past);
+        // Only fetch user's waitlist entries if they're logged in
+        if (user) {
+          const userEntriesData = await getUserWaitlistEntries(user.id);
+          
+          // Split entries into active and past
+          const active = userEntriesData.filter(entry => 
+            entry.status === 'waiting' || entry.status === 'notified'
+          );
+          
+          const past = userEntriesData.filter(entry => 
+            entry.status === 'seated' || entry.status === 'cancelled'
+          );
+          
+          setActiveWaitlists(active);
+          setPastWaitlists(past);
+        } else {
+          setActiveWaitlists([]);
+          setPastWaitlists([]);
+        }
       } catch (error) {
         console.error("Error fetching waitlists:", error);
         toast({
@@ -65,49 +68,14 @@ const CustomerWaitlists = () => {
     waitlist.profiles?.business_type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleJoinWaitlist = async (waitlistId: string, waitlistName: string) => {
-    if (!user) {
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to join the waitlist",
-      });
-      return;
-    }
-    
-    setIsJoining(true);
-    try {
-      const entryData = {
-        waitlist_id: waitlistId,
-        user_id: user.id,
-        notes: "Joined via customer dashboard"
-      };
-      
-      await addToWaitlist(entryData);
-      
-      // Refresh active waitlists
-      const userEntriesData = await getUserWaitlistEntries(user.id);
-      const active = userEntriesData.filter(entry => 
-        entry.status === 'waiting' || entry.status === 'notified'
-      );
-      setActiveWaitlists(active);
-      
-      toast({
-        title: "Success!",
-        description: `You've been added to ${waitlistName}'s waitlist.`,
-      });
-    } catch (error) {
-      console.error("Error joining waitlist:", error);
-      toast({
-        title: "Failed to Join",
-        description: "Could not join the waitlist. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsJoining(false);
-    }
+  const handleJoinWaitlist = (waitlistId: string) => {
+    // Navigate to the guest form for joining waitlists
+    navigate(`/join-waitlist/${waitlistId}`);
   };
   
   const handleLeaveWaitlist = async (waitlistId: string, entryId: string, businessName: string) => {
+    if (!user) return;
+    
     try {
       // Use the removeFromWaitlist function from waitlistService
       await import('@/lib/waitlistService').then(module => {
@@ -141,6 +109,20 @@ const CustomerWaitlists = () => {
   };
 
   const renderActiveWaitlists = () => {
+    if (!user) {
+      return (
+        <BlurCard className="p-6 text-center">
+          <h3 className="text-lg font-medium mb-2">Sign In to View Your Waitlists</h3>
+          <p className="text-muted-foreground mb-4">
+            Sign in to see your current waitlist status and history.
+          </p>
+          <Button onClick={() => navigate('/signin')}>
+            Sign In
+          </Button>
+        </BlurCard>
+      );
+    }
+
     if (isLoading) {
       return Array(2).fill(0).map((_, i) => (
         <BlurCard key={i}>
@@ -245,8 +227,8 @@ const CustomerWaitlists = () => {
     }
     
     return filteredWaitlists.map(waitlist => {
-      // Check if user is already in this waitlist
-      const alreadyJoined = activeWaitlists.some(entry => entry.waitlist_id === waitlist.id);
+      // Check if user is already in this waitlist (only if logged in)
+      const alreadyJoined = user && activeWaitlists.some(entry => entry.waitlist_id === waitlist.id);
       
       return (
         <BlurCard key={waitlist.id} className="overflow-hidden">
@@ -274,8 +256,8 @@ const CustomerWaitlists = () => {
             
             <Button
               className="w-full"
-              disabled={isJoining || alreadyJoined}
-              onClick={() => handleJoinWaitlist(waitlist.id, waitlist.name)}
+              disabled={alreadyJoined}
+              onClick={() => handleJoinWaitlist(waitlist.id)}
             >
               {alreadyJoined ? 'Already Joined' : 'Join Waitlist'}
             </Button>
@@ -285,22 +267,82 @@ const CustomerWaitlists = () => {
     });
   };
 
+  const renderHistoryTab = () => {
+    return (
+      <BlurCard>
+        <div className="divide-y divide-border">
+          {isLoading ? (
+            Array(3).fill(0).map((_, i) => (
+              <div key={i} className="p-4">
+                <Skeleton className="h-5 w-1/3 mb-2" />
+                <div className="flex items-center gap-4 mt-1">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            ))
+          ) : pastWaitlists.length > 0 ? (
+            pastWaitlists.map(entry => (
+              <div key={entry.id} className="p-4 hover:bg-accent/10">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">
+                      {entry.waitlists?.name || 'Unnamed Waitlist'} - 
+                      {entry.waitlists?.profiles?.business_name || 'Unknown Business'}
+                    </h3>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(entry.created_at).toLocaleDateString()}
+                      </div>
+                      {entry.estimated_wait_time && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          Wait time: ~{entry.estimated_wait_time} min
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-xs ${
+                    entry.status === 'seated' 
+                      ? 'bg-green-500/20 text-green-500' 
+                      : 'bg-red-500/20 text-red-500'
+                  }`}>
+                    {entry.status === 'seated' ? 'Seated' : 'Cancelled'}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 text-center">
+              <p className="text-muted-foreground">
+                You don't have any past waitlist entries yet.
+              </p>
+            </div>
+          )}
+        </div>
+      </BlurCard>
+    );
+  };
+
   return (
     <div className="animate-fade-in">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Waitlists</h1>
       
-      <Tabs defaultValue="active">
+      <Tabs defaultValue={user ? "active" : "discover"}>
         <TabsList className="mb-6">
-          <TabsTrigger value="active">My Active Waitlists</TabsTrigger>
+          {user && <TabsTrigger value="active">My Active Waitlists</TabsTrigger>}
           <TabsTrigger value="discover">Discover Waitlists</TabsTrigger>
-          <TabsTrigger value="history">Waitlist History</TabsTrigger>
+          {user && <TabsTrigger value="history">Waitlist History</TabsTrigger>}
         </TabsList>
         
-        <TabsContent value="active">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {renderActiveWaitlists()}
-          </div>
-        </TabsContent>
+        {user && (
+          <TabsContent value="active">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderActiveWaitlists()}
+            </div>
+          </TabsContent>
+        )}
         
         <TabsContent value="discover">
           <div className="mb-6">
@@ -317,61 +359,11 @@ const CustomerWaitlists = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="history">
-          <BlurCard>
-            <div className="divide-y divide-border">
-              {isLoading ? (
-                Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="p-4">
-                    <Skeleton className="h-5 w-1/3 mb-2" />
-                    <div className="flex items-center gap-4 mt-1">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                ))
-              ) : pastWaitlists.length > 0 ? (
-                pastWaitlists.map(entry => (
-                  <div key={entry.id} className="p-4 hover:bg-accent/10">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium">
-                          {entry.waitlists?.name || 'Unnamed Waitlist'} - 
-                          {entry.waitlists?.profiles?.business_name || 'Unknown Business'}
-                        </h3>
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(entry.created_at).toLocaleDateString()}
-                          </div>
-                          {entry.estimated_wait_time && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="w-4 h-4" />
-                              Wait time: ~{entry.estimated_wait_time} min
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-xs ${
-                        entry.status === 'seated' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-red-500/20 text-red-500'
-                      }`}>
-                        {entry.status === 'seated' ? 'Seated' : 'Cancelled'}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground">
-                    You don't have any past waitlist entries yet.
-                  </p>
-                </div>
-              )}
-            </div>
-          </BlurCard>
-        </TabsContent>
+        {user && (
+          <TabsContent value="history">
+            {renderHistoryTab()}
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

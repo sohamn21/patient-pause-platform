@@ -28,89 +28,86 @@ const PatientBookingPage = () => {
   const [businessName, setBusinessName] = useState('');
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [clinicNotFound, setClinicNotFound] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   useEffect(() => {
     const loadBusinessData = async () => {
-      if (businessId) {
-        console.log("Loading business data for businessId:", businessId);
-        setBusinessIdVerified(businessId);
-
-        try {
-          // First verify this is a valid clinic business
-          const business = await getBusinessById(businessId);
-          console.log("Business data:", business);
-          
-          if (!business || business?.business_type !== 'clinic') {
-            console.log("Business does not exist or is not a clinic");
-            setClinicNotFound(true);
-            setDebugInfo(`Business ID ${businessId} is not a clinic or doesn't exist`);
-            setIsLoading(false);
-            return;
-          }
-          
-          setBusinessName(business.business_name || 'Healthcare Provider');
-
-          // Fetch practitioners and services data
-          console.log("Fetching practitioners and services...");
-          const practitionersData = await getPractitioners(businessId);
-          const servicesData = await getServices(businessId);
-          
-          console.log("Raw practitioners data:", practitionersData);
-          console.log("Raw services data:", servicesData);
-          
-          // Ensure we have arrays
-          const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
-          const servicesArray = Array.isArray(servicesData) ? servicesData : [];
-          
-          console.log("Processed arrays - practitioners:", practitionerArray.length, "services:", servicesArray.length);
-          
-          // Check if this clinic has any data set up
-          if (practitionerArray.length === 0 && servicesArray.length === 0) {
-            console.log("No practitioners or services found for this clinic");
-            setClinicNotFound(true);
-            setDebugInfo(`No practitioners or services found for clinic ${businessId}`);
-          } else {
-            // Transform the data using mapper utilities
-            const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
-            const mappedServices = servicesArray.map(item => mapToService(item));
-            
-            console.log("Mapped practitioners:", mappedPractitioners);
-            console.log("Mapped services:", mappedServices);
-            
-            setPractitioners(mappedPractitioners);
-            setServices(mappedServices);
-            
-            setDebugInfo(`Loaded ${mappedPractitioners.length} practitioners and ${mappedServices.length} services`);
-            
-            if (mappedPractitioners.length === 0 || mappedServices.length === 0) {
-              toast({
-                title: "Limited Availability",
-                description: "This clinic may have limited booking options available.",
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error loading clinic data:", error);
-          setClinicNotFound(true);
-          setDebugInfo(`Error loading clinic data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          toast({
-            title: "Error",
-            description: "Unable to load clinic information. Please try again later.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
+      if (!businessId) {
         console.log("No businessId provided");
-        setDebugInfo("No business ID provided in URL parameters");
+        setErrorMessage("No clinic selected. Please scan a valid QR code.");
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Loading business data for businessId:", businessId);
+      setBusinessIdVerified(businessId);
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        // First verify this is a valid clinic business
+        const business = await getBusinessById(businessId);
+        console.log("Business data:", business);
+        
+        if (!business || business?.business_type !== 'clinic') {
+          console.log("Business does not exist or is not a clinic");
+          setErrorMessage(`Business ID ${businessId} is not a clinic or doesn't exist`);
+          setHasError(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        setBusinessName(business.business_name || 'Healthcare Provider');
+
+        // Fetch practitioners and services data in parallel
+        console.log("Fetching practitioners and services...");
+        const [practitionersData, servicesData] = await Promise.all([
+          getPractitioners(businessId),
+          getServices(businessId)
+        ]);
+        
+        console.log("Raw practitioners data:", practitionersData);
+        console.log("Raw services data:", servicesData);
+        
+        // Ensure we have arrays and map the data
+        const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
+        const servicesArray = Array.isArray(servicesData) ? servicesData : [];
+        
+        console.log("Processed arrays - practitioners:", practitionerArray.length, "services:", servicesArray.length);
+        
+        // Transform the data using mapper utilities
+        const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
+        const mappedServices = servicesArray.map(item => mapToService(item));
+        
+        console.log("Mapped practitioners:", mappedPractitioners);
+        console.log("Mapped services:", mappedServices);
+        
+        setPractitioners(mappedPractitioners);
+        setServices(mappedServices);
+        
+        // Check if this clinic has any data set up
+        if (mappedPractitioners.length === 0 && mappedServices.length === 0) {
+          console.log("No practitioners or services found for this clinic");
+          setErrorMessage(`No practitioners or services found for clinic ${businessId}`);
+          setHasError(true);
+        } else if (mappedPractitioners.length === 0 || mappedServices.length === 0) {
+          toast({
+            title: "Limited Availability",
+            description: "This clinic may have limited booking options available.",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading clinic data:", error);
+        setErrorMessage(`Error loading clinic data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setHasError(true);
         toast({
-          title: "Missing Information",
-          description: "No clinic selected. Please scan a valid QR code.",
+          title: "Error",
+          description: "Unable to load clinic information. Please try again later.",
           variant: "destructive",
         });
+      } finally {
         setIsLoading(false);
       }
     };
@@ -129,33 +126,22 @@ const PatientBookingPage = () => {
     );
   }
   
-  if (!businessIdVerified || clinicNotFound) {
+  if (hasError || !businessIdVerified) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Book an Appointment</h1>
           <p className="text-muted-foreground">
-            {!businessIdVerified 
-              ? "Invalid clinic information. Please scan a valid QR code or select a clinic."
-              : "This clinic is not set up for appointment booking yet."
-            }
+            {errorMessage || "Invalid clinic information. Please scan a valid QR code or select a clinic."}
           </p>
-          {debugInfo && (
-            <div className="text-xs text-muted-foreground mt-2 flex items-center">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              <span>{debugInfo}</span>
-            </div>
-          )}
         </div>
         
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-muted-foreground" />
               <p className="text-center text-muted-foreground">
-                {!businessIdVerified 
-                  ? "Please scan a valid clinic QR code to book an appointment."
-                  : "This clinic needs to set up practitioners and services before accepting appointments."
-                }
+                {errorMessage || "Please scan a valid clinic QR code to book an appointment."}
               </p>
               <Button onClick={() => navigate('/')}>
                 Return to Home
@@ -209,12 +195,6 @@ const PatientBookingPage = () => {
           Schedule your appointment with {businessName}
           {!user && " - No account needed to book"}
         </p>
-        {debugInfo && (
-          <div className="text-xs text-muted-foreground mt-1 flex items-center">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            <span>{debugInfo}</span>
-          </div>
-        )}
       </div>
       
       <PatientAppointmentBooking 

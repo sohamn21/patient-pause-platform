@@ -24,7 +24,8 @@ export const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteP
     location.pathname.startsWith('/customer/book') || 
     location.pathname === '/customer/book-appointment' ||
     location.pathname.includes('/book-appointment') ||
-    location.pathname === '/customer/patient-booking'; // Add the patient booking page
+    location.pathname === '/customer/patient-booking' ||
+    location.pathname.includes('/patient-booking'); // Add patient booking path
   
   const isWaitlistPath = 
     location.pathname.includes('/join-waitlist') ||

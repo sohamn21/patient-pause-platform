@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -68,7 +67,6 @@ const PatientAppointmentBooking = ({
   const [practitioners, setPractitioners] = useState<Practitioner[]>(initialPractitioners);
   const [services, setServices] = useState<Service[]>(initialServices);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [activeStep, setActiveStep] = useState<'service' | 'practitioner' | 'schedule' | 'contact'>('service');
 
@@ -86,20 +84,14 @@ const PatientAppointmentBooking = ({
     },
   });
   
-  // Debug logs to check what's being passed in
+  // Update local state when props change
   useEffect(() => {
-    console.log("InitialPractitioners received:", initialPractitioners);
-    console.log("InitialServices received:", initialServices);
+    console.log("Updating practitioners and services from props");
+    console.log("InitialPractitioners:", initialPractitioners);
+    console.log("InitialServices:", initialServices);
     
-    if (initialPractitioners && initialPractitioners.length > 0) {
-      console.log("Setting practitioners state with:", initialPractitioners);
-      setPractitioners(initialPractitioners);
-    }
-    
-    if (initialServices && initialServices.length > 0) {
-      console.log("Setting services state with:", initialServices);
-      setServices(initialServices);
-    }
+    setPractitioners(initialPractitioners);
+    setServices(initialServices);
   }, [initialPractitioners, initialServices]);
   
   useEffect(() => {
@@ -191,27 +183,15 @@ const PatientAppointmentBooking = ({
     }
   };
   
-  if (isLoading && !services.length && !practitioners.length) {
+  // Check if we have data to display
+  if (services.length === 0 && practitioners.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-          <p className="text-muted-foreground">Loading clinic information...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Debug check to see what data we have
-  console.log("Rendering with practitioners:", practitioners);
-  console.log("Rendering with services:", services);
-  
-  if (loadError) {
-    return (
-      <Card className="border-destructive/50">
+      <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4">
-            <p className="text-center text-muted-foreground">{loadError}</p>
+            <p className="text-center text-muted-foreground">
+              No services or practitioners available for booking at this clinic.
+            </p>
             <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
               Return Home
             </Button>
@@ -221,17 +201,30 @@ const PatientAppointmentBooking = ({
     );
   }
   
-  if ((services.length === 0 || practitioners.length === 0) && !initialPractitioners.length && !initialServices.length) {
+  if (services.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4">
             <p className="text-center text-muted-foreground">
-              {services.length === 0 && practitioners.length === 0 
-                ? "No services or practitioners available."
-                : services.length === 0 
-                ? "No services have been set up for this clinic." 
-                : "No practitioners are available at this clinic."}
+              No services have been set up for this clinic.
+            </p>
+            <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
+              Return Home
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (practitioners.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center space-y-4">
+            <p className="text-center text-muted-foreground">
+              No practitioners are available at this clinic.
             </p>
             <Button variant="secondary" onClick={onCancel || (() => navigate('/'))}>
               Return Home
@@ -263,16 +256,12 @@ const PatientAppointmentBooking = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {services.length === 0 ? (
-                        <SelectItem value="no-services" disabled>No services available</SelectItem>
-                      ) : (
-                        services.map((service) => (
-                          <SelectItem key={service.id} value={service.id}>
-                            {service.name} ({service.duration} min)
-                            {service.price ? ` - $${service.price}` : ''}
-                          </SelectItem>
-                        ))
-                      )}
+                      {services.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name} ({service.duration} min)
+                          {service.price ? ` - $${service.price}` : ''}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -316,15 +305,11 @@ const PatientAppointmentBooking = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {practitioners.length === 0 ? (
-                        <SelectItem value="no-practitioners" disabled>No practitioners available</SelectItem>
-                      ) : (
-                        practitioners.map((practitioner) => (
-                          <SelectItem key={practitioner.id} value={practitioner.id}>
-                            {practitioner.name}
-                          </SelectItem>
-                        ))
-                      )}
+                      {practitioners.map((practitioner) => (
+                        <SelectItem key={practitioner.id} value={practitioner.id}>
+                          {practitioner.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>

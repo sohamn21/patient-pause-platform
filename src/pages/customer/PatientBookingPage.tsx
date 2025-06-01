@@ -4,14 +4,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
   getPractitioners, 
-  getServices
+  getServices,
+  getBusinessById
 } from '@/lib/clinicService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PatientAppointmentBooking from '@/components/clinic/PatientAppointmentBooking';
 import { Practitioner, Service } from '@/types/clinic';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { mapToPractitioner, mapToService } from '@/lib/dataMappers';
 
 const PatientBookingPage = () => {
@@ -24,34 +25,64 @@ const PatientBookingPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appointmentSuccess, setAppointmentSuccess] = useState(false);
   const [businessIdVerified, setBusinessIdVerified] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState('');
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [clinicNotFound, setClinicNotFound] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   
   useEffect(() => {
     const loadBusinessData = async () => {
       if (businessId) {
+        console.log("Loading business data for businessId:", businessId);
         setBusinessIdVerified(businessId);
 
         try {
+          // First verify this is a valid clinic business
+          const business = await getBusinessById(businessId);
+          console.log("Business data:", business);
+          
+          if (!business || business?.business_type !== 'clinic') {
+            console.log("Business does not exist or is not a clinic");
+            setClinicNotFound(true);
+            setDebugInfo(`Business ID ${businessId} is not a clinic or doesn't exist`);
+            setIsLoading(false);
+            return;
+          }
+          
+          setBusinessName(business.business_name || 'Healthcare Provider');
+
           // Fetch practitioners and services data
+          console.log("Fetching practitioners and services...");
           const practitionersData = await getPractitioners(businessId);
           const servicesData = await getServices(businessId);
+          
+          console.log("Raw practitioners data:", practitionersData);
+          console.log("Raw services data:", servicesData);
           
           // Ensure we have arrays
           const practitionerArray = Array.isArray(practitionersData) ? practitionersData : [];
           const servicesArray = Array.isArray(servicesData) ? servicesData : [];
           
-          // Check if this is actually a clinic business
+          console.log("Processed arrays - practitioners:", practitionerArray.length, "services:", servicesArray.length);
+          
+          // Check if this clinic has any data set up
           if (practitionerArray.length === 0 && servicesArray.length === 0) {
+            console.log("No practitioners or services found for this clinic");
             setClinicNotFound(true);
+            setDebugInfo(`No practitioners or services found for clinic ${businessId}`);
           } else {
             // Transform the data using mapper utilities
             const mappedPractitioners = practitionerArray.map(item => mapToPractitioner(item));
             const mappedServices = servicesArray.map(item => mapToService(item));
             
+            console.log("Mapped practitioners:", mappedPractitioners);
+            console.log("Mapped services:", mappedServices);
+            
             setPractitioners(mappedPractitioners);
             setServices(mappedServices);
+            
+            setDebugInfo(`Loaded ${mappedPractitioners.length} practitioners and ${mappedServices.length} services`);
             
             if (mappedPractitioners.length === 0 || mappedServices.length === 0) {
               toast({
@@ -63,6 +94,7 @@ const PatientBookingPage = () => {
         } catch (error) {
           console.error("Error loading clinic data:", error);
           setClinicNotFound(true);
+          setDebugInfo(`Error loading clinic data: ${error instanceof Error ? error.message : 'Unknown error'}`);
           toast({
             title: "Error",
             description: "Unable to load clinic information. Please try again later.",
@@ -72,6 +104,8 @@ const PatientBookingPage = () => {
           setIsLoading(false);
         }
       } else {
+        console.log("No businessId provided");
+        setDebugInfo("No business ID provided in URL parameters");
         toast({
           title: "Missing Information",
           description: "No clinic selected. Please scan a valid QR code.",
@@ -103,9 +137,15 @@ const PatientBookingPage = () => {
           <p className="text-muted-foreground">
             {!businessIdVerified 
               ? "Invalid clinic information. Please scan a valid QR code or select a clinic."
-              : "This business doesn't offer appointment booking services."
+              : "This clinic is not set up for appointment booking yet."
             }
           </p>
+          {debugInfo && (
+            <div className="text-xs text-muted-foreground mt-2 flex items-center">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              <span>{debugInfo}</span>
+            </div>
+          )}
         </div>
         
         <Card>
@@ -114,7 +154,7 @@ const PatientBookingPage = () => {
               <p className="text-center text-muted-foreground">
                 {!businessIdVerified 
                   ? "Please scan a valid clinic QR code to book an appointment."
-                  : "This business may be a restaurant or other type of business that doesn't offer medical appointments."
+                  : "This clinic needs to set up practitioners and services before accepting appointments."
                 }
               </p>
               <Button onClick={() => navigate('/')}>
@@ -154,14 +194,27 @@ const PatientBookingPage = () => {
     );
   }
   
+  // Debug information to help troubleshoot
+  console.log("About to render booking component with:");
+  console.log("- businessId:", businessIdVerified);
+  console.log("- practitioners:", practitioners.length);
+  console.log("- services:", services.length);
+  console.log("- user:", user ? 'logged in' : 'guest');
+  
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Book an Appointment</h1>
         <p className="text-muted-foreground">
-          Schedule your appointment with your preferred healthcare provider
+          Schedule your appointment with {businessName}
           {!user && " - No account needed to book"}
         </p>
+        {debugInfo && (
+          <div className="text-xs text-muted-foreground mt-1 flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            <span>{debugInfo}</span>
+          </div>
+        )}
       </div>
       
       <PatientAppointmentBooking 

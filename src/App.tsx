@@ -100,7 +100,8 @@ function App() {
 
               {/* Booking routes (allow guest access) */}
               <Route element={<ProtectedRoute allowGuest={true}><div /></ProtectedRoute>}>
-                <Route path="/customer/book-appointment" element={<BookAppointmentPage />} />
+                <Route path="/customer/book-appointment" element={<PatientBookingPage />} />
+                <Route path="/customer/patient-booking" element={<PatientBookingPage />} />
                 <Route path="/customer/book/:businessId" element={<PatientBookingPage />} />
                 <Route path="/join-waitlist/:waitlistId" element={<JoinWaitlist />} />
               </Route>

@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Profile } from '@/integrations/supabase/types.custom';
 
@@ -26,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,6 +112,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
+      
+      // Check if there's a return path from the URL
+      const searchParams = new URLSearchParams(location.search);
+      const returnTo = searchParams.get('returnTo');
+      
+      if (returnTo) {
+        // User came from a booking page, redirect them back
+        navigate(decodeURIComponent(returnTo));
+        return;
+      }
       
       // Fetch the profile to get the user's role
       const { data: profileData, error: profileError } = await supabase

@@ -67,7 +67,10 @@ const SignIn = () => {
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold">Sign In</h1>
             <p className="text-muted-foreground mt-2">
-              Welcome back! Enter your details to continue.
+              {fromBooking 
+                ? "Sign in to manage your appointments, or continue as guest"
+                : "Welcome back! Enter your details to continue."
+              }
             </p>
           </div>
           

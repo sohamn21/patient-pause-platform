@@ -26,9 +26,9 @@ const appointmentFormSchema = z.object({
   date: z.date(),
   start_time: z.string().min(1, "Please select a time"),
   notes: z.string().optional(),
-  guest_name: z.string().min(1, "Please enter your name").optional().or(z.literal('')),
-  guest_email: z.string().email("Please enter a valid email").optional().or(z.literal('')),
-  guest_phone: z.string().optional().or(z.literal('')),
+  guest_name: z.string().optional(),
+  guest_email: z.string().optional(),
+  guest_phone: z.string().optional(),
 });
 
 const generateTimeSlots = () => {
@@ -69,9 +69,23 @@ const PatientAppointmentBooking = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [activeStep, setActiveStep] = useState<'service' | 'practitioner' | 'schedule' | 'contact'>('service');
+  
+  // Create a modified schema based on whether user is logged in
+  const getValidationSchema = () => {
+    if (user) {
+      // User is logged in, guest fields are not required
+      return appointmentFormSchema;
+    } else {
+      // User is not logged in, require guest information
+      return appointmentFormSchema.extend({
+        guest_name: z.string().min(1, "Please enter your name"),
+        guest_email: z.string().email("Please enter a valid email"),
+      });
+    }
+  };
 
   const form = useForm<AppointmentFormData>({
-    resolver: zodResolver(appointmentFormSchema),
+    resolver: zodResolver(getValidationSchema()),
     defaultValues: {
       service_id: '',
       practitioner_id: '',
@@ -107,7 +121,7 @@ const PatientAppointmentBooking = ({
   const onSubmitAppointment = async (formData: AppointmentFormData) => {
     setIsLoading(true);
     try {
-      // Always require guest information if user isn't logged in
+      // For guest users, ensure contact information is provided
       if (!user && (!formData.guest_name || !formData.guest_email)) {
         toast({
           title: "Missing Information",
@@ -130,7 +144,9 @@ const PatientAppointmentBooking = ({
       if (appointment) {
         toast({
           title: "Appointment Booked",
-          description: "Your appointment has been successfully scheduled.",
+          description: user 
+            ? "Your appointment has been successfully scheduled."
+            : "Your appointment has been successfully scheduled. Please check your email for confirmation details.",
         });
         
         if (onSuccess) {
@@ -434,6 +450,9 @@ const PatientAppointmentBooking = ({
         {activeStep === 'contact' && (
           <div className="space-y-4 p-4 bg-accent/30 rounded-lg">
             <h3 className="font-medium">Your Contact Information</h3>
+            <p className="text-sm text-muted-foreground">
+              Since you're booking as a guest, we need your contact details to confirm your appointment.
+            </p>
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -445,7 +464,7 @@ const PatientAppointmentBooking = ({
                       <Input 
                         placeholder="Enter your name"
                         {...field}
-                        required
+                        required={!user}
                       />
                     </FormControl>
                     <FormMessage />
@@ -463,7 +482,7 @@ const PatientAppointmentBooking = ({
                         type="email"
                         placeholder="your@email.com"
                         {...field}
-                        required
+                        required={!user}
                       />
                     </FormControl>
                     <FormMessage />
@@ -489,7 +508,7 @@ const PatientAppointmentBooking = ({
               />
             </div>
             <div className="text-sm text-muted-foreground mt-2">
-              <p>Your contact information is used only to confirm your appointment.</p>
+              <p>Your contact information is used only to confirm your appointment and will not be shared.</p>
             </div>
           </div>
         )}

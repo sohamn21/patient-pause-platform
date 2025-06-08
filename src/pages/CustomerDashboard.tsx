@@ -6,14 +6,31 @@ import { Button } from '@/components/ui/button';
 import { BlurCard, BlurCardContent } from '@/components/ui/blur-card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, User, ArrowRight, FileEdit } from 'lucide-react';
+import { Calendar, Clock, User, ArrowRight, FileEdit, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 const CustomerDashboard = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully logged out.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const quickActions = [
     {
@@ -38,7 +55,15 @@ const CustomerDashboard = () => {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight mb-6">Welcome, {profile?.first_name || 'Patient'}</h1>
+      <div className="flex justify-between items-start">
+        <h1 className="text-2xl font-bold tracking-tight mb-6">
+          Welcome, {profile?.first_name || 'Patient'}
+        </h1>
+        <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2">
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">

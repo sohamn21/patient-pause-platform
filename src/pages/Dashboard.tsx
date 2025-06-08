@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Calendar, Clock, Users, Settings, Plus, DollarSign, BarChart2, 
   UserPlus, Shield, Check, Stethoscope, ClipboardList, Scissors,
-  Utensils, TableProperties, ChefHat, Heart, Brush, Grid2X2
+  Utensils, TableProperties, ChefHat, Heart, Brush, Grid2X2, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinessWaitlists } from '@/lib/waitlistService';
@@ -15,7 +16,7 @@ import { getCurrentSubscription, SubscriptionStatus } from '@/lib/subscriptionSe
 import { SubscriptionFeaturesList } from '@/components/dashboard/SubscriptionFeaturesList';
 
 const Dashboard = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const role = user?.user_metadata?.role as string || 'customer';
   const businessType = profile?.business_type || user?.user_metadata?.businessType as string;
   const navigate = useNavigate();
@@ -24,24 +25,42 @@ const Dashboard = () => {
   if (loading) {
     return <div className="h-screen flex items-center justify-center">Loading...</div>;
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully logged out.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   if (role === 'business') {
-    return <BusinessDashboard businessType={businessType} />;
+    return <BusinessDashboard businessType={businessType} onSignOut={handleSignOut} />;
   } else {
-    return <CustomerDashboard />;
+    return <CustomerDashboard onSignOut={handleSignOut} />;
   }
 };
 
 interface BusinessDashboardProps {
   businessType: string;
+  onSignOut: () => void;
 }
 
-const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
+const BusinessDashboard = ({ businessType, onSignOut }: BusinessDashboardProps) => {
   const [waitlists, setWaitlists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -188,19 +207,6 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
     }
   };
 
-  const getBusinessTypeIcon = () => {
-    switch (businessType) {
-      case 'clinic':
-        return <Heart className="mr-2 h-4 w-4" />;
-      case 'salon':
-        return <Scissors className="mr-2 h-4 w-4" />;
-      case 'restaurant':
-        return <Utensils className="mr-2 h-4 w-4" />;
-      default:
-        return <Calendar className="mr-2 h-4 w-4" />;
-    }
-  };
-
   const getPrimaryActionButton = () => {
     switch (businessType) {
       case 'clinic':
@@ -235,14 +241,24 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
   };
 
   const industryFeatures = getIndustryFeatures();
+  const firstName = profile?.first_name || user?.user_metadata?.first_name || '';
+  const businessName = profile?.business_name || user?.user_metadata?.businessName || '';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Business Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your {businessType || 'business'}.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Welcome back, {firstName}!
+          </h1>
+          <p className="text-muted-foreground">
+            Here's an overview of your {businessName || businessType || 'business'}.
+          </p>
+        </div>
+        <Button variant="outline" onClick={onSignOut} className="flex items-center gap-2">
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
       </div>
       
       {!subscriptionLoading && (
@@ -263,7 +279,7 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
                       </p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => navigate('/settings')}>
+                  <Button size="sm" variant="outline" onClick={() => navigate('/subscription')}>
                     Manage Subscription
                   </Button>
                 </div>
@@ -284,7 +300,7 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
                       </p>
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => navigate('/settings')}>
+                  <Button size="sm" onClick={() => navigate('/subscription')}>
                     View Plans
                   </Button>
                 </div>
@@ -413,10 +429,14 @@ const BusinessDashboard = ({ businessType }: BusinessDashboardProps) => {
   );
 };
 
-const CustomerDashboard = () => {
+interface CustomerDashboardProps {
+  onSignOut: () => void;
+}
+
+const CustomerDashboard = ({ onSignOut }: CustomerDashboardProps) => {
   const [waitlistEntries, setWaitlistEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -442,13 +462,21 @@ const CustomerDashboard = () => {
     fetchWaitlistEntries();
   }, [user, toast]);
 
+  const firstName = profile?.first_name || user?.user_metadata?.first_name || '';
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">My Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome! Manage your appointments and reservations.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome, {firstName || 'User'}!</h1>
+          <p className="text-muted-foreground">
+            Manage your appointments and reservations.
+          </p>
+        </div>
+        <Button variant="outline" onClick={onSignOut} className="flex items-center gap-2">
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
       </div>
       
       <div className="flex flex-wrap gap-4">

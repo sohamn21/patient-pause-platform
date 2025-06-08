@@ -1,15 +1,18 @@
 
-import { BarChart3, Calendar, Clock, Users } from "lucide-react";
+import { BarChart3, Calendar, Clock, Users, LogOut } from "lucide-react";
 import { WaitlistCard } from "@/components/dashboard/WaitlistCard";
 import { AppointmentsCard } from "@/components/dashboard/AppointmentsCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ActivityChart } from "@/components/dashboard/ActivityChart";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const { toast } = useToast();
   const [statsData, setStatsData] = useState({
     customersToday: 0,
     waitTime: "0 min",
@@ -45,13 +48,43 @@ const Index = () => {
     fetchDashboardData();
   }, [user]);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully logged out.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const firstName = profile?.first_name || user?.user_metadata?.first_name || '';
+  const businessName = profile?.business_name || user?.user_metadata?.businessName || '';
+
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col gap-2 mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your PatientPause dashboard. Here's an overview of your current waitlist and appointments.
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Welcome back, {firstName}!
+            </h1>
+            <p className="text-muted-foreground">
+              Here's an overview of your {businessName || 'PatientPause'} dashboard.
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

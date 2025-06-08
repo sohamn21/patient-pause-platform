@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   LayoutDashboard,
@@ -15,8 +16,12 @@ import {
   Bell,
   Settings,
   CreditCard,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface SidebarItemProps {
   icon: React.ComponentType<any>;
@@ -38,14 +43,34 @@ const sidebarItems = [
   { icon: UserCog, label: "Staff", href: "/staff" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Bell, label: "Notifications", href: "/notifications" },
-  { icon: CreditCard, label: "Subscription", href: "/subscription" }, // Added subscription link
+  { icon: CreditCard, label: "Subscription", href: "/subscription" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export const AppSidebar = () => {
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully logged out.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full py-4">
-      <div className="space-y-2">
+      <div className="space-y-2 flex-1">
         {sidebarItems.map((item: SidebarItemProps) => (
           <NavLink
             key={item.label}
@@ -60,6 +85,17 @@ export const AppSidebar = () => {
             <span>{item.label}</span>
           </NavLink>
         ))}
+      </div>
+      
+      <div className="mt-auto pt-4 border-t">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );

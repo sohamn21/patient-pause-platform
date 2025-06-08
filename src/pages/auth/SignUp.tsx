@@ -30,7 +30,7 @@ const SignUp = () => {
           <div className="space-y-4">
             <GlowButton
               className="w-full h-auto py-6 justify-start"
-              onClick={() => navigate('/register/business')}
+              onClick={() => navigate('/signup/business')}
             >
               <div className="flex items-start gap-4">
                 <div className="bg-primary/10 p-2 rounded-full">
@@ -48,7 +48,7 @@ const SignUp = () => {
             <Button
               variant="outline"
               className="w-full h-auto py-6 justify-start"
-              onClick={() => navigate('/register/user')}
+              onClick={() => navigate('/signup/user')}
             >
               <div className="flex items-start gap-4">
                 <div className="bg-muted p-2 rounded-full">
